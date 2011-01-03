@@ -1,0 +1,4 @@
+<settings>
+    <setting id="EnableAnimation" type="bool" label="30000" default="true"/>
+    <setting id="AutoOff" type="enum" label="30001" values="0|30|60|90|120|180|240" default="180"/>
+</settings>

@@ -50,6 +50,7 @@ class TVOverlay(xbmcgui.WindowDialog):
             self.message('Unable to find any channels. Create smart\nplaylists with file names Channel_1, Chanbel_2, etc.')
             return
 
+        # Don't allow any actions during initialization
         self.actionSemaphore.acquire()
 
         if self.readConfig() == False:
@@ -66,6 +67,7 @@ class TVOverlay(xbmcgui.WindowDialog):
     # Determine the maximum number of channels by opening consecutive
     # playlists until we don't find one
     def findMaxChannels(self):
+        self.log('findMaxChannels')
         notfound = False
         channel = 1
 
@@ -79,11 +81,13 @@ class TVOverlay(xbmcgui.WindowDialog):
             fl.close
 
         self.maxChannels = channel - 1
+        self.log('findMaxChannels return')
 
 
     # setup all basic configuration parameters, including creating the playlists that
     # will be used to actually run this thing
     def readConfig(self):
+        self.log('readConfig')
         self.updateDialog = xbmcgui.DialogProgress()
         self.sleepTimeValue = int(ADDON_SETTINGS.getSetting('AutoOff')) * 60000
         self.log('Auto off is ' + str(self.sleepTimeValue))
@@ -104,10 +108,13 @@ class TVOverlay(xbmcgui.WindowDialog):
         self.currentChannel = 1
         xbmc.Player().stop()
         self.updateDialog.close()
+        self.log('readConfig return')
         return True
 
         
     def getSmartPlaylistName(self, filename):
+        self.log('getSmartPlaylistName ' + filename)
+
         try:
             fl = open(filename, "r")
         except:
@@ -130,6 +137,7 @@ class TVOverlay(xbmcgui.WindowDialog):
             line = fl.readline()
             
         fl.close()
+        self.log('getSmartPlaylistName return ' + thename)
         return thename
 
 
@@ -144,6 +152,7 @@ class TVOverlay(xbmcgui.WindowDialog):
 
     # Based on a smart playlist, create a normal playlist that can actually be used by us
     def makeChannelList(self, channel):
+        self.log('makeChannelList ' + str(channel))
         xbmc.executebuiltin('XBMC.Playlist.clear()')
 
         if self.startPlaylist("XBMC.PlayMedia(special://profile/playlists/video/Channel_" + str(channel) + ".xsp)") == False:
@@ -181,6 +190,7 @@ class TVOverlay(xbmcgui.WindowDialog):
                 lastval = (i + 1) * itemsize // 1
 
         channelplaylist.close()
+        self.log('makeChannelList return')
         return True
 
 
@@ -247,6 +257,7 @@ class TVOverlay(xbmcgui.WindowDialog):
 
         self.setChannel(channel)
         self.background.setVisible(False)
+        self.log('channelDown return')
 
 
     def channelUp(self):
@@ -260,6 +271,7 @@ class TVOverlay(xbmcgui.WindowDialog):
 
         self.setChannel(channel)
         self.background.setVisible(False)
+        self.log('channelUp return')
 
 
     def message(self, data):
@@ -278,6 +290,7 @@ class TVOverlay(xbmcgui.WindowDialog):
         self.log('setChannel ' + str(channel))
 
         if channel < 1 or channel > self.maxChannels:
+            self.log('setChannel invalid channel')
             return
 
         self.lastActionTime = 0
@@ -396,13 +409,16 @@ class TVOverlay(xbmcgui.WindowDialog):
 
         if xbmc.Player().isPlaying():
             if xbmc.getCondVisibility('Player.Paused') == False:
+                self.log('Pausing')
                 xbmc.Player().pause()
 
                 if self.waitForVideoPaused() == False:
                     return
 
+        self.log('Executing command')
         xbmc.executebuiltin(command)
         sleeptime = 0
+        self.log('Waiting for video')
 
         while sleeptime < TIMEOUT:
             xbmc.sleep(100)
@@ -428,6 +444,7 @@ class TVOverlay(xbmcgui.WindowDialog):
     # Display the current channel based on self.currentChannel.
     # Start the timer to hide it.
     def showChannelLabel(self, channel):
+        self.log('showChannelLabel ' + str(channel))
         self.channelLabelTimer.stopTimer()
         tmp = self.inputChannel
         self.hideChannelLabel()
@@ -447,13 +464,18 @@ class TVOverlay(xbmcgui.WindowDialog):
         self.channelLabel[curlabel].setImage(IMAGES_LOC + 'label_' + str(channel % 10) + '.png')
         self.channelLabel[curlabel].setVisible(True)
         self.channelLabelTimer.startTimer(5000, self.hideChannelLabel)
+        self.log('showChannelLabel return')
 
 
     # Called from the timer to hide the channel label.
     def hideChannelLabel(self):
+        self.log('hideChannelLabel')
         self.inputChannel = -1
+
         for i in range(3):
             self.channelLabel[i].setVisible(False)
+            
+        self.log('hideChannelLabel return')
 
 
     # return a channel in the proper range
@@ -468,11 +490,12 @@ class TVOverlay(xbmcgui.WindowDialog):
     # Handle all input while videos are playing
     def onAction(self, act):
         action = act.getId()
+        self.log('onAction ' + str(action))
 
         if self.actionSemaphore.acquire(False) == False:
+            self.log('Unable to get semaphore')
             return
 
-        self.log('onAction ' + str(action))
         lastaction = time.time() - self.lastActionTime
 
         # during certain times we just want to discard all input
@@ -485,7 +508,14 @@ class TVOverlay(xbmcgui.WindowDialog):
         if action == ACTION_MENU:
             # set the video to upper right
             self.sleepTimer.stopTimer()
+            self.newChannel = 0
             self.myEPG.doModal()
+            
+            if self.newChannel != 0:
+                self.background.setVisible(True)
+                self.setChannel(self.newChannel)
+                self.background.setVisible(False)
+
         elif action == ACTION_PAGEUP:
             # read the configuration and set initial params
             # potentially go through all channels, start the smart playlist,
@@ -527,6 +557,7 @@ class TVOverlay(xbmcgui.WindowDialog):
             self.showChannelLabel(self.inputChannel)
 
         self.actionSemaphore.release()
+        self.log('onAction return')
 
 
     def startSleepTimer(self):
@@ -542,16 +573,18 @@ class TVOverlay(xbmcgui.WindowDialog):
 
     # cleanup and end
     def end(self):
+        self.log('end')
+
         # We don't want to fail end, even when something goes wrong.
         # Wrap it in a try block
-        try:
-            self.actionTimer.stopTimer()
-            self.channelLabelTimer.stopTimer()
-            self.sleepTimer.stopTimer()
+#        try:
+        self.actionTimer.stopTimer()
+        self.channelLabelTimer.stopTimer()
+        self.sleepTimer.stopTimer()
 
-            del self.myEPG
-        except:
-            pass
+        del self.myEPG
+#        except:
+#            pass
 
         if xbmc.Player().isPlaying():
             xbmc.Player().stop()
@@ -589,6 +622,8 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         for i in range(3):
             self.getControl(101 + i).setLabel(now.strftime("%I:%M"))
             now = now + delta
+            
+        self.log('setTimeLabels return')
 
 
     def log(self, msg):
@@ -620,11 +655,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 break
 
         self.focusRow = 2
+        self.log('onInit return')
 
 
     # setup all channel buttons for a given time
     def setChannelButtons(self, starttime, curchannel):
-        self.log('setChannelButtons')
+        self.log('setChannelButtons ' + str(starttime) + ', ' + str(curchannel))
         self.removeControl(self.currentTimeBar)
         self.centerChannel = MyOverlayWindow.fixChannel(curchannel)
         curchannel = MyOverlayWindow.fixChannel(curchannel - 2)
@@ -648,6 +684,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 self.currentTimeBar.setPosition(1278, 288)
 
         self.addControl(self.currentTimeBar)
+        self.log('setChannelButtons return')
 
 
     # round the given time down to the nearest half hour
@@ -665,7 +702,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
     # create the buttons for the specified channel in the given row
     def setButtons(self, starttime, curchannel, row):
-        self.log('setButtons')
+        self.log('setButtons ' + str(starttime) + ", " + str(curchannel) + ", " + str(row))
         curchannel = MyOverlayWindow.fixChannel(curchannel)
 
         if xbmc.Player().isPlaying() == False:
@@ -741,14 +778,17 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 reftime += tmpdur
                 playlistpos += 1
 
+        self.log('setButtons return')
         return True
 
 
     def onAction(self, act):
+        self.log('onAction ' + str(act.getId()))
+
         if self.actionSemaphore.acquire(False) == False:
+            self.log('Unable to get semaphore')
             return
 
-        self.log('Action ' + str(act.getId()))
         action = act.getId()
 
         if action == ACTION_PREVIOUS_MENU:
@@ -766,6 +806,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             MyOverlayWindow.end()
 
         self.actionSemaphore.release()
+        self.log('onAction return')
 
 
     def closeEPG(self):
@@ -786,10 +827,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
     # Run when a show is selected, so close the epg and run the show
     def onClick(self, controlid):
+        self.log('onClick')
+
         if self.actionSemaphore.acquire(False) == False:
+            self.log('Unable to get semaphore')
             return
 
-        self.log('onClick')
         selectedbutton = self.getControl(controlid)
 
         for i in range(5):
@@ -801,22 +844,29 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                     self.selectShow()
                     self.closeEPG()
                     self.actionSemaphore.release()
+                    self.log('onClick found button return')
                     return
 
         self.closeEPG()
         self.actionSemaphore.release()
+        self.log('onClick return')
 
 
     def GoDown(self):
+        self.log('goDown')
+
         # change controls to display the proper junks
         if self.focusRow == 4:
             self.setChannelButtons(self.focusTime, self.centerChannel + 1)
             self.focusRow = 3
 
         self.setProperButton(self.focusRow + 1)
+        self.log('goDown return')
 
 
     def GoUp(self):
+        self.log('goUp')
+
         # same as godown
         # change controls to display the proper junks
         if self.focusRow == 0:
@@ -824,9 +874,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             self.focusRow = 1
 
         self.setProperButton(self.focusRow - 1)
+        self.log('goUp return')
 
 
     def GoLeft(self):
+        self.log('goLeft')
+
         # change controls to display the proper junks
         if self.focusIndex == 0:
             self.setChannelButtons(self.focusTime - 1800, self.centerChannel)
@@ -834,9 +887,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         self.focusIndex -= 1
         self.setFocus(self.channelButtons[self.focusRow][self.focusIndex])
+        self.log('goLeft return')
 
 
     def GoRight(self):
+        self.log('goRight')
+
         # change controls to display the proper junks
         if self.focusIndex == len(self.channelButtons[self.focusRow]) - 1:
             self.setChannelButtons(self.focusTime + 1800, self.centerChannel)
@@ -844,6 +900,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         self.focusIndex += 1
         self.setFocus(self.channelButtons[self.focusRow][self.focusIndex])
+        self.log('goRight return')
 
 
     # based on the current focus row and index, find the appropriate button in
@@ -860,10 +917,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             if left >= bleft and left <= bleft + width:
                 self.focusIndex = i
                 self.setFocus(self.channelButtons[newrow][i])
+                self.log('setProperButton found button return')
                 return
 
         self.focusIndex = 0
         self.setFocus(self.channelButtons[newrow][0])
+        self.log('setProperButton return')
 
 
     # using the currently selected button, play the proper shows
@@ -886,9 +945,11 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             MyOverlayWindow.channels[newchan - 1].setShowTime(0)
             MyOverlayWindow.channels[newchan - 1].setAccessTime(time.time())
 
-        MyOverlayWindow.background.setVisible(True)
-        MyOverlayWindow.setChannel(newchan)
-        MyOverlayWindow.background.setVisible(False)
+#        MyOverlayWindow.background.setVisible(True)
+#        MyOverlayWindow.setChannel(newchan)
+#        MyOverlayWindow.background.setVisible(False)
+        MyOverlayWindow.newChannel = newchan
+        self.log('selectShow return')
 
 
     def determinePlaylistPosAtTime(self, starttime, channel):
@@ -897,6 +958,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         # if the channel is paused, then it's just the current item
         if MyOverlayWindow.channels[channel - 1].isPaused:
+            self.log('determinePlaylistPosAtTime paused return')
             return MyOverlayWindow.channels[channel - 1].playlistPosition
         else:
             # Find the show that was running at the given time
@@ -924,6 +986,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 reftime += MyOverlayWindow.channels[channel - 1].getItemDuration(playlistpos)
                 playlistpos += 1
 
+            self.log('determinePlaylistPosAtTime return')
             return MyOverlayWindow.channels[channel - 1].fixPlaylistIndex(playlistpos)
 
 

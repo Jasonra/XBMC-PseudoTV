@@ -85,7 +85,7 @@ class TVOverlay(xbmcgui.WindowDialog):
     # will be used to actually run this thing
     def readConfig(self):
         self.updateDialog = xbmcgui.DialogProgress()
-        self.sleepTimeValue = int(ADDON_SETTINGS.getSetting('AutoOff')) * 6000
+        self.sleepTimeValue = int(ADDON_SETTINGS.getSetting('AutoOff')) * 60000
         self.log('Auto off is ' + str(self.sleepTimeValue))
         self.updateDialog.create("XBMC TV", "Updating channel list")
         self.updateDialog.update(0, "Updating channel list")
@@ -99,11 +99,38 @@ class TVOverlay(xbmcgui.WindowDialog):
                 return False
 
             self.channels[-1].setPlaylist(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u')
+            self.channels[-1].name = self.getSmartPlaylistName(xbmc.translatePath("special://profile/playlists/video") + "/Channel_" + str(i + 1) + ".xsp")
 
         self.currentChannel = 1
         xbmc.Player().stop()
         self.updateDialog.close()
         return True
+
+        
+    def getSmartPlaylistName(self, filename):
+        try:
+            fl = open(filename, "r")
+        except:
+            self.log("Unable to open the smart playlist " + filename)
+            return ''
+
+        line = fl.readline()
+        thename = ''
+
+        while len(line) > 0:
+            index = line.find('<name>')
+
+            if index >= 0:
+                index2 = line.find('</name>')
+                
+                if index2 >= 0:
+                    thename = line[index + 6:index2]
+                    break
+
+            line = fl.readline()
+            
+        fl.close()
+        return thename
 
 
     # handle fatal errors: log it, show the dialog, and exit
@@ -608,7 +635,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         for i in range(5):
             self.setButtons(starttime, curchannel, i)
-            self.getControl(301 + i).setLabel(str(curchannel))
+            self.getControl(301 + i).setLabel(MyOverlayWindow.channels[curchannel - 1].name + '\n' + str(curchannel))
             curchannel = MyOverlayWindow.fixChannel(curchannel + 1)
 
         if time.time() >= starttime and time.time() < starttime + 5400:

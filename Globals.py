@@ -6,7 +6,7 @@ def log(msg):
     xbmc.log(ADDON_ID + '-' + msg)
 
 
-ADDON_ID = 'script.XBTV.xml'
+ADDON_ID = 'script.PseudoTV'
 ADDON_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
 ADDON_INFO = ADDON_SETTINGS.getAddonInfo('path')
 

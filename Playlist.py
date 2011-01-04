@@ -65,8 +65,7 @@ class Playlist:
                 break
 
             line = fle.readline()
-
-        if len(line) == 0:
+        else:
             fle.close()
             self.log('Unable to find playlist header for the file: ' + filename)
             return False

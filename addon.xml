@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon
-    id="script.XBTV.xml"
-	version="0.0.5"
-	name="XBTVxml"
+    id="script.PseudoTV"
+	version="0.0.1"
+	name="PseudoTV"
 	provider-name="Jason Anderson">
 
 	<requires>

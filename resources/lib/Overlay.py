@@ -46,9 +46,17 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     def onInit(self):
         self.log('onInit')
         self.channelLabelTimer = threading.Timer(5.0, self.hideChannelLabel)
+        self.background = self.getControl(101)
+
+        if not os.path.exists(CHANNELS_LOC):
+            try:
+                os.makedirs(CHANNELS_LOC)
+            except:
+                self.Error('Unable to create the cache directory')
+                return
+
         self.myEPG = EPGWindow("script.PseudoTV.EPG.xml", ADDON_INFO, "Default")
         self.myEPG.MyOverlayWindow = self
-        self.background = self.getControl(101)
         self.findMaxChannels()
 
         if self.maxChannels == 0:
@@ -78,13 +86,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         channel = 1
 
         while notfound == False:
-            try:
-                fl = open(xbmc.translatePath('special://profile/playlists/video') + '/Channel_' + str(channel) + '.xsp', 'r')
-            except IOError:
+            if not os.path.exists(xbmc.translatePath('special://profile/playlists/video') + '/Channel_' + str(channel) + '.xsp'):
                 break
 
             channel += 1
-            fl.close
 
         self.maxChannels = channel - 1
         self.log('findMaxChannels return')
@@ -596,11 +601,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     def end(self):
         self.log('end')
 
-        if self.channelLabelTimer.isAlive():
-            self.channelLabelTimer.cancel()
-
-        if self.sleepTimer.isAlive():
-            self.sleepTimer.cancel()
+        try:
+            if self.channelLabelTimer.isAlive():
+                self.channelLabelTimer.cancel()
+    
+            if self.sleepTimer.isAlive():
+                self.sleepTimer.cancel()
+        except:
+            pass
 
         if xbmc.Player().isPlaying():
             xbmc.Player().stop()

@@ -451,9 +451,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     # Start the timer to hide it.
     def showChannelLabel(self, channel):
         self.log('showChannelLabel ' + str(channel))
-        
+
         if self.channelLabelTimer.isAlive():
             self.channelLabelTimer.cancel()
+            self.channelLabelTimer = threading.Timer(5.0, self.hideChannelLabel)
 
         tmp = self.inputChannel
         self.hideChannelLabel()
@@ -479,6 +480,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     # Called from the timer to hide the channel label.
     def hideChannelLabel(self):
         self.log('hideChannelLabel')
+        self.channelLabelTimer = threading.Timer(5.0, self.hideChannelLabel)
         self.inputChannel = -1
 
         for i in range(3):
@@ -520,6 +522,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             # set the video to upper right
             if self.sleepTimer.isAlive():
                 self.sleepTimer.cancel()
+                self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
 
             self.newChannel = 0
             self.myEPG.doModal()
@@ -576,12 +579,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     def startSleepTimer(self):
         if self.sleepTimer.isAlive():
             self.sleepTimer.cancel()
+            self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
 
         self.sleepTimer.start()
 
 
     def sleepAction(self):
         xbmc.log("sleep!!!")
+        self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
         # TODO: show some dialog, allow the user to cancel the sleep
         # perhaps modify the sleep time based on the current show
 #        self.end()

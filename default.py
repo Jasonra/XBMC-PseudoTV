@@ -7,7 +7,7 @@ import xbmcaddon
 # Script constants
 __scriptname__ = "PseudoTV"
 __author__     = "Jason102"
-__url__        = "http://code.google.com/p/xbmc-addons/"
+__url__        = "http://github.com/Jasonra/XBMC-PseudoTV"
 __version__    = "0.1.0"
 __settings__   = xbmcaddon.Addon(id='script.PseudoTV')
 __language__   = __settings__.getLocalizedString
@@ -18,5 +18,4 @@ import resources.lib.Overlay as Overlay
 
 
 MyOverlayWindow = Overlay.TVOverlay("script.PseudoTV.TVOverlay.xml", __cwd__, "Default")
-xbmc.log('done!')
 del MyOverlayWindow

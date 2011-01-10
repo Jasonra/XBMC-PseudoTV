@@ -1,4 +1,4 @@
 <strings>
-    <string id="30000">Enable Animation</string>
     <string id="30001">Auto-off Timer(in minutes)</string>
+    <string id="30002">Force all channels to be reset</string>
 </strings>

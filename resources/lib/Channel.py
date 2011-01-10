@@ -10,34 +10,32 @@ class Channel:
         self.playlistPosition = 0
         self.showTimeOffset = 0
         self.lastAccessTime = 0
+        self.totalTimePlayed = 0
         self.isPaused = False
 
 
     def log(self, msg):
         log('Channel: ' + msg)
-        
+
 
     def setPlaylist(self, filename):
         self.Playlist.load(filename)
+        self.log('Playlist loaded with a duration of ' + str(self.getTotalDuration()))
 
 
     def setPaused(self, paused):
-        self.log('Paused set to ' + str(paused))
         self.isPaused = paused
 
 
     def setShowTime(self, thetime):
-        self.log('Show time set to ' + str(thetime))
         self.showTimeOffset = thetime // 1
 
 
     def setShowPosition(self, show):
-        self.log('Show position set to ' + str(show))
         self.playlistPosition = self.fixPlaylistIndex(show)
 
 
     def setAccessTime(self, thetime):
-        self.log('Access time set to ' + str(thetime))
         self.lastAccessTime = thetime // 1
 
 
@@ -49,10 +47,14 @@ class Channel:
         return self.Playlist.getduration(self.fixPlaylistIndex(index))
 
 
+    def getTotalDuration(self):
+        return self.Playlist.totalDuration
+
+
     def getCurrentDescription(self):
         return self.getItemDescription(self.playlistPosition)
-        
-        
+
+
     def getItemDescription(self, index):
         return self.Playlist.getdescription(self.fixPlaylistIndex(index))
 

@@ -21,6 +21,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.lastActionTime = 0
         self.actionSemaphore = threading.BoundedSemaphore()
         self.setCoordinateResolution(1)
+        self.timeStarted = 0
 
         for i in range(3):
             self.channelLabel.append(xbmcgui.ControlImage(50 + (50 * i), 50, 50, 50, IMAGES_LOC + 'solid.png', colorDiffuse='0xAA00ff00'))
@@ -35,7 +36,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         curtime = time.time()
 
         for i in range(self.maxChannels):
-            self.channels[i].setAccessTime(curtime)
+            self.channels[i].setAccessTime(curtime - self.channels[i].totalTimePlayed)
 
 
     def onFocus(self, controlId):
@@ -69,11 +70,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         if self.readConfig() == False:
             return
 
-        self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
+        if self.sleepTimeValue > 0:
+            self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
+
         self.resetChannelTimes()
         self.setChannel(self.currentChannel)
+        self.timeStarted = time.time()
         self.background.setVisible(False)
-        self.sleepTimer.start()
+        self.startSleepTimer()
         self.actionSemaphore.release()
         self.log('onInit return')
 
@@ -86,7 +90,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         channel = 1
 
         while notfound == False:
-            if not os.path.exists(xbmc.translatePath('special://profile/playlists/video') + '/Channel_' + str(channel) + '.xsp'):
+            if len(self.getSmartPlaylistFilename(channel)) == 0:
                 break
 
             channel += 1
@@ -100,27 +104,61 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     def readConfig(self):
         self.log('readConfig')
         self.updateDialog = xbmcgui.DialogProgress()
-        self.sleepTimeValue = int(ADDON_SETTINGS.getSetting('AutoOff')) * 60
+        # Sleep setting is in 30 minute incriments...so multiply by 30, and then 60 (min to sec)
+        self.sleepTimeValue = int(ADDON_SETTINGS.getSetting('AutoOff')) * 1800
         self.log('Auto off is ' + str(self.sleepTimeValue))
+        forcereset = ADDON_SETTINGS.getSetting('ForceChannelReset') == "true"
+        self.log('Force Reset is ' + str(forcereset))
+        self.startupTime = time.time()
         self.updateDialog.create("XBMC TV", "Updating channel list")
         self.updateDialog.update(0, "Updating channel list")
         self.background.setVisible(True)
 
         # Go through all channels, create their arrays, and setup the new playlist
         for i in range(self.maxChannels):
+            self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel list")
             self.channels.append(Channel())
+            createlist = forcereset
 
-            if self.makeChannelList(i + 1) == False:
-                return False
+            # If possible, use an existing playlist
+            if os.path.exists(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u'):
+                try:
+                    self.channels[-1].totalTimePlayed = int(ADDON_SETTINGS.getSetting('Channel_' + str(i + 1) + '_time'))
+                    self.channels[-1].setPlaylist(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u')
 
-            self.channels[-1].setPlaylist(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u')
-            self.channels[-1].name = self.getSmartPlaylistName(xbmc.translatePath("special://profile/playlists/video") + "/Channel_" + str(i + 1) + ".xsp")
+                    # If this channel has been watched for longer than it lasts, reset the channel
+                    # Really, this should only apply when the order is random
+                    if self.channels[-1].totalTimePlayed > self.channels[-1].getTotalDuration():
+                        createlist = True
+                except:
+                    createlist = True
 
+            if createlist:
+                if self.makeChannelList(i + 1) == False:
+                    self.updateDialog.close()
+                    return False
+
+                self.channels[-1].setPlaylist(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u')
+                self.channels[-1].totalTimePlayed = 0
+                ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', '0')
+
+            self.channels[-1].name = self.getSmartPlaylistName(self.getSmartPlaylistFilename(i + 1))
+
+        ADDON_SETTINGS.setSetting('ForceChannelReset', 'false')
         self.currentChannel = 1
         xbmc.Player().stop()
         self.updateDialog.close()
         self.log('readConfig return')
         return True
+
+
+    def getSmartPlaylistFilename(self, channel):
+        if os.path.exists(xbmc.translatePath('special://profile/playlists/video') + '/Channel_' + str(channel) + '.xsp'):
+            return xbmc.translatePath('special://profile/playlists/video') + '/Channel_' + str(channel) + '.xsp'
+#        elif os.path.exists(xbmc.translatePath('special://profile/playlists/mixed') + '/Channel_' + str(channel) + '.xsp'):
+#            return xbmc.translatePath('special://profile/playlists/mixed') + '/Channel_' + str(channel) + '.xsp'
+        else:
+            return ''
 
 
     def getSmartPlaylistName(self, filename):
@@ -165,8 +203,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     def makeChannelList(self, channel):
         self.log('makeChannelList ' + str(channel))
         xbmc.executebuiltin('XBMC.Playlist.clear()')
+        fle = self.getSmartPlaylistFilename(channel)
 
-        if self.startPlaylist("XBMC.PlayMedia(special://profile/playlists/video/Channel_" + str(channel) + ".xsp)") == False:
+        if len(fle) == 0:
+            self.Error('Unable to locate the playlist for channel ' + str(channel))
+            return False
+
+        if self.startPlaylist("XBMC.PlayMedia(" + fle + ")") == False:
              self.Error('Unable to process channel ' + str(channel))
              return False
 
@@ -330,6 +373,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             if self.startPlaylist('XBMC.PlayMedia(' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u)') == False:
                 self.Error('Unable to set channel ' + str(channel))
                 return
+                
+            xbmc.executebuiltin("XBMC.PlayerControl(repeatall)")
 
         timedif += (time.time() - self.channels[self.currentChannel - 1].lastAccessTime)
 
@@ -525,9 +570,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         if action == ACTION_MENU:
             # set the video to upper right
-            if self.sleepTimer.isAlive():
-                self.sleepTimer.cancel()
-                self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
+            if self.sleepTimeValue > 0:
+                if self.sleepTimer.isAlive():
+                    self.sleepTimer.cancel()
+                    self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
 
             self.newChannel = 0
             self.myEPG.doModal()
@@ -581,7 +627,12 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log('onAction return')
 
 
+    # Reset the sleep timer
     def startSleepTimer(self):
+        if self.sleepTimeValue == 0:
+            return
+
+        # Cancel the timer if itbis still running
         if self.sleepTimer.isAlive():
             self.sleepTimer.cancel()
             self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
@@ -589,12 +640,15 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.sleepTimer.start()
 
 
+    # This is called when the sleep timer expires
     def sleepAction(self):
-        xbmc.log("sleep!!!")
-        self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
+        self.log("sleepAction")
+        self.actionSemaphore.acquire()
+#        self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
         # TODO: show some dialog, allow the user to cancel the sleep
         # perhaps modify the sleep time based on the current show
-#        self.end()
+        self.end()
+        self.actionSemaphore.release()
 
 
     # cleanup and end
@@ -604,14 +658,19 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         try:
             if self.channelLabelTimer.isAlive():
                 self.channelLabelTimer.cancel()
-    
-            if self.sleepTimer.isAlive():
-                self.sleepTimer.cancel()
+
+            if self.sleepTimeValue > 0:
+                if self.sleepTimer.isAlive():
+                    self.sleepTimer.cancel()
         except:
             pass
 
         if xbmc.Player().isPlaying():
             xbmc.Player().stop()
+
+        if self.timeStarted > 0:
+            for i in range(self.maxChannels):
+                ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(time.time() - self.timeStarted + self.channels[i].totalTimePlayed)))
 
         self.background.setVisible(False)
         self.close()
@@ -776,7 +835,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             totaltime = 0
 
             while reftime < endtime:
-                xpos = 322 + ((totaltime * 0.1774) // 1)
+                xpos = int(322 + (totaltime * 0.1774))
                 tmpdur = self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos)
                 shouldskip = False
 
@@ -789,7 +848,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                     if tmpdur < 60 * 3:
                         shouldskip = True
 
-                width = 0.1774 * tmpdur // 1
+                width = int(0.1774 * tmpdur)
 
                 if width + xpos > 1280:
                     width = 1280 - xpos

@@ -13,6 +13,7 @@ class PlaylistItem:
 class Playlist:
     def __init__(self):
         self.itemlist = []
+        self.totalDuration = 0
 
 
     def getduration(self, index):
@@ -42,8 +43,9 @@ class Playlist:
 
     def clear(self):
         del self.itemlist[:]
-        
-        
+        self.totalDuration = 0
+
+
     def log(self, msg):
         xbmc.log('XBTV - Playlist: ' + msg)
 
@@ -90,6 +92,7 @@ class Playlist:
 
                 tmpitem.filename = line[:-1]
                 self.itemlist.append(tmpitem)
+                self.totalDuration += tmpitem.duration
 
             line = fle.readline()
 

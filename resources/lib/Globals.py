@@ -13,7 +13,7 @@ ADDON_INFO = ADDON_SETTINGS.getAddonInfo('path')
 TIMEOUT = 10 * 1000
 
 IMAGES_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'images')) + '/'
-CHANNELS_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'cache')) + '/'
+CHANNELS_LOC = xbmc.translatePath('special://profile/addon_data/' + ADDON_ID + '/cache') + '/'
 
 ACTION_MOVE_LEFT = 1
 ACTION_MOVE_RIGHT = 2

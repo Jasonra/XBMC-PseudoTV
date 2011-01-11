@@ -97,7 +97,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             channel += 1
 
         self.maxChannels = channel - 1
-        self.log('findMaxChannels return')
+        self.log('findMaxChannels return ' + str(self.maxChannels))
 
 
     # setup all basic configuration parameters, including creating the playlists that
@@ -119,7 +119,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         for i in range(self.maxChannels):
             self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel list")
             self.channels.append(Channel())
-            createlist = forcereset
+            createlist = True
 
             # If possible, use an existing playlist
             if os.path.exists(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u'):
@@ -129,10 +129,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
                     # If this channel has been watched for longer than it lasts, reset the channel
                     # Really, this should only apply when the order is random
-                    if self.channels[-1].totalTimePlayed > self.channels[-1].getTotalDuration():
-                        createlist = True
+                    if self.channels[-1].totalTimePlayed < self.channels[-1].getTotalDuration():
+                        createlist = forcereset
                 except:
-                    createlist = True
+                    pass
 
             if createlist:
                 if self.makeChannelList(i + 1) == False:
@@ -266,11 +266,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         if len(data) > 15:
             # parse the result
-            if data[:7] == '<field>':
-                index = data.find('</field>')
+            index1 = data.find('<field>')
 
-                if index > 0:
-                    return data[7:index]
+            # parse the result
+            if index1 >= 0:
+                index2 = data.find('</field>')
+
+                if index2 > (index1 + 7):
+                    return data[index1 + 7:index2]
 
         return ''
 
@@ -291,13 +294,16 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
 
         if len(data) > 15:
+            index1 = data.find('<field>')
+
             # parse the result
-            if data[:7] == '<field>':
-                index = data.find('</field>')
+            if index1 >= 0:
+                index2 = data.find('</field>')
 
-                if index > 0:
-                    return int(data[7:index])
+                if index2 > (index1 + 7):
+                    return int(data[index1 + 7:index2])
 
+        self.log(data)
         return 0
 
 

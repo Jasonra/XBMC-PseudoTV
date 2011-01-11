@@ -120,6 +120,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel list")
             self.channels.append(Channel())
             createlist = True
+            
+            # If the user pressed cancel, stop everything and exit
+            if self.updateDialog.iscanceled():
+                self.log('Update channels cancelled')
+                self.updateDialog.close()
+                self.end()
+                return False
 
             # If possible, use an existing playlist
             if os.path.exists(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u'):
@@ -162,6 +169,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             return ''
 
 
+    # Open the smart playlist and read the name out of it...this is the channel name
     def getSmartPlaylistName(self, filename):
         self.log('getSmartPlaylistName ' + filename)
 

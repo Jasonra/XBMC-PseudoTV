@@ -62,7 +62,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.findMaxChannels()
 
         if self.maxChannels == 0:
-            self.message('Unable to find any channels. Create smart\nplaylists with file names Channel_1, Chanbel_2, etc.')
+            self.Error('Unable to find any channels. Create smart\nplaylists with file names Channel_1, Chanbel_2, etc.')
             return
 
         # Don't allow any actions during initialization
@@ -120,7 +120,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel list")
             self.channels.append(Channel())
             createlist = True
-            
+
             # If the user pressed cancel, stop everything and exit
             if self.updateDialog.iscanceled():
                 self.log('Update channels cancelled')
@@ -176,24 +176,24 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         try:
             fl = open(filename, "r")
         except:
-            self.log("Unable to open the smart playlist " + filename)
+            self.log("Unable to open the smart playlist " + filename, xbmc.LOGERROR)
             return ''
 
         line = fl.readline()
         thename = ''
 
         while len(line) > 0:
-            index = line.find('<name>')
+            index1 = line.find('<name>')
 
-            if index >= 0:
+            if index1 >= 0:
                 index2 = line.find('</name>')
 
-                if index2 >= 0:
-                    thename = line[index + 6:index2]
+                if index2 > index1 + 6:
+                    thename = line[index1 + 6:index2]
                     break
 
             line = fl.readline()
-            
+
         fl.close()
         self.log('getSmartPlaylistName return ' + thename)
         return thename
@@ -201,7 +201,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
     # handle fatal errors: log it, show the dialog, and exit
     def Error(self, message):
-        self.log('FATAL ERROR: ' + message)
+        self.log('FATAL ERROR: ' + message, xbmc.LOGFATAL)
         dlg = xbmcgui.Dialog()
         dlg.ok('Error', message)
         del dlg
@@ -246,7 +246,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 channelplaylist.write("#EXTINF:" + str(duration) + "," + title + "\n")
                 channelplaylist.write(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename() + "\n")
             else:
-                self.log("Can't get duration: " + xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename())
+                self.log("Can't get duration: " + xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename(), xbmc.LOGERROR)
 
             if (i + 1) * itemsize // 1 > lastval:
                 self.updateDialog.update(updatebase + ((i + 1) * itemsize), "Updating channel list")
@@ -350,8 +350,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         del dlg
 
 
-    def log(self, msg):
-        log('TVOverlay: ' + msg)
+    def log(self, msg, level = xbmc.LOGDEBUG):
+        log('TVOverlay: ' + msg, level)
 
 
     # set the channel, the proper show offset, and time offset
@@ -359,7 +359,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log('setChannel ' + str(channel))
 
         if channel < 1 or channel > self.maxChannels:
-            self.log('setChannel invalid channel')
+            self.log('setChannel invalid channel ' + str(channel), xbmc.LOGERROR)
             return
 
         self.lastActionTime = 0
@@ -388,7 +388,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             if self.startPlaylist('XBMC.PlayMedia(' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u)') == False:
                 self.Error('Unable to set channel ' + str(channel))
                 return
-                
+
             xbmc.executebuiltin("XBMC.PlayerControl(repeatall)")
 
         timedif += (time.time() - self.channels[self.currentChannel - 1].lastAccessTime)
@@ -421,14 +421,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 if self.waitForVideoPaused() == False:
                     return
             except:
-                self.log('Exception during seek on paused channel')
+                self.log('Exception during seek on paused channel', xbmc.LOGERROR)
         else:
             seektime = self.channels[self.currentChannel - 1].showTimeOffset + timedif
 
             try:
                 xbmc.Player().seekTime(seektime)
             except:
-                self.log('Exception during seek')
+                self.log('Exception during seek', xbmc.LOGERROR)
 
         self.showChannelLabel(self.currentChannel)
         self.lastActionTime = time.time()

@@ -37,7 +37,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         for i in range(3):
             self.getControl(101 + i).setLabel(now.strftime("%I:%M"))
             now = now + delta
-            
+
         self.log('setTimeLabels return')
 
 

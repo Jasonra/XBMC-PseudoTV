@@ -111,7 +111,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         forcereset = ADDON_SETTINGS.getSetting('ForceChannelReset') == "true"
         self.log('Force Reset is ' + str(forcereset))
         self.startupTime = time.time()
-        self.updateDialog.create("XBMC TV", "Updating channel list")
+        self.updateDialog.create("PseudoTV", "Updating channel list")
         self.updateDialog.update(0, "Updating channel list")
         self.background.setVisible(True)
 

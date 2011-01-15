@@ -21,21 +21,20 @@
         <control type="image">
             <description>Info Background</description>
             <posx>0</posx>
-            <posy>32</posy>
+            <posy>56</posy>
             <width>1280</width>
-            <height>200</height>
-            <texture border="10,10,10,10">defaultSolid.png</texture>
-            <colordiffuse>DD000000</colordiffuse>
+            <height>230</height>
+            <texture>pstvGradient.png</texture>
         </control>
 
         <control type="label" id="500">
             <description>Show Name Label</description>
             <posx>20</posx>
-            <posy>42</posy>
+            <posy>66</posy>
             <width>1260</width>
             <height>30</height>
             <label>Show Name</label>
-            <font>font13</font>
+            <font>font14</font>
             <align>left</align>
             <textcolor>FFFFFFFF</textcolor>
             <shadowcolor>AA000000</shadowcolor>
@@ -44,47 +43,138 @@
         <control type="label" id="501">
             <description>Show Title Label</description>
             <posx>20</posx>
-            <posy>77</posy>
+            <posy>101</posy>
             <width>1260</width>
             <height>30</height>
             <label>Show Title</label>
             <font>font13</font>
             <align>left</align>
-            <textcolor>FFFFFFFF</textcolor>
+            <textcolor>FF777777</textcolor>
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
         <control type="label" id="502">
             <description>Show Description Label</description>
             <posx>20</posx>
-            <posy>112</posy>
+            <posy>136</posy>
             <width>1260</width>
             <height>80</height>
             <label>Show Description</label>
             <font>font13</font>
             <align>left</align>
-            <textcolor>FFFFFFFF</textcolor>
+            <textcolor>FF777777</textcolor>
             <shadowcolor>AA000000</shadowcolor>
+            <wrapmultiline>true</wrapmultiline>
         </control>
 
         <control type="image">
             <description>Background</description>
-            <posx>0</posx>
-            <posy>250</posy>
-            <width>1280</width>
-            <height>438</height>
-            <texture border="10,10,10,10">defaultSolid.png</texture>
-            <colordiffuse>DD000000</colordiffuse>
+            <posx>319</posx>
+            <posy>287</posy>
+            <width>961</width>
+            <height>400</height>
+            <texture>pstvGradient.png</texture>
+            <colordiffuse>DD222277</colordiffuse>
         </control>
 
         <control type="image">
-            <description>Date Background</description>
+            <description>Seperator1</description>
+            <posx>0</posx>
+            <posy>286</posy>
+            <width>1280</width>
+            <height>2</height>
+            <texture>pstvSolid.png</texture>
+            <colordiffuse>FF777777</colordiffuse>
+        </control>
+
+        <control type="image">
+            <description>Seperator2</description>
+            <posx>0</posx>
+            <posy>687</posy>
+            <width>1280</width>
+            <height>2</height>
+            <texture>pstvSolid.png</texture>
+            <colordiffuse>FF000000</colordiffuse>
+        </control>
+
+        <control type="image">
+            <description>SepChan12a</description>
+            <posx>317</posx>
+            <posy>366</posy>
+            <width>963</width>
+            <height>2</height>
+            <texture>pstvSolid.png</texture>
+            <colordiffuse>FFAAAAAA</colordiffuse>
+        </control>
+
+        <control type="image">
+            <description>SepChan12b</description>
             <posx>2</posx>
-            <posy>252</posy>
+            <posy>366</posy>
             <width>316</width>
-            <height>34</height>
-            <texture>defaultSquare.png</texture>
-            <colordiffuse>FF0000FF</colordiffuse>
+            <height>2</height>
+            <texture>pstvSolid.png</texture>
+            <colordiffuse>FF222222</colordiffuse>
+        </control>
+
+        <control type="image">
+            <description>SepChan23a</description>
+            <posx>317</posx>
+            <posy>446</posy>
+            <width>963</width>
+            <height>2</height>
+            <texture>pstvSolid.png</texture>
+            <colordiffuse>FFAAAAAA</colordiffuse>
+        </control>
+
+        <control type="image">
+            <description>SepChan23b</description>
+            <posx>2</posx>
+            <posy>446</posy>
+            <width>316</width>
+            <height>2</height>
+            <texture>pstvSolid.png</texture>
+            <colordiffuse>FF222222</colordiffuse>
+        </control>
+
+        <control type="image">
+            <description>SepChan34a</description>
+            <posx>317</posx>
+            <posy>526</posy>
+            <width>963</width>
+            <height>2</height>
+            <texture>pstvSolid.png</texture>
+            <colordiffuse>FFAAAAAA</colordiffuse>
+        </control>
+
+        <control type="image">
+            <description>SepChan34b</description>
+            <posx>2</posx>
+            <posy>526</posy>
+            <width>316</width>
+            <height>2</height>
+            <texture>pstvSolid.png</texture>
+            <colordiffuse>FF222222</colordiffuse>
+        </control>
+
+        <control type="image">
+            <description>SepChan45a</description>
+            <posx>317</posx>
+            <posy>606</posy>
+            <width>963</width>
+            <height>2</height>
+            <texture>pstvSolid.png</texture>
+            <colordiffuse>FFAAAAAA</colordiffuse>
+        </control>
+
+        <control type="image">
+            <description>SepChan45b</description>
+            <posx>2</posx>
+            <posy>606</posy>
+            <width>316</width>
+            <height>2</height>
+            <texture>pstvSolid.png</texture>
+            <colordiffuse>FF222222</colordiffuse>
         </control>
 
         <control type="label" id="104">
@@ -100,16 +190,6 @@
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
-        <control type="image" id="201">
-            <description>Time 1 Background</description>
-            <posx>322</posx>
-            <posy>252</posy>
-            <width>316</width>
-            <height>34</height>
-            <texture>defaultSquare.png</texture>
-            <colordiffuse>FF0000FF</colordiffuse>
-        </control>
-
         <control type="label" id="101">
             <description>Time 1 Label</description>
             <posx>324</posx>
@@ -123,16 +203,6 @@
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
-        <control type="image" id="202">
-            <description>Time 2 Background</description>
-            <posx>642</posx>
-            <posy>252</posy>
-            <width>316</width>
-            <height>34</height>
-            <texture>defaultSquare.png</texture>
-            <colordiffuse>FF0000FF</colordiffuse>
-        </control>
-
         <control type="label" id="102">
             <description>Time 2 Label</description>
             <posx>644</posx>
@@ -144,16 +214,6 @@
             <align>center</align>
             <textcolor>FFFFFFFF</textcolor>
             <shadowcolor>AA000000</shadowcolor>
-        </control>
-
-        <control type="image" id="203">
-            <description>Time 3 Background</description>
-            <posx>962</posx>
-            <posy>252</posy>
-            <width>316</width>
-            <height>34</height>
-            <texture>defaultSquare.png</texture>
-            <colordiffuse>FF0000FF</colordiffuse>
         </control>
 
         <control type="label" id="103">
@@ -175,8 +235,7 @@
             <posy>288</posy>
             <width>316</width>
             <height>78</height>
-            <texture>defaultChBack.png</texture>
-            <colordiffuse>FF0000FF</colordiffuse>
+            <texture>pstvChannel.png</texture>
         </control>
 
         <control type="label" id="301">
@@ -188,7 +247,8 @@
             <label>Channel 1</label>
             <font>font13</font>
             <align>center</align>
-            <textcolor>FFFFFFFF</textcolor>
+            <aligny>center</aligny>
+            <textcolor>FF222222</textcolor>
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
@@ -198,8 +258,7 @@
             <posy>368</posy>
             <width>316</width>
             <height>78</height>
-            <texture>defaultChBack.png</texture>
-            <colordiffuse>FF0000FF</colordiffuse>
+            <texture>pstvChannel.png</texture>
         </control>
 
         <control type="label" id="302">
@@ -211,7 +270,8 @@
             <label>Channel 2</label>
             <font>font13</font>
             <align>center</align>
-            <textcolor>FFFFFFFF</textcolor>
+            <aligny>center</aligny>
+            <textcolor>FF222222</textcolor>
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
@@ -221,8 +281,7 @@
             <posy>448</posy>
             <width>316</width>
             <height>78</height>
-            <texture>defaultChBack.png</texture>
-            <colordiffuse>FF0000FF</colordiffuse>
+            <texture>pstvChannel.png</texture>
         </control>
 
         <control type="label" id="303">
@@ -234,7 +293,8 @@
             <label>Channel 3</label>
             <font>font13</font>
             <align>center</align>
-            <textcolor>FFFFFFFF</textcolor>
+            <aligny>center</aligny>
+            <textcolor>FF222222</textcolor>
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
@@ -244,8 +304,7 @@
             <posy>528</posy>
             <width>316</width>
             <height>78</height>
-            <texture>defaultChBack.png</texture>
-            <colordiffuse>FF0000FF</colordiffuse>
+            <texture>pstvChannel.png</texture>
         </control>
 
         <control type="label" id="304">
@@ -257,7 +316,8 @@
             <label>Channel 4</label>
             <font>font13</font>
             <align>center</align>
-            <textcolor>FFFFFFFF</textcolor>
+            <aligny>center</aligny>
+            <textcolor>FF222222</textcolor>
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
@@ -267,8 +327,7 @@
             <posy>608</posy>
             <width>316</width>
             <height>78</height>
-            <texture>defaultChBack.png</texture>
-            <colordiffuse>FF0000FF</colordiffuse>
+            <texture>pstvChannel.png</texture>
         </control>
 
         <control type="label" id="305">
@@ -280,7 +339,8 @@
             <label>Channel 5</label>
             <font>font13</font>
             <align>center</align>
-            <textcolor>FFFFFFFF</textcolor>
+            <aligny>center</aligny>
+            <textcolor>FF222222</textcolor>
             <shadowcolor>AA000000</shadowcolor>
         </control>
     </controls>

@@ -14,7 +14,7 @@
             <posy>0</posy>
             <width>1280</width>
             <height>720</height>
-            <texture>defaultSolid.png</texture>
+            <texture>pstvSolid.png</texture>
             <colordiffuse>FF000000</colordiffuse>
         </control>
     </controls>

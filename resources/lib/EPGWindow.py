@@ -12,7 +12,7 @@ from Channel import Channel
 class EPGWindow(xbmcgui.WindowXMLDialog):
     def __init__(self, *args, **kwargs):
         self.focusRow = 0
-        self.focuaIndex = 0
+        self.focusIndex = 0
         self.focusTime = 0
         self.focusEndTime = 0
         self.shownTime = 0
@@ -74,6 +74,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 break
 
         self.focusRow = 2
+        self.setShowInfo()
         self.log('onInit return')
 
 
@@ -137,7 +138,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         # if the channel is paused, then only 1 button needed
         if self.MyOverlayWindow.channels[curchannel - 1].isPaused:
-            self.channelButtons[row].append(xbmcgui.ControlButton(322, 288 + (row * 80), 958, 78, self.MyOverlayWindow.channels[curchannel - 1].getCurrentDescription()), alignment=8)
+            self.channelButtons[row].append(xbmcgui.ControlButton(322, 288 + (row * 80), 958, 78, self.MyOverlayWindow.channels[curchannel - 1].getCurrentTitle()), alignment=8)
             self.addControl(self.channelButtons[row][0])
         else:
             # Find the show that was running at the given time
@@ -190,7 +191,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                     width = 1280 - xpos
 
                 if shouldskip == False:
-                    self.channelButtons[row].append(xbmcgui.ControlButton(xpos, 288 + (row * 80), width, 78, self.MyOverlayWindow.channels[curchannel - 1].getItemDescription(playlistpos), alignment=8))
+                    self.channelButtons[row].append(xbmcgui.ControlButton(xpos, 288 + (row * 80), width, 78, self.MyOverlayWindow.channels[curchannel - 1].getItemTitle(playlistpos), alignment=8))
                     self.addControl(self.channelButtons[row][-1])
 
                 totaltime += tmpdur
@@ -335,6 +336,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             if self.focusTime >= starttime and self.focusTime <= endtime:
                 self.focusIndex = i
                 self.setFocus(self.channelButtons[newrow][i])
+                self.setShowInfo()
                 self.focusEndTime = endtime
 
                 if resetfocustime:
@@ -345,7 +347,28 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         self.focusIndex = 0
         self.setFocus(self.channelButtons[newrow][0])
+        self.setShowInfo()
         self.log('setProperButton return')
+
+
+    def setShowInfo(self):
+        self.log('setShowInfo')
+        # use the selected time to set the video
+        left, top = self.channelButtons[self.focusRow][self.focusIndex].getPosition()
+        width = self.channelButtons[self.focusRow][self.focusIndex].getWidth()
+        left = left - 322 + (width / 2)
+        starttime = self.shownTime + (left / 0.1774)
+        newchan = self.MyOverlayWindow.fixChannel(self.centerChannel + self.focusRow - 2)
+        plpos = self.determinePlaylistPosAtTime(starttime, newchan)
+
+        if plpos == -1:
+            self.log('Unable to find the proper playlist to set from EPG')
+            return
+
+        self.getControl(500).setLabel(self.MyOverlayWindow.channels[newchan - 1].getItemTitle(plpos))
+        self.getControl(501).setLabel(self.MyOverlayWindow.channels[newchan - 1].getItemEpisodeTitle(plpos))
+        self.getControl(502).setLabel(self.MyOverlayWindow.channels[newchan - 1].getItemDescription(plpos))
+        self.log('setShowInfo return')
 
 
     # using the currently selected button, play the proper shows

@@ -238,12 +238,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 duration = self.getDurationForFile(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename())
 
             if duration > 0:
-                title = self.getTitleForFile(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename())
-
-                if len(title) == 0:
-                    title = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getdescription()
-
-                channelplaylist.write("#EXTINF:" + str(duration) + "," + title + "\n")
+                data = self.getInformation(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename())
+                channelplaylist.write("#EXTINF:" + str(duration) + "," + data + "\n")
                 channelplaylist.write(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename() + "\n")
             else:
                 self.log("Can't get duration: " + xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename(), xbmc.LOGERROR)
@@ -257,8 +253,19 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         return True
 
 
-    # We need to get the title for tv shows
-    def getTitleForFile(self, filename):
+    # Return a string wirh the needed show information
+    def getInformation(self, filename):
+        fileid = self.getFileId(filename)
+        epid = self.getEpisodeId(fileid)
+
+        if epid > -1:
+            return self.getEpisodeInformation(epid)
+
+        movieid = self.getMovieId(fileid)
+        return self.getMovieInformation(movieid)
+
+
+    def getFileId(self, filename):
         # determine the filename and path
         path, name = filename.rsplit('/', 1)
         path = path + '/'
@@ -266,12 +273,19 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         name = name.replace(',', '%2C')
         path = path.replace(',', '%2C')
         # construct the query
-        query = 'select tvshow.c00 from tvshow where tvshow.idShow in (select tvshowlinkepisode.idShow from tvshowlinkepisode where tvshowlinkepisode.idEpisode in' \
-            '(select episode.idEpisode from episode where episode.idFile in (select files.idFile from files where files.strFilename="' + name + '" and files.idPath in ' \
-            '(select path.idPath from path where path.strPath="' + path + '"))))'
+
+        query = 'select files.idFile from files where files.strFilename="' + name + '" and files.idPath in ' \
+            '(select path.idPath from path where path.strPath="' + path + '")'
         #run the query
         data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
 
+        try:
+            return int(self.parseQuery(data))
+        except:
+            return -1
+
+
+    def parseQuery(self, data):
         if len(data) > 15:
             # parse the result
             index1 = data.find('<field>')
@@ -284,6 +298,67 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                     return data[index1 + 7:index2]
 
         return ''
+
+
+    def getEpisodeInformation(self, episodeid):
+        self.log('getEpisodeInformation')
+        # Want to use JSON, but GetEpisodeDetails isn't in the mainstream release yet
+#        retv = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodeDetails", "params": {"episodeid": ' + str(epid) + '}, "id": 1}')
+        # Get the TV show title
+        query = 'select tvshow.c00 from tvshow where tvshow.idShow in' \
+            '(select tvshowlinkepisode.idShow from tvshowlinkepisode where tvshowlinkepisode.idEpisode=' + str(episodeid) + ')'
+        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
+        result = self.parseQuery(data)
+        # Get the episode title and description
+        query = 'select episode.c00 from episode where episode.idEpisode=' + str(episodeid)
+        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
+        result += '//' + self.parseQuery(data)
+        query = 'select episode.c01 from episode where episode.idEpisode=' + str(episodeid)
+        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
+        result += '//' + self.parseQuery(data)
+        self.log('getEpisodeInformation return')
+        return result
+
+
+    def getMovieInformation(self, movieid):
+        self.log('getMovieInformation')
+        # Get the episode title and description
+        query = 'select movie.c00 from movie where movie.idMovie=' + str(movieid)
+        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
+        self.log('1-' + data)
+        result = self.parseQuery(data) + '//'
+        query = 'select movie.c03 from movie where movie.idMovie=' + str(movieid)
+        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
+        self.log('2-' + data)
+        result += self.parseQuery(data) + '//'
+        query = 'select movie.c01 from movie where movie.idMovie=' + str(movieid)
+        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
+        self.log('3-' + data)
+        result += self.parseQuery(data)
+        self.log('getMovieInformation return')
+        return result
+
+
+    def getEpisodeId(self, fileid):
+        query = 'select episode.idEpisode from episode where episode.idFile=' + str(fileid)
+        #run the query
+        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
+
+        try:
+            return int(self.parseQuery(data))
+        except:
+            return -1
+
+
+    def getMovieId(self, fileid):
+        query = 'select movie.idMovie from movie where movie.idFile=' + str(fileid)
+        #run the query
+        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
+
+        try:
+            return int(self.parseQuery(data))
+        except:
+            return -1
 
 
     # since the playlist isn't properly returning the duration, get it from the database
@@ -301,22 +376,18 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         #run the query
         data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
 
-        if len(data) > 15:
-            index1 = data.find('<field>')
-
-            # parse the result
-            if index1 >= 0:
-                index2 = data.find('</field>')
-
-                if index2 > (index1 + 7):
-                    return int(data[index1 + 7:index2])
-
-        self.log(data)
-        return 0
+        try:
+            return int(self.parseQuery(data))
+        except:
+            return 0
 
 
     def channelDown(self):
         self.log('channelDown')
+
+        if self.maxChannels == 1:
+            return
+
         self.background.setVisible(True)
         channel = self.currentChannel
         channel -= 1
@@ -331,6 +402,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
     def channelUp(self):
         self.log('channelUp')
+
+        if self.maxChannels == 1:
+            return
+
         self.background.setVisible(True)
         channel = self.currentChannel
         channel += 1

@@ -7,6 +7,8 @@ class PlaylistItem:
         self.duration = 0
         self.filename = ''
         self.description = ''
+        self.title = ''
+        self.episodetitle = ''
 
 
 
@@ -37,6 +39,20 @@ class Playlist:
     def getdescription(self, index):
         if index >= 0 and index < len(self.itemlist):
             return self.itemlist[index].description
+
+        return ''
+
+
+    def getepisodetitle(self, index):
+        if index >= 0 and index < len(self.itemlist):
+            return self.itemlist[index].episodetitle
+
+        return ''
+
+
+    def getTitle(self, index):
+        if index >= 0 and index < len(self.itemlist):
+            return self.itemlist[index].title
 
         return ''
 
@@ -82,7 +98,17 @@ class Playlist:
 
                 if index > 0:
                     tmpitem.duration = int(line[8:index])
-                    tmpitem.description = line[index + 1:-1]
+                    tmpitem.title = line[index + 1:-1]
+                    index = tmpitem.title.find('//')
+
+                    if index >= 0:
+                        tmpitem.episodetitle = tmpitem.title[index + 2:]
+                        tmpitem.title = tmpitem.title[:index]
+                        index = tmpitem.episodetitle.find('//')
+
+                        if index >= 0:
+                            tmpitem.description = tmpitem.episodetitle[index + 2:]
+                            tmpitem.episodetitle = tmpitem.episodetitle[:index]
 
                 line = fle.readline()
 

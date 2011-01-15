@@ -19,6 +19,55 @@
 
     <controls>
         <control type="image">
+            <description>Info Background</description>
+            <posx>0</posx>
+            <posy>32</posy>
+            <width>1280</width>
+            <height>200</height>
+            <texture border="10,10,10,10">defaultSolid.png</texture>
+            <colordiffuse>DD000000</colordiffuse>
+        </control>
+
+        <control type="label" id="500">
+            <description>Show Name Label</description>
+            <posx>20</posx>
+            <posy>42</posy>
+            <width>1260</width>
+            <height>30</height>
+            <label>Show Name</label>
+            <font>font13</font>
+            <align>left</align>
+            <textcolor>FFFFFFFF</textcolor>
+            <shadowcolor>AA000000</shadowcolor>
+        </control>
+
+        <control type="label" id="501">
+            <description>Show Title Label</description>
+            <posx>20</posx>
+            <posy>77</posy>
+            <width>1260</width>
+            <height>30</height>
+            <label>Show Title</label>
+            <font>font13</font>
+            <align>left</align>
+            <textcolor>FFFFFFFF</textcolor>
+            <shadowcolor>AA000000</shadowcolor>
+        </control>
+
+        <control type="label" id="502">
+            <description>Show Description Label</description>
+            <posx>20</posx>
+            <posy>112</posy>
+            <width>1260</width>
+            <height>80</height>
+            <label>Show Description</label>
+            <font>font13</font>
+            <align>left</align>
+            <textcolor>FFFFFFFF</textcolor>
+            <shadowcolor>AA000000</shadowcolor>
+        </control>
+
+        <control type="image">
             <description>Background</description>
             <posx>0</posx>
             <posy>250</posy>

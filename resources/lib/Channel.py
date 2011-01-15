@@ -59,6 +59,30 @@ class Channel:
         return self.Playlist.getdescription(self.fixPlaylistIndex(index))
 
 
+    def getCurrentEpisodeTitle(self):
+        return self.getItemEpisodeTitle(self.playlistPosition)
+
+
+    def getItemEpisodeTitle(self, index):
+        return self.Playlist.getepisodetitle(self.fixPlaylistIndex(index))
+
+
+    def getCurrentTitle(self):
+        return self.getItemTitle(self.playlistPosition)
+
+
+    def getItemTitle(self, index):
+        return self.Playlist.getTitle(self.fixPlaylistIndex(index))
+
+
+    def getCurrentFilename(self):
+        return self.getItemFilename(self.playlistPosition)
+
+
+    def getItemFilename(self, index):
+        return self.Playlist.getfilename(self.fixPlaylistIndex(index))
+
+
     def fixPlaylistIndex(self, index):
         if self.Playlist.size() == 0:
             return index

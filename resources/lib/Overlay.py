@@ -559,7 +559,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 xbmc.Player().pause()
 
                 if self.waitForVideoPaused() == False:
-                    return
+                    return False
 
         self.log('Executing command')
         xbmc.executebuiltin(command)

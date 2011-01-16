@@ -1,4 +1,8 @@
 Changelog
 
 
+0.1.1
+    Fixed a freeze when there are unexpected things in the smart playlist.
+    
+
 0.1.0 (Initial alpha version)

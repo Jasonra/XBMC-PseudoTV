@@ -25,6 +25,7 @@
             <width>1280</width>
             <height>230</height>
             <texture>pstvGradient.png</texture>
+            <colordiffuse>DDFFFFFF</colordiffuse>
         </control>
 
         <control type="label" id="500">
@@ -236,6 +237,7 @@
             <width>316</width>
             <height>78</height>
             <texture>pstvChannel.png</texture>
+            <colordiffuse>DDFFFFFF</colordiffuse>
         </control>
 
         <control type="label" id="301">
@@ -259,6 +261,7 @@
             <width>316</width>
             <height>78</height>
             <texture>pstvChannel.png</texture>
+            <colordiffuse>DDFFFFFF</colordiffuse>
         </control>
 
         <control type="label" id="302">
@@ -282,6 +285,7 @@
             <width>316</width>
             <height>78</height>
             <texture>pstvChannel.png</texture>
+            <colordiffuse>DDFFFFFF</colordiffuse>
         </control>
 
         <control type="label" id="303">
@@ -305,6 +309,7 @@
             <width>316</width>
             <height>78</height>
             <texture>pstvChannel.png</texture>
+            <colordiffuse>DDFFFFFF</colordiffuse>
         </control>
 
         <control type="label" id="304">
@@ -328,6 +333,7 @@
             <width>316</width>
             <height>78</height>
             <texture>pstvChannel.png</texture>
+            <colordiffuse>DDFFFFFF</colordiffuse>
         </control>
 
         <control type="label" id="305">

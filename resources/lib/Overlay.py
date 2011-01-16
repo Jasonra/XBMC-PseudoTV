@@ -280,8 +280,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             return -1
 
         # determine the filename and path
-        path, name = filename.rsplit('/', 1)
-        path = path + '/'
+        path, name = os.path.split(filename)
+
+        if filename.find('/') > -1:
+            path += '/'
+        else:
+            path += '\\'
+
         # Get past a bug in the http api that turns all commas into semi-colons
         name = name.replace(',', '%2C')
         path = path.replace(',', '%2C')
@@ -377,14 +382,19 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     # since the playlist isn't properly returning the duration, get it from the database
     def getDurationForFile(self, filename):
         self.log('getDurationForFile ' + filename)
-        
+
         if len(filename) == 0:
             self.log('getDurationForFile return no filename')
             return 0
 
         # determine the filename and path
-        path, name = filename.rsplit('/', 1)
-        path = path + '/'
+        path, name = os.path.split(filename)
+
+        if filename.find('/') > -1:
+            path += '/'
+        else:
+            path += '\\'
+
         # Get past a bug in the http api that turns all commas into semi-colons
         name = name.replace(',', '%2C')
         path = path.replace(',', '%2C')
@@ -398,7 +408,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         try:
             x = int(self.parseQuery(data))
             self.log('getDurationForFile return ' + str(x))
-            return
+            return x
         except:
             self.log('getDurationForFile return 0')
             return 0

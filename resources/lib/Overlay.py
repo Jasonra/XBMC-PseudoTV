@@ -275,6 +275,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
 
     def getFileId(self, filename):
+        if len(filename) == 0:
+            self.log('getFileId no filename')
+            return -1
+
         # determine the filename and path
         path, name = filename.rsplit('/', 1)
         path = path + '/'
@@ -373,6 +377,11 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     # since the playlist isn't properly returning the duration, get it from the database
     def getDurationForFile(self, filename):
         self.log('getDurationForFile ' + filename)
+        
+        if len(filename) == 0:
+            self.log('getDurationForFile return no filename')
+            return 0
+
         # determine the filename and path
         path, name = filename.rsplit('/', 1)
         path = path + '/'

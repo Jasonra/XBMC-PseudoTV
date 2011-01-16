@@ -223,7 +223,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
              return False
 
         xbmc.Player().pause()
-        channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")
+        
+        try:
+            channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")
+        except:
+            self.Error('Unable to open the cache file ' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
+            return False
+
         channelplaylist.write("#EXTM3U\n")
         updatebase = (channel - 1) * 100.0 / self.maxChannels
         totalchanrange = 100.0 / self.maxChannels
@@ -255,20 +261,32 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
     # Return a string wirh the needed show information
     def getInformation(self, filename):
+        self.log('getInformation ' + filename)
         fileid = self.getFileId(filename)
         epid = self.getEpisodeId(fileid)
 
         if epid > -1:
+            self.log('getInformation episode return')
             return self.getEpisodeInformation(epid)
 
         movieid = self.getMovieId(fileid)
+        self.log('getInformation movie return')
         return self.getMovieInformation(movieid)
 
 
     def getFileId(self, filename):
+        if len(filename) == 0:
+            self.log('getFileId no filename')
+            return -1
+
         # determine the filename and path
-        path, name = filename.rsplit('/', 1)
-        path = path + '/'
+        path, name = os.path.split(filename)
+
+        if filename.find('/') > -1:
+            path += '/'
+        else:
+            path += '\\'
+
         # Get past a bug in the http api that turns all commas into semi-colons
         name = name.replace(',', '%2C')
         path = path.replace(',', '%2C')
@@ -363,9 +381,20 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
     # since the playlist isn't properly returning the duration, get it from the database
     def getDurationForFile(self, filename):
+        self.log('getDurationForFile ' + filename)
+
+        if len(filename) == 0:
+            self.log('getDurationForFile return no filename')
+            return 0
+
         # determine the filename and path
-        path, name = filename.rsplit('/', 1)
-        path = path + '/'
+        path, name = os.path.split(filename)
+
+        if filename.find('/') > -1:
+            path += '/'
+        else:
+            path += '\\'
+
         # Get past a bug in the http api that turns all commas into semi-colons
         name = name.replace(',', '%2C')
         path = path.replace(',', '%2C')
@@ -377,8 +406,11 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
 
         try:
-            return int(self.parseQuery(data))
+            x = int(self.parseQuery(data))
+            self.log('getDurationForFile return ' + str(x))
+            return x
         except:
+            self.log('getDurationForFile return 0')
             return 0
 
 

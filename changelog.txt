@@ -1,6 +1,11 @@
 Changelog
 
 
+0.1.2
+    Windows systems experienced freezes...but no more!
+    There was also an issue getting the duration of an episode.
+
+
 0.1.1
     Fixed a freeze when there are unexpected things in the smart playlist.
     

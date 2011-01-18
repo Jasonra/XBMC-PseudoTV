@@ -223,7 +223,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
              return False
 
         xbmc.Player().pause()
-        
+
         try:
             channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")
         except:
@@ -245,6 +245,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
             if duration > 0:
                 data = self.getInformation(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename())
+                data = data.replace("\n", " ")
+                data = data.replace("\r", " ")
                 channelplaylist.write("#EXTINF:" + str(duration) + "," + data + "\n")
                 channelplaylist.write(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename() + "\n")
             else:

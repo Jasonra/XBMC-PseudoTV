@@ -247,6 +247,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 data = self.getInformation(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename())
                 data = data.replace("\n", " ")
                 data = data.replace("\r", " ")
+                data = data[:600]
                 channelplaylist.write("#EXTINF:" + str(duration) + "," + data + "\n")
                 channelplaylist.write(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename() + "\n")
             else:

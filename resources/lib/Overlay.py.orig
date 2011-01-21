@@ -217,9 +217,19 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         if len(fle) == 0:
             self.Error('Unable to locate the playlist for channel ' + str(channel))
             return False
+<<<<<<< HEAD
+
+        if self.startPlaylist("XBMC.PlayMedia(" + fle + ")") == False:
+             self.Error('Unable to process channel ' + str(channel))
+             return False
+
+        xbmc.Player().pause()
+
+=======
             
         fileList = self.buildFileList(fle)
-
+        
+>>>>>>> TheOddLinguist/sets
         try:
             channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")
         except:
@@ -237,10 +247,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             duration = self.getDurationForFile(fileList[i])
 
             if duration > 0:
-                data = self.getInformation(fileList[i])
+<<<<<<< HEAD
+                data = self.getInformation(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename())
                 data = data.replace("\n", " ")
                 data = data.replace("\r", " ")
                 data = data[:600]
+=======
+                data = self.getInformation(fileList[i])
+>>>>>>> TheOddLinguist/sets
                 channelplaylist.write("#EXTINF:" + str(duration) + "," + data + "\n")
                 channelplaylist.write(fileList[i] + "\n")
             else:

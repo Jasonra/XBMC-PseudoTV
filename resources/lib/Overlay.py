@@ -2,6 +2,7 @@ import xbmc, xbmcgui, xbmcaddon
 import subprocess, os
 import time, threading
 import datetime
+import sys, re
 
 from Playlist import Playlist
 from Globals import *
@@ -211,18 +212,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     # Based on a smart playlist, create a normal playlist that can actually be used by us
     def makeChannelList(self, channel):
         self.log('makeChannelList ' + str(channel))
-        xbmc.executebuiltin('XBMC.Playlist.clear()')
         fle = self.getSmartPlaylistFilename(channel)
 
         if len(fle) == 0:
             self.Error('Unable to locate the playlist for channel ' + str(channel))
             return False
-
-        if self.startPlaylist("XBMC.PlayMedia(" + fle + ")") == False:
-             self.Error('Unable to process channel ' + str(channel))
-             return False
-
-        xbmc.Player().pause()
+            
+        fileList = self.buildFileList(fle)
         
         try:
             channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")
@@ -233,22 +229,19 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         channelplaylist.write("#EXTM3U\n")
         updatebase = (channel - 1) * 100.0 / self.maxChannels
         totalchanrange = 100.0 / self.maxChannels
-        itemsize = totalchanrange / xbmc.PlayList(xbmc.PLAYLIST_VIDEO).size()
+        itemsize = totalchanrange / len(fileList)
         lastval = 0
 
         # Write each entry into the new playlist
-        for i in range(xbmc.PlayList(xbmc.PLAYLIST_VIDEO).size()):
-            try:
-                duration = int(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getduration()) * 60
-            except:
-                duration = self.getDurationForFile(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename())
+        for i in range(len(fileList)):
+            duration = self.getDurationForFile(fileList[i])
 
             if duration > 0:
-                data = self.getInformation(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename())
+                data = self.getInformation(fileList[i])
                 channelplaylist.write("#EXTINF:" + str(duration) + "," + data + "\n")
-                channelplaylist.write(xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename() + "\n")
+                channelplaylist.write(fileList[i] + "\n")
             else:
-                self.log("Can't get duration: " + xbmc.PlayList(xbmc.PLAYLIST_VIDEO)[i].getfilename(), xbmc.LOGERROR)
+                self.log("Can't get duration: " + fileList[i], xbmc.LOGERROR)
 
             if (i + 1) * itemsize // 1 > lastval:
                 self.updateDialog.update(updatebase + ((i + 1) * itemsize), "Updating channel list")
@@ -257,6 +250,30 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         channelplaylist.close()
         self.log('makeChannelList return')
         return True
+        
+            
+    def buildFileList( self, dir_name, media_type="files", recursive="TRUE", contains="" ):
+        fileList = []
+        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "%s", "recursive": "%s"}, "id": 1}' % ( self.escapeDirJSON( dir_name ), media_type, recursive )
+        json_folder_detail = xbmc.executeJSONRPC(json_query)
+        file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
+        for f in file_detail:
+            match = re.search( '"file" : "(.*?)",', f )
+            if match:
+                if ( match.group(1).endswith( "/" ) or match.group(1).endswith( "\\" ) ):
+                    if ( recursive == "TRUE" ):
+                        fileList.extend( self.buildFileList( match.group(1), media_type, recursive, contains ) )
+                elif not contains or ( contains and (contains in match.group(1) ) ):
+                    fileList.append( match.group(1) )
+            else:
+                continue
+        return fileList
+        
+        
+    def escapeDirJSON ( self, dir_name ):
+        if (dir_name.find(":")):
+            dir_name = dir_name.replace("\\", "\\\\")
+        return dir_name    
 
 
     # Return a string wirh the needed show information

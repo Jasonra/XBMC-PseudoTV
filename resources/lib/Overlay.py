@@ -217,7 +217,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         if len(fle) == 0:
             self.Error('Unable to locate the playlist for channel ' + str(channel))
             return False
-            
+
         fileList = self.buildFileList(fle)
 
         try:
@@ -253,15 +253,18 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         channelplaylist.close()
         self.log('makeChannelList return')
         return True
-        
-            
-    def buildFileList( self, dir_name, media_type="files", recursive="TRUE", contains="" ):
+
+
+    def buildFileList(self, dir_name, media_type="files", recursive="TRUE", contains=""):
         fileList = []
         json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "%s", "recursive": "%s"}, "id": 1}' % ( self.escapeDirJSON( dir_name ), media_type, recursive )
         json_folder_detail = xbmc.executeJSONRPC(json_query)
+        self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
+
         for f in file_detail:
             match = re.search( '"file" : "(.*?)",', f )
+
             if match:
                 if ( match.group(1).endswith( "/" ) or match.group(1).endswith( "\\" ) ):
                     if ( recursive == "TRUE" ):
@@ -270,13 +273,15 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                     fileList.append( match.group(1) )
             else:
                 continue
+
         return fileList
-        
-        
-    def escapeDirJSON ( self, dir_name ):
+
+
+    def escapeDirJSON(self, dir_name):
         if (dir_name.find(":")):
             dir_name = dir_name.replace("\\", "\\\\")
-        return dir_name    
+
+        return dir_name
 
 
     # Return a string wirh the needed show information

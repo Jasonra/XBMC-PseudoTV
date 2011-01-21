@@ -219,6 +219,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             return False
 
         fileList = self.buildFileList(fle)
+        
+        if len(fileList) == 0:
+            self.Error("Unable to get information about channel " + str(channel))
+            return False
 
         try:
             channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")

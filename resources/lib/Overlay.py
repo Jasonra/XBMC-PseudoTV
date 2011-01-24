@@ -299,8 +299,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             return self.getEpisodeInformation(epid)
 
         movieid = self.getMovieId(fileid)
-        self.log('getInformation movie return')
-        return self.getMovieInformation(movieid)
+        
+        if movieid > -1:
+            self.log('getInformation movie return')
+            return self.getMovieInformation(movieid)
+            
+        self.log('getInformation music video return')
+        return self.getMusicVideoInformation(fileid)
 
 
     def getFileId(self, filename):
@@ -383,6 +388,22 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log('3-' + data)
         result += self.parseQuery(data)
         self.log('getMovieInformation return')
+        return result
+
+
+    def getMusicVideoInformation(self, fileid):
+        self.log('getMusicVideoInformation')
+        query = 'select musicvideo.c00 from musicvideo where musicvideo.idFile=' + str(fileid)
+        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
+        result = self.parseQuery(data)
+        # Get the episode title and description
+        query = 'select musicvideo.c07 from musicvideo where musicvideo.idFile=' + str(fileid)
+        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
+        result += '//' + self.parseQuery(data)
+        query = 'select musicvideo.c10 from musicvideo where musicvideo.idFile=' + str(fileid)
+        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
+        result += '//' + self.parseQuery(data)
+        self.log('getMusicVideoInformation return')
         return result
 
 

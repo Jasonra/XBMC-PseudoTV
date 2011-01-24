@@ -147,7 +147,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             # The only way this isn't true is if the current channel is curchannel since
             # it could have been fast forwarded or rewinded (rewound)?
             if curchannel == self.MyOverlayWindow.currentChannel:
-                playlistpos = xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition()
+                playlistpos = int(xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition())
                 videotime = xbmc.Player().getTime()
                 reftime = time.time()
             else:
@@ -190,7 +190,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 if width + xpos > 1280:
                     width = 1280 - xpos
 
-                if shouldskip == False:
+                if shouldskip == False and width > 10:
                     self.channelButtons[row].append(xbmcgui.ControlButton(xpos, 288 + (row * 80), width, 78, self.MyOverlayWindow.channels[curchannel - 1].getItemTitle(playlistpos), alignment=8))
                     self.addControl(self.channelButtons[row][-1])
 
@@ -347,6 +347,16 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         self.focusIndex = 0
         self.setFocus(self.channelButtons[newrow][0])
+        left, top = self.channelButtons[newrow][0].getPosition()
+        width = self.channelButtons[newrow][0].getWidth()
+        left = left - 322
+        starttime = self.shownTime + (left / 0.1774)
+        endtime = starttime + (width / 0.1774)
+        self.focusEndTime = endtime
+
+        if resetfocustime:
+            self.focusTime = starttime + 30
+
         self.setShowInfo()
         self.log('setProperButton return')
 
@@ -429,5 +439,5 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 reftime += self.MyOverlayWindow.channels[channel - 1].getItemDuration(playlistpos)
                 playlistpos += 1
 
-            self.log('determinePlaylistPosAtTime return')
+            self.log('determinePlaylistPosAtTime return' + str(self.MyOverlayWindow.channels[channel - 1].fixPlaylistIndex(playlistpos)))
             return self.MyOverlayWindow.channels[channel - 1].fixPlaylistIndex(playlistpos)

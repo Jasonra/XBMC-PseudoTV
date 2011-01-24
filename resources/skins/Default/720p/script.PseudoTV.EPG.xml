@@ -199,7 +199,7 @@
             <height>30</height>
             <label>Time 1</label>
             <font>font13</font>
-            <align>center</align>
+            <align>left</align>
             <textcolor>FFFFFFFF</textcolor>
             <shadowcolor>AA000000</shadowcolor>
         </control>
@@ -212,7 +212,7 @@
             <height>30</height>
             <label>Time 2</label>
             <font>font13</font>
-            <align>center</align>
+            <align>left</align>
             <textcolor>FFFFFFFF</textcolor>
             <shadowcolor>AA000000</shadowcolor>
         </control>
@@ -225,7 +225,7 @@
             <height>30</height>
             <label>Time 3</label>
             <font>font13</font>
-            <align>center</align>
+            <align>left</align>
             <textcolor>FFFFFFFF</textcolor>
             <shadowcolor>AA000000</shadowcolor>
         </control>

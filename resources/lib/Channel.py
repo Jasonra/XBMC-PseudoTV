@@ -20,7 +20,6 @@ class Channel:
 
     def setPlaylist(self, filename):
         self.Playlist.load(filename)
-        self.log('Playlist loaded with a duration of ' + str(self.getTotalDuration()))
 
 
     def setPaused(self, paused):
@@ -32,6 +31,7 @@ class Channel:
 
 
     def setShowPosition(self, show):
+        show = int(show)
         self.playlistPosition = self.fixPlaylistIndex(show)
 
 

@@ -3,7 +3,7 @@ import xbmcaddon, xbmc
 
 
 def log(msg, level = xbmc.LOGDEBUG):
-    xbmc.log(ADDON_ID + '-' + msg)#, level)
+    xbmc.log(ADDON_ID + '-' + msg, level)
 
 
 ADDON_ID = 'script.PseudoTV'

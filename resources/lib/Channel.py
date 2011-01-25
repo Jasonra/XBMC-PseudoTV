@@ -97,4 +97,4 @@ class Channel:
 
 
     def addShowPosition(self, addition):
-        self.setShowPosition(self.showTimeOffset + addition)
+        self.setShowPosition(self.playlistPosition + addition)

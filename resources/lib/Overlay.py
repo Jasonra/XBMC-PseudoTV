@@ -259,7 +259,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         return True
 
 
-    def buildFileList(self, dir_name, media_type="files", recursive="TRUE", contains=""):
+    def buildFileList(self, dir_name, media_type="files", recursive="TRUE"):
         fileList = []
         json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "%s", "recursive": "%s"}, "id": 1}' % ( self.escapeDirJSON( dir_name ), media_type, recursive )
         json_folder_detail = xbmc.executeJSONRPC(json_query)
@@ -272,9 +272,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             if match:
                 if ( match.group(1).endswith( "/" ) or match.group(1).endswith( "\\" ) ):
                     if ( recursive == "TRUE" ):
-                        fileList.extend( self.buildFileList( match.group(1), media_type, recursive, contains ) )
-                elif not contains or ( contains and (contains in match.group(1) ) ):
-                    fileList.append( match.group(1) )
+                        fileList.extend( self.buildFileList( match.group(1), media_type, recursive ) )
+                else:
+                    fileList.append( match.group(1).replace("\\\\", "\\") )
             else:
                 continue
 

@@ -17,7 +17,6 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.focusEndTime = 0
         self.shownTime = 0
         self.centerChannel = 0
-        self.currentTimeBar = xbmcgui.ControlImage(322, 288, 2, 398, IMAGES_LOC + 'solid.png', colorDiffuse='0x99FF0000')
         self.channelButtons = [None] * 5
         self.actionSemaphore = threading.BoundedSemaphore()
 
@@ -49,7 +48,6 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
     def onInit(self):
         self.log('onInit')
-        self.addControl(self.currentTimeBar)
 
         if self.setChannelButtons(time.time(), self.MyOverlayWindow.currentChannel) == False:
             self.log('Unable to add channel buttons')
@@ -84,13 +82,15 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
     # setup all channel buttons for a given time
     def setChannelButtons(self, starttime, curchannel):
         self.log('setChannelButtons ' + str(starttime) + ', ' + str(curchannel))
-        self.removeControl(self.currentTimeBar)
         self.centerChannel = self.MyOverlayWindow.fixChannel(curchannel)
         curchannel = self.MyOverlayWindow.fixChannel(curchannel - 2)
         starttime = starttime // 1
         starttime = self.roundToHalfHour(starttime)
         self.setTimeLabels(starttime)
         self.shownTime = starttime
+        tmpx, bary = self.getControl(120).getPosition()
+        basex, basey = self.getControl(111).getPosition()
+        basew = self.getControl(111).getWidth()
 
         for i in range(5):
             self.setButtons(starttime, curchannel, i)
@@ -98,15 +98,14 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             curchannel = self.MyOverlayWindow.fixChannel(curchannel + 1)
 
         if time.time() >= starttime and time.time() < starttime + 5400:
-            dif = (starttime + 5400 - time.time()) // 1
-            self.currentTimeBar.setPosition(1278 - (dif * .1774), 288)
+            dif = int((starttime + 5400 - time.time()))
+            self.getControl(120).setPosition((basex + basew - 2) - (dif * (basew / 5400.0)), bary)
         else:
             if time.time() < starttime:
-                self.currentTimeBar.setPosition(322, 288)
+                self.getControl(120).setPosition(basex + 2, bary)
             else:
-                self.currentTimeBar.setPosition(1278, 288)
+                self.getControl(120).setPosition(basex + basew - 2, bary)
 
-        self.addControl(self.currentTimeBar)
         self.log('setChannelButtons return')
 
 
@@ -239,7 +238,6 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.log('closeEPG')
 
         try:
-            self.removeControl(self.currentTimeBar)
             self.MyOverlayWindow.startSleepTimer()
         except:
             pass

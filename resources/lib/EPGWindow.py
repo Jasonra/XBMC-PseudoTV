@@ -57,14 +57,17 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         curtime = time.time()
         self.focusIndex = 0
+        basex, basey = self.getControl(113).getPosition()
+        baseh = self.getControl(113).getHeight()
+        basew = self.getControl(113).getWidth()
 
         # set the button that corresponds to the currently playing show
         for i in range(len(self.channelButtons[2])):
             left, top = self.channelButtons[2][i].getPosition()
             width = self.channelButtons[2][i].getWidth()
-            left = left - 322
-            starttime = self.shownTime + (left / 0.1774)
-            endtime = starttime + (width / 0.1774)
+            left = left - basex
+            starttime = self.shownTime + (left / (basew / 5400.0))
+            endtime = starttime + (width / (basew / 5400.0))
 
             if curtime >= starttime and curtime <= endtime:
                 self.focusIndex = i
@@ -124,6 +127,9 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
     def setButtons(self, starttime, curchannel, row):
         self.log('setButtons ' + str(starttime) + ", " + str(curchannel) + ", " + str(row))
         curchannel = self.MyOverlayWindow.fixChannel(curchannel)
+        basex, basey = self.getControl(111 + row).getPosition()
+        baseh = self.getControl(111 + row).getHeight()
+        basew = self.getControl(111 + row).getWidth()
 
         if xbmc.Player().isPlaying() == False:
             self.log('No video is playing, not adding buttons')
@@ -138,7 +144,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         # if the channel is paused, then only 1 button needed
         if self.MyOverlayWindow.channels[curchannel - 1].isPaused:
-            self.channelButtons[row].append(xbmcgui.ControlButton(322, 288 + (row * 80), 958, 78, self.MyOverlayWindow.channels[curchannel - 1].getCurrentTitle()), alignment=8)
+            self.channelButtons[row].append(xbmcgui.ControlButton(basex, basey, basew, baseh, self.MyOverlayWindow.channels[curchannel - 1].getCurrentTitle()), alignment=8)
             self.addControl(self.channelButtons[row][0])
         else:
             # Find the show that was running at the given time
@@ -172,7 +178,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             totaltime = 0
 
             while reftime < endtime:
-                xpos = int(322 + (totaltime * 0.1774))
+                xpos = int(basex + (totaltime * (basew / 5400.0)))
                 tmpdur = self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos)
                 shouldskip = False
 
@@ -185,13 +191,13 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                     if tmpdur < 60 * 3:
                         shouldskip = True
 
-                width = int(0.1774 * tmpdur)
+                width = int((basew / 5400.0) * tmpdur)
 
                 if width + xpos > 1280:
                     width = 1280 - xpos
 
                 if shouldskip == False and width > 10:
-                    self.channelButtons[row].append(xbmcgui.ControlButton(xpos, 288 + (row * 80), width, 78, self.MyOverlayWindow.channels[curchannel - 1].getItemTitle(playlistpos), alignment=8))
+                    self.channelButtons[row].append(xbmcgui.ControlButton(xpos, basey, width, baseh, self.MyOverlayWindow.channels[curchannel - 1].getItemTitle(playlistpos), alignment=8))
                     self.addControl(self.channelButtons[row][-1])
 
                 totaltime += tmpdur
@@ -325,13 +331,16 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
     def setProperButton(self, newrow, resetfocustime = False):
         self.log('setProperButton ' + str(newrow))
         self.focusRow = newrow
+        basex, basey = self.getControl(111 + newrow).getPosition()
+        baseh = self.getControl(111 + newrow).getHeight()
+        basew = self.getControl(111 + newrow).getWidth()
 
         for i in range(len(self.channelButtons[newrow])):
             left, top = self.channelButtons[newrow][i].getPosition()
             width = self.channelButtons[newrow][i].getWidth()
-            left = left - 322
-            starttime = self.shownTime + (left / 0.1774)
-            endtime = starttime + (width / 0.1774)
+            left = left - basex
+            starttime = self.shownTime + (left / (basew / 5400.0))
+            endtime = starttime + (width / (basew / 5400.0))
 
             if self.focusTime >= starttime and self.focusTime <= endtime:
                 self.focusIndex = i
@@ -349,9 +358,9 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.setFocus(self.channelButtons[newrow][0])
         left, top = self.channelButtons[newrow][0].getPosition()
         width = self.channelButtons[newrow][0].getWidth()
-        left = left - 322
-        starttime = self.shownTime + (left / 0.1774)
-        endtime = starttime + (width / 0.1774)
+        left = left - basex
+        starttime = self.shownTime + (left / (basew / 5400.0))
+        endtime = starttime + (width / (basew / 5400.0))
         self.focusEndTime = endtime
 
         if resetfocustime:
@@ -363,11 +372,14 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
     def setShowInfo(self):
         self.log('setShowInfo')
+        basex, basey = self.getControl(111 + self.focusRow).getPosition()
+        baseh = self.getControl(111 + self.focusRow).getHeight()
+        basew = self.getControl(111 + self.focusRow).getWidth()
         # use the selected time to set the video
         left, top = self.channelButtons[self.focusRow][self.focusIndex].getPosition()
         width = self.channelButtons[self.focusRow][self.focusIndex].getWidth()
-        left = left - 322 + (width / 2)
-        starttime = self.shownTime + (left / 0.1774)
+        left = left - basex + (width / 2)
+        starttime = self.shownTime + (left / (basew / 5400.0))
         newchan = self.MyOverlayWindow.fixChannel(self.centerChannel + self.focusRow - 2)
         plpos = self.determinePlaylistPosAtTime(starttime, newchan)
 
@@ -384,11 +396,14 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
     # using the currently selected button, play the proper shows
     def selectShow(self):
         self.log('selectShow')
+        basex, basey = self.getControl(111 + self.focusRow).getPosition()
+        baseh = self.getControl(111 + self.focusRow).getHeight()
+        basew = self.getControl(111 + self.focusRow).getWidth()
         # use the selected time to set the video
         left, top = self.channelButtons[self.focusRow][self.focusIndex].getPosition()
         width = self.channelButtons[self.focusRow][self.focusIndex].getWidth()
-        left = left - 322 + (width / 2)
-        starttime = self.shownTime + (left / 0.1774)
+        left = left - basex + (width / 2)
+        starttime = self.shownTime + (left / (basew / 5400.0))
         newchan = self.MyOverlayWindow.fixChannel(self.centerChannel + self.focusRow - 2)
         plpos = self.determinePlaylistPosAtTime(starttime, newchan)
 

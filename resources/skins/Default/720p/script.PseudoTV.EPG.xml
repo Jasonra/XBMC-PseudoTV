@@ -230,6 +230,41 @@
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
+        <control type="group" id="111">
+            <posx>322</posx>
+            <posy>288</posy>
+            <width>958</width>
+            <height>78</height>
+        </control>
+
+        <control type="group" id="112">
+            <posx>322</posx>
+            <posy>368</posy>
+            <width>958</width>
+            <height>78</height>
+        </control>
+
+        <control type="group" id="113">
+            <posx>322</posx>
+            <posy>448</posy>
+            <width>958</width>
+            <height>78</height>
+        </control>
+
+        <control type="group" id="114">
+            <posx>322</posx>
+            <posy>528</posy>
+            <width>958</width>
+            <height>78</height>
+        </control>
+
+        <control type="group" id="115">
+            <posx>322</posx>
+            <posy>608</posy>
+            <width>958</width>
+            <height>78</height>
+        </control>
+
         <control type="image" id="401">
             <description>Channel 1 Background</description>
             <posx>2</posx>

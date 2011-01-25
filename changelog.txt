@@ -1,11 +1,18 @@
 Changelog
 
 
+0.1.5
+    Resolved the problem with not resuming the channel properly.
+    Fixed the issue introduced in 0.1.4 that prevending gathering information
+        on Windows systems.
+    Put several of the controls into the hands of the skinners.
+
+
 0.1.4
     New method of scanning channels (thanks to TheOddLinguist) that correctly
         uses movie sets and TV show-type playlists.
     Display music video information in the EPG.
-    
+
 
 0.1.3
     There was an issue where XBMC woukd sometimes return a float when an int

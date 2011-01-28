@@ -274,8 +274,8 @@
             <width>958</width>
             <height>78</height>
         </control>
-        
-        <control type="image" id="401">
+
+        <control type="image">
             <description>Channel 1 Background</description>
             <posx>2</posx>
             <posy>288</posy>
@@ -286,20 +286,44 @@
         </control>
 
         <control type="label" id="301">
-            <description>Channel 1 Label</description>
-            <posx>4</posx>
-            <posy>288</posy>
-            <width>312</width>
-            <height>74</height>
-            <label>Channel 1</label>
+            <description>Channel 1 Name</description>
+            <posx>80</posx>
+            <posy>325</posy>
+            <width>234</width>
+            <height>37</height>
+            <label>Channel</label>
             <font>font13</font>
             <align>center</align>
             <aligny>center</aligny>
-            <textcolor>FF222222</textcolor>
+            <textcolor>99222222</textcolor>
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
-        <control type="image" id="402">
+        <control type="label" id="311">
+            <description>Channel 1 Number</description>
+            <posx>80</posx>
+            <posy>288</posy>
+            <width>234</width>
+            <height>37</height>
+            <label>1</label>
+            <font>font13</font>
+            <align>center</align>
+            <aligny>center</aligny>
+            <textcolor>99222222</textcolor>
+            <shadowcolor>AA000000</shadowcolor>
+        </control>
+
+        <control type="image" id="321">
+            <description>Channel 1 Icon</description>
+            <posx>4</posx>
+            <posy>288</posy>
+            <width>74</width>
+            <height>74</height>
+            <texture></texture>
+            <colordiffuse>FFFFFFFF</colordiffuse>
+        </control>
+
+        <control type="image">
             <description>Channel 2 Background</description>
             <posx>2</posx>
             <posy>368</posy>
@@ -310,11 +334,11 @@
         </control>
 
         <control type="label" id="302">
-            <description>Channel 2 Label</description>
-            <posx>4</posx>
-            <posy>368</posy>
-            <width>312</width>
-            <height>74</height>
+            <description>Channel 2 Name</description>
+            <posx>80</posx>
+            <posy>405</posy>
+            <width>234</width>
+            <height>37</height>
             <label>Channel 2</label>
             <font>font13</font>
             <align>center</align>
@@ -323,7 +347,31 @@
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
-        <control type="image" id="403">
+        <control type="label" id="312">
+            <description>Channel 2 Number</description>
+            <posx>80</posx>
+            <posy>368</posy>
+            <width>234</width>
+            <height>37</height>
+            <label>2</label>
+            <font>font13</font>
+            <align>center</align>
+            <aligny>center</aligny>
+            <textcolor>99222222</textcolor>
+            <shadowcolor>AA000000</shadowcolor>
+        </control>
+
+        <control type="image" id="322">
+            <description>Channel 2 Icon</description>
+            <posx>4</posx>
+            <posy>368</posy>
+            <width>74</width>
+            <height>74</height>
+            <texture></texture>
+            <colordiffuse>FFFFFFFF</colordiffuse>
+        </control>
+
+        <control type="image">
             <description>Channel 3 Background</description>
             <posx>2</posx>
             <posy>448</posy>
@@ -334,11 +382,11 @@
         </control>
 
         <control type="label" id="303">
-            <description>Channel 3 Label</description>
-            <posx>4</posx>
-            <posy>448</posy>
-            <width>312</width>
-            <height>74</height>
+            <description>Channel 3 Name</description>
+            <posx>80</posx>
+            <posy>485</posy>
+            <width>234</width>
+            <height>37</height>
             <label>Channel 3</label>
             <font>font13</font>
             <align>center</align>
@@ -347,7 +395,31 @@
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
-        <control type="image" id="404">
+        <control type="label" id="313">
+            <description>Channel 3 Number</description>
+            <posx>80</posx>
+            <posy>448</posy>
+            <width>234</width>
+            <height>37</height>
+            <label>3</label>
+            <font>font13</font>
+            <align>center</align>
+            <aligny>center</aligny>
+            <textcolor>99222222</textcolor>
+            <shadowcolor>AA000000</shadowcolor>
+        </control>
+
+        <control type="image" id="323">
+            <description>Channel 3 Icon</description>
+            <posx>4</posx>
+            <posy>448</posy>
+            <width>74</width>
+            <height>74</height>
+            <texture></texture>
+            <colordiffuse>FFFFFFFF</colordiffuse>
+        </control>
+
+        <control type="image">
             <description>Channel 4 Background</description>
             <posx>2</posx>
             <posy>528</posy>
@@ -358,11 +430,11 @@
         </control>
 
         <control type="label" id="304">
-            <description>Channel 4 Label</description>
-            <posx>4</posx>
-            <posy>528</posy>
-            <width>312</width>
-            <height>74</height>
+            <description>Channel 4 Name</description>
+            <posx>80</posx>
+            <posy>565</posy>
+            <width>234</width>
+            <height>37</height>
             <label>Channel 4</label>
             <font>font13</font>
             <align>center</align>
@@ -371,7 +443,31 @@
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
-        <control type="image" id="405">
+        <control type="label" id="314">
+            <description>Channel 4 Number</description>
+            <posx>80</posx>
+            <posy>528</posy>
+            <width>234</width>
+            <height>37</height>
+            <label>4</label>
+            <font>font13</font>
+            <align>center</align>
+            <aligny>center</aligny>
+            <textcolor>99222222</textcolor>
+            <shadowcolor>AA000000</shadowcolor>
+        </control>
+
+        <control type="image" id="324">
+            <description>Channel 4 Icon</description>
+            <posx>4</posx>
+            <posy>528</posy>
+            <width>74</width>
+            <height>74</height>
+            <texture></texture>
+            <colordiffuse>FFFFFFFF</colordiffuse>
+        </control>
+
+        <control type="image">
             <description>Channel 5 Background</description>
             <posx>2</posx>
             <posy>608</posy>
@@ -382,17 +478,41 @@
         </control>
 
         <control type="label" id="305">
-            <description>Channel 5 Label</description>
-            <posx>4</posx>
-            <posy>608</posy>
-            <width>312</width>
-            <height>74</height>
+            <description>Channel 5 Name</description>
+            <posx>80</posx>
+            <posy>645</posy>
+            <width>234</width>
+            <height>37</height>
             <label>Channel 5</label>
             <font>font13</font>
             <align>center</align>
             <aligny>center</aligny>
             <textcolor>FF222222</textcolor>
             <shadowcolor>AA000000</shadowcolor>
+        </control>
+
+        <control type="label" id="315">
+            <description>Channel 5 Number</description>
+            <posx>80</posx>
+            <posy>608</posy>
+            <width>234</width>
+            <height>37</height>
+            <label>5</label>
+            <font>font13</font>
+            <align>center</align>
+            <aligny>center</aligny>
+            <textcolor>99222222</textcolor>
+            <shadowcolor>AA000000</shadowcolor>
+        </control>
+
+        <control type="image" id="325">
+            <description>Channel 5 Icon</description>
+            <posx>4</posx>
+            <posy>608</posy>
+            <width>74</width>
+            <height>74</height>
+            <texture></texture>
+            <colordiffuse>FFFFFFFF</colordiffuse>
         </control>
     </controls>
 </window>

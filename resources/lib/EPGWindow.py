@@ -17,6 +17,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.focusEndTime = 0
         self.shownTime = 0
         self.centerChannel = 0
+        self.rowCount = 5
         self.channelButtons = [None] * 5
         self.actionSemaphore = threading.BoundedSemaphore()
 
@@ -84,7 +85,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.log('setChannelButtons ' + str(starttime) + ', ' + str(curchannel))
         self.centerChannel = self.MyOverlayWindow.fixChannel(curchannel)
         curchannel = self.MyOverlayWindow.fixChannel(curchannel - 2)
-        starttime = starttime // 1
+        starttime = int(starttime)
         starttime = self.roundToHalfHour(starttime)
         self.setTimeLabels(starttime)
         self.shownTime = starttime
@@ -92,9 +93,20 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         basex, basey = self.getControl(111).getPosition()
         basew = self.getControl(111).getWidth()
 
-        for i in range(5):
+        for i in range(self.rowCount):
             self.setButtons(starttime, curchannel, i)
-            self.getControl(301 + i).setLabel(self.MyOverlayWindow.channels[curchannel - 1].name + '\n' + str(curchannel))
+            self.getControl(301 + i).setLabel(self.MyOverlayWindow.channels[curchannel - 1].name)
+            
+            try:
+                self.getControl(311 + i).setLabel(str(curchannel))
+            except:
+                pass
+
+            try:
+                self.getControl(321 + i).setImage(IMAGES_LOC + "Channel_" + str(curchannel) + ".png")
+            except:
+                pass
+
             curchannel = self.MyOverlayWindow.fixChannel(curchannel + 1)
 
         if time.time() >= starttime and time.time() < starttime + 5400:

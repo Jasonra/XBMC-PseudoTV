@@ -154,7 +154,15 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.channels[-1].name = self.getSmartPlaylistName(self.getSmartPlaylistFilename(i + 1))
 
         ADDON_SETTINGS.setSetting('ForceChannelReset', 'false')
-        self.currentChannel = 1
+
+        try:
+            self.currentChannel = int(ADDON_SETTINGS.getSetting('CurrentChannel'))
+        except:
+            self.currentChannel = 1
+
+        if self.currentChannel > self.maxChannels or self.currentChannel < 1 or forcereset:
+            self.currentChannel = 1
+
         xbmc.Player().stop()
         self.updateDialog.close()
         self.log('readConfig return')
@@ -825,5 +833,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             for i in range(self.maxChannels):
                 ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(time.time() - self.timeStarted + self.channels[i].totalTimePlayed)))
 
+        ADDON_SETTINGS.setSetting('CurrentChannel', str(self.currentChannel))
         self.background.setVisible(False)
         self.close()

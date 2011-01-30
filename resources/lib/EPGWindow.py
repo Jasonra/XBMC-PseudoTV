@@ -83,6 +83,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
     # setup all channel buttons for a given time
     def setChannelButtons(self, starttime, curchannel):
         self.log('setChannelButtons ' + str(starttime) + ', ' + str(curchannel))
+        xbmcgui.lock()
         self.centerChannel = self.MyOverlayWindow.fixChannel(curchannel)
         curchannel = self.MyOverlayWindow.fixChannel(curchannel - 2)
         starttime = int(starttime)
@@ -118,6 +119,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             else:
                 self.getControl(120).setPosition(basex + basew - 2, bary)
 
+        xbmcgui.unlock()
         self.log('setChannelButtons return')
 
 

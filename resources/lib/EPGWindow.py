@@ -204,10 +204,10 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
                 width = int((basew / 5400.0) * tmpdur)
 
-                if width + xpos > 1280:
-                    width = 1280 - xpos
+                if width + xpos > basex + basew:
+                    width = basew + basex - xpos
 
-                if shouldskip == False and width > 10:
+                if shouldskip == False and width > 30:
                     self.channelButtons[row].append(xbmcgui.ControlButton(xpos, basey, width, baseh, self.MyOverlayWindow.channels[curchannel - 1].getItemTitle(playlistpos), alignment=8))
                     self.addControl(self.channelButtons[row][-1])
 

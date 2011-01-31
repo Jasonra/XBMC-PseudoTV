@@ -3,6 +3,7 @@ import subprocess, os
 import time, threading
 import datetime
 import sys, re
+import random
 
 from Playlist import Playlist
 from Globals import *
@@ -172,8 +173,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     def getSmartPlaylistFilename(self, channel):
         if os.path.exists(xbmc.translatePath('special://profile/playlists/video') + '/Channel_' + str(channel) + '.xsp'):
             return xbmc.translatePath('special://profile/playlists/video') + '/Channel_' + str(channel) + '.xsp'
-#        elif os.path.exists(xbmc.translatePath('special://profile/playlists/mixed') + '/Channel_' + str(channel) + '.xsp'):
-#            return xbmc.translatePath('special://profile/playlists/mixed') + '/Channel_' + str(channel) + '.xsp'
+        elif os.path.exists(xbmc.translatePath('special://profile/playlists/mixed') + '/Channel_' + str(channel) + '.xsp'):
+            return xbmc.translatePath('special://profile/playlists/mixed') + '/Channel_' + str(channel) + '.xsp'
         else:
             return ''
 
@@ -215,6 +216,35 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         dlg.ok('Error', message)
         del dlg
         self.end()
+        
+        
+    def getSmartPlaylistType(self, filename):
+        self.log('getSmartPlaylistType ' + filename)
+
+        try:
+            fl = open(filename, "r")
+        except:
+            self.log("Unable to open the smart playlist " + filename, xbmc.LOGERROR)
+            return ''
+
+        line = fl.readline()
+        thetype = ''
+
+        while len(line) > 0:
+            index1 = line.find('<smartplaylist type="')
+
+            if index1 >= 0:
+                index2 = line.find('">')
+
+                if index2 > index1 + 6:
+                    thetype = line[index1 + 21:index2]
+                    break
+
+            line = fl.readline()
+
+        fl.close()
+        self.log('getSmartPlaylistType return ' + thetype)
+        return thetype
 
 
     # Based on a smart playlist, create a normal playlist that can actually be used by us
@@ -226,8 +256,11 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.Error('Unable to locate the playlist for channel ' + str(channel))
             return False
 
-        fileList = self.buildFileList(fle)
-        
+        if self.getSmartPlaylistType(fle) == 'mixed':
+            fileList = self.buildMixedFileList(fle)
+        else:
+            fileList = self.buildFileList(fle)
+
         if len(fileList) == 0:
             self.Error("Unable to get information about channel " + str(channel))
             return False
@@ -238,6 +271,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.Error('Unable to open the cache file ' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
             return False
 
+        fileList = fileList[:250]
         channelplaylist.write("#EXTM3U\n")
         updatebase = (channel - 1) * 100.0 / self.maxChannels
         totalchanrange = 100.0 / self.maxChannels
@@ -286,6 +320,37 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             else:
                 continue
 
+        return fileList
+
+
+    def buildMixedFileList(self, filename):
+        fileList = []
+        self.log('buildMixedFileList ' + filename)
+
+        try:
+            fl = open(filename, "r")
+        except:
+            self.log("Unable to open the smart playlist " + filename, xbmc.LOGERROR)
+            return ''
+
+        line = fl.readline()
+
+        while len(line) > 0:
+            index1 = line.find('<rule field="playlist"')
+
+            if index1 >= 0:
+                index1 = line.find('>')
+
+                if index1 > 0:
+                    index2 = line.find('</rule>')
+                    
+                    if index2 > index1:
+                        fileList.extend(self.buildFileList(xbmc.translatePath('special://profile/playlists/video') + '/' + line[index1 + 1:index2]))
+
+            line = fl.readline()
+
+        fl.close()
+        random.shuffle(fileList)
         return fileList
 
 
@@ -833,6 +898,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             for i in range(self.maxChannels):
                 ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(time.time() - self.timeStarted + self.channels[i].totalTimePlayed)))
 
-        ADDON_SETTINGS.setSetting('CurrentChannel', str(self.currentChannel))
+        try:
+            ADDON_SETTINGS.setSetting('CurrentChannel', str(self.currentChannel))
+        except:
+            pass
+
         self.background.setVisible(False)
         self.close()

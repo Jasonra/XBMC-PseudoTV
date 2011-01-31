@@ -97,14 +97,14 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         for i in range(self.rowCount):
             self.setButtons(starttime, curchannel, i)
             self.getControl(301 + i).setLabel(self.MyOverlayWindow.channels[curchannel - 1].name)
-            
+
             try:
                 self.getControl(311 + i).setLabel(str(curchannel))
             except:
                 pass
 
             try:
-                self.getControl(321 + i).setImage(IMAGES_LOC + "Channel_" + str(curchannel) + ".png")
+                self.getControl(321 + i).setImage(IMAGES_LOC + "Channel_" + self.MyOverlayWindow.channels[curchannel - 1].name + ".png")
             except:
                 pass
 

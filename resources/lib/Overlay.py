@@ -25,6 +25,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.actionSemaphore = threading.BoundedSemaphore()
         self.setCoordinateResolution(1)
         self.timeStarted = 0
+        random.seed()
 
         for i in range(3):
             self.channelLabel.append(xbmcgui.ControlImage(50 + (50 * i), 50, 50, 50, IMAGES_LOC + 'solid.png', colorDiffuse='0xAA00ff00'))

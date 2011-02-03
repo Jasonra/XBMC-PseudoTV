@@ -230,16 +230,6 @@
             <shadowcolor>AA000000</shadowcolor>
         </control>
 
-        <control type="image" id="120">
-            <description>Time Bar</description>
-            <posx>322</posx>
-            <posy>288</posy>
-            <width>2</width>
-            <height>398</height>
-            <texture>pstvSolid.png</texture>
-            <colordiffuse>99FF0000</colordiffuse>
-        </control>
-
         <control type="group" id="111">
             <posx>322</posx>
             <posy>288</posy>

@@ -13,7 +13,12 @@ ADDON_INFO = ADDON_SETTINGS.getAddonInfo('path')
 TIMEOUT = 10 * 1000
 
 IMAGES_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'images')) + '/'
-CHANNELS_LOC = xbmc.translatePath('special://profile/addon_data/' + ADDON_ID + '/cache') + '/'
+CHANNELS_LOC = xbmc.translatePath('special://profile/addon_data/' + ADDON_ID + '/cache/')
+
+TIME_BAR = 'pstvTimeBar.png'
+TIME_BAR_WIDTH = 24
+BUTTON_FOCUS = 'pstvButtonFocus.png'
+BUTTON_NO_FOCUS = 'pstvButtonNoFocus.png'
 
 ACTION_MOVE_LEFT = 1
 ACTION_MOVE_RIGHT = 2

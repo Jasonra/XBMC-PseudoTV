@@ -319,7 +319,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in file_detail:
-            match = re.search( '"file" : "(.*?)",', f )
+            match = re.search( '"file" *: *"(.*?)",', f )
 
             if match:
                 if ( match.group(1).endswith( "/" ) or match.group(1).endswith( "\\" ) ):

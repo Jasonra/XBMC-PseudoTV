@@ -1,4 +1,5 @@
 <settings>
     <setting id="AutoOff" type="enum" label="30001" values="Disable|30|60|90|120|150|180|210|240" default="6"/>
     <setting id="ForceChannelReset" type="bool" label="30002" default="false"/>
+    <setting id="InfoOnChange" type="bool" label="30003" default="true"/>
 </settings>

@@ -9,6 +9,7 @@ from Playlist import Playlist
 from Globals import *
 from Channel import Channel
 from EPGWindow import EPGWindow
+from InfoWindow import InfoWindow
 
 
 
@@ -25,6 +26,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.actionSemaphore = threading.BoundedSemaphore()
         self.setCoordinateResolution(1)
         self.timeStarted = 0
+        self.infoOnChange = True
         random.seed()
 
         for i in range(3):
@@ -59,6 +61,11 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             except:
                 self.Error('Unable to create the cache directory')
                 return
+
+        ##ADDED BY SRANSHAFT
+        self.myInfo = InfoWindow("script.PseudoTV.Info.xml", ADDON_INFO, "Default")
+        self.myInfo.MyOverlayWindow = self
+        ##
 
         self.myEPG = EPGWindow("script.PseudoTV.EPG.xml", ADDON_INFO, "Default")
         self.myEPG.MyOverlayWindow = self
@@ -113,6 +120,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log('Auto off is ' + str(self.sleepTimeValue))
         forcereset = ADDON_SETTINGS.getSetting('ForceChannelReset') == "true"
         self.log('Force Reset is ' + str(forcereset))
+        self.infoOnChange = ADDON_SETTINGS.getSetting("InfoOnChange") == "true"
+        self.log('Show info label on channel change is ' + str(self.infoOnChange))
         self.startupTime = time.time()
         self.updateDialog.create("PseudoTV", "Updating channel list")
         self.updateDialog.update(0, "Updating channel list")
@@ -217,8 +226,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         dlg.ok('Error', message)
         del dlg
         self.end()
-        
-        
+
+
     def getSmartPlaylistType(self, filename):
         self.log('getSmartPlaylistType ' + filename)
 
@@ -344,7 +353,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
                 if index1 > 0:
                     index2 = line.find('</rule>')
-                    
+
                     if index2 > index1:
                         fileList.extend(self.buildFileList(xbmc.translatePath('special://profile/playlists/video') + '/' + line[index1 + 1:index2]))
 
@@ -373,11 +382,11 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             return self.getEpisodeInformation(epid)
 
         movieid = self.getMovieId(fileid)
-        
+
         if movieid > -1:
             self.log('getInformation movie return')
             return self.getMovieInformation(movieid)
-            
+
         self.log('getInformation music video return')
         return self.getMusicVideoInformation(fileid)
 
@@ -769,6 +778,12 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         self.channelLabel[curlabel].setImage(IMAGES_LOC + 'label_' + str(channel % 10) + '.png')
         self.channelLabel[curlabel].setVisible(True)
+
+        ##ADDED BY SRANSHAFT: USED TO SHOW NEW INFO WINDOW WHEN CHANGING CHANNELS
+        if self.inputChannel == -1 and self.infoOnChange == True:
+            self.myInfo.show()
+        ##
+
         self.channelLabelTimer.start()
         self.log('showChannelLabel return')
 
@@ -777,11 +792,15 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     def hideChannelLabel(self):
         self.log('hideChannelLabel')
         self.channelLabelTimer = threading.Timer(5.0, self.hideChannelLabel)
-        self.inputChannel = -1
 
         for i in range(3):
             self.channelLabel[i].setVisible(False)
 
+        ##ADDED BY SRANSHAFT: USED TO HIDE NEW INFO WINDOW WHEN CHANGING CHANNELS
+        self.myInfo.close()
+        ##
+
+        self.inputChannel = -1
         self.log('hideChannelLabel return')
 
 
@@ -841,6 +860,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.channelDown()
         elif action == ACTION_STOP:
             self.end()
+        elif action == ACTION_SHOW_INFO:
+            self.myInfo.doModal()
         elif action >= ACTION_NUMBER_0 and action <= ACTION_NUMBER_9:
             if self.inputChannel < 0:
                 self.inputChannel = action - ACTION_NUMBER_0

@@ -16,7 +16,6 @@ IMAGES_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'images'))
 CHANNELS_LOC = xbmc.translatePath('special://profile/addon_data/' + ADDON_ID + '/cache/')
 
 TIME_BAR = 'pstvTimeBar.png'
-TIME_BAR_WIDTH = 24
 BUTTON_FOCUS = 'pstvButtonFocus.png'
 BUTTON_NO_FOCUS = 'pstvButtonNoFocus.png'
 
@@ -28,6 +27,7 @@ ACTION_PAGEUP = 5
 ACTION_PAGEDOWN = 6
 ACTION_SELECT_ITEM = 7
 ACTION_PREVIOUS_MENU = 10
+ACTION_SHOW_INFO = 11
 ACTION_PAUSE = 12
 ACTION_STOP = 13
 ACTION_NEXT_ITEM = 14

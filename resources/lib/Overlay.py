@@ -9,7 +9,6 @@ from Playlist import Playlist
 from Globals import *
 from Channel import Channel
 from EPGWindow import EPGWindow
-from InfoWindow import InfoWindow
 
 
 
@@ -27,6 +26,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.setCoordinateResolution(1)
         self.timeStarted = 0
         self.infoOnChange = True
+        self.infoOffset = 0
+        self.showingInfo = False
         random.seed()
 
         for i in range(3):
@@ -53,7 +54,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     def onInit(self):
         self.log('onInit')
         self.channelLabelTimer = threading.Timer(5.0, self.hideChannelLabel)
+        self.infoTimer = threading.Timer(5.0, self.hideInfo)
         self.background = self.getControl(101)
+        self.getControl(102).setVisible(False)
 
         if not os.path.exists(CHANNELS_LOC):
             try:
@@ -62,12 +65,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 self.Error('Unable to create the cache directory')
                 return
 
-        ##ADDED BY SRANSHAFT
-        self.myInfo = InfoWindow("script.PseudoTV.Info.xml", ADDON_INFO, "Default")
-        self.myInfo.MyOverlayWindow = self
-        ##
-
-        self.myEPG = EPGWindow("script.PseudoTV.EPG.xml", ADDON_INFO, "Default")
+        self.myEPG = EPGWindow("script.PseudoTV.EPG.xml", ADDON_INFO, "default")
         self.myEPG.MyOverlayWindow = self
         self.findMaxChannels()
 
@@ -606,6 +604,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         timedif = 0
         forcestart = True
         samechannel = False
+        self.getControl(102).setVisible(False)
+        self.showingInfo = False
 
         # first of all, save playing state, time, and playlist offset for
         # the currently playing channel
@@ -752,6 +752,25 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         return True
 
 
+    def setShowInfo(self):
+        self.log('setShowInfo')
+
+        if self.infoOffset > 0:
+            self.getControl(502).setLabel('COMING UP:')
+        elif self.infoOffset < 0:
+            self.getControl(502).setLabel('ALREADY SEEN:')
+        elif self.infoOffset == 0:
+            self.getControl(502).setLabel('NOW WATCHING:')
+
+        position = self.channels[self.currentChannel - 1].playlistPosition + self.infoOffset
+        channel = self.fixChannel(self.currentChannel)
+        self.getControl(503).setLabel(self.channels[channel - 1].getItemTitle(position))
+        self.getControl(504).setLabel(self.channels[channel - 1].getItemEpisodeTitle(position))
+        self.getControl(505).setLabel(self.channels[channel - 1].getItemDescription(position))
+        self.getControl(506).setImage(IMAGES_LOC + self.channels[channel - 1].name + '.png')
+        self.log('setShowInfo return')
+
+
     # Display the current channel based on self.currentChannel.
     # Start the timer to hide it.
     def showChannelLabel(self, channel):
@@ -781,7 +800,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         ##ADDED BY SRANSHAFT: USED TO SHOW NEW INFO WINDOW WHEN CHANGING CHANNELS
         if self.inputChannel == -1 and self.infoOnChange == True:
-            self.myInfo.show()
+            self.showInfo(5.0)
         ##
 
         self.channelLabelTimer.start()
@@ -796,13 +815,31 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         for i in range(3):
             self.channelLabel[i].setVisible(False)
 
-        ##ADDED BY SRANSHAFT: USED TO HIDE NEW INFO WINDOW WHEN CHANGING CHANNELS
-        self.myInfo.closeInfoWindow()
-        ##
-
         self.inputChannel = -1
         self.log('hideChannelLabel return')
 
+
+    def hideInfo(self):
+        self.getControl(102).setVisible(False)
+        self.infoOffset = 0
+        self.showingInfo = False
+
+        if self.infoTimer.isAlive():
+            self.infoTimer.cancel()
+
+        self.infoTimer = threading.Timer(5.0, self.hideInfo)
+
+
+    def showInfo(self, timer):
+        self.getControl(102).setVisible(True)
+        self.showingInfo = True
+        self.setShowInfo()
+        
+        if self.infoTimer.isAlive():
+            self.infoTimer.cancel()
+            
+        self.infoTimer = threading.Timer(timer, self.hideInfo)
+        self.infoTimer.start()
 
     # return a channel in the proper range
     def fixChannel(self, channel):
@@ -847,6 +884,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                         self.sleepTimer.cancel()
                         self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
 
+                self.hideInfo()
                 self.newChannel = 0
                 self.myEPG.doModal()
 
@@ -858,10 +896,24 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.channelUp()
         elif action == ACTION_MOVE_DOWN:
             self.channelDown()
+        elif action == ACTION_MOVE_LEFT:
+            if self.showingInfo:
+                self.infoOffset -= 1
+                self.showInfo(10.0)
+        elif action == ACTION_MOVE_RIGHT:
+            if self.showingInfo:
+                self.infoOffset += 1
+                self.showInfo(10.0)
         elif action == ACTION_STOP:
             self.end()
+        elif action == ACTION_PREVIOUS_MENU:
+            if self.showingInfo:
+                self.hideInfo()
         elif action == ACTION_SHOW_INFO:
-            self.myInfo.doModal()
+            if self.showingInfo:
+                self.hideInfo()
+            else:
+                self.showInfo(10.0)
         elif action >= ACTION_NUMBER_0 and action <= ACTION_NUMBER_9:
             if self.inputChannel < 0:
                 self.inputChannel = action - ACTION_NUMBER_0
@@ -906,6 +958,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         try:
             if self.channelLabelTimer.isAlive():
                 self.channelLabelTimer.cancel()
+                
+            if self.infoTimer.isAlive():
+                self.infoTimer.cancel()
 
             if self.sleepTimeValue > 0:
                 if self.sleepTimer.isAlive():

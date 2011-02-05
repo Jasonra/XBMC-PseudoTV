@@ -142,7 +142,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         if time.time() >= starttime and time.time() < starttime + 5400:
             dif = int((starttime + 5400 - time.time()))
-            self.currentTimeBar.setPosition((basex + basew - 2) - (dif * (basew / 5400.0)), timey)
+            self.currentTimeBar.setPosition(int((basex + basew - 2) - (dif * (basew / 5400.0))), timey)
         else:
             if time.time() < starttime:
                 self.currentTimeBar.setPosition(basex + 2, timey)

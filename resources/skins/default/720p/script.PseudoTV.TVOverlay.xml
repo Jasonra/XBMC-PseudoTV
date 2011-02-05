@@ -17,5 +17,87 @@
             <texture>pstvSolid.png</texture>
             <colordiffuse>FF000000</colordiffuse>
         </control>
+
+        <control type="group" id="102">
+            <control type="image">
+                <description>Info Background</description>
+                <posx>0</posx>
+                <posy>400</posy>
+                <width>1280</width>
+                <height>324</height>
+                <texture>pstvInfoWindow.png</texture>
+            </control>
+    
+            <control type="grouplist">
+    			<posx>140</posx>
+    			<posy>500</posy>
+    			<width>750</width>
+    			<height>40</height>
+    			<orientation>horizontal</orientation>
+    			<itemgap>10</itemgap>
+
+    			<control type="label" id="502">
+    				<description>Show Name Label</description>
+    				<width min="40" max="250">auto</width>
+    				<height>40</height>
+    				<label>Now watching</label>
+    				<font>font10</font>
+    				<align>left</align>
+    				<textcolor>FFFFFFFF</textcolor>
+    			</control>
+    
+    			<control type="label" id="503">
+    				<description>Show Name Label</description>
+    				<width min="40" max="300">auto</width>
+    				<height>40</height>
+    				<label>Show Name</label>
+    				<font>font13</font>
+    				<align>left</align>
+    				<textcolor>FFFFFFFF</textcolor>
+    			</control>
+    
+    			<control type="label">
+    				<description>Show Name Label</description>
+    				<width>10</width>
+    				<height>40</height>
+    				<label>•</label>
+    				<font>font10</font>
+    				<align>left</align>
+    				<textcolor>FFFFFFFF</textcolor>
+    			</control>
+    
+    			<control type="label" id="504">
+    				<description>Show Title Label</description>
+    				<width min="40" max="300">auto</width>
+    				<height>40</height>
+    				<label>Show Title</label>
+    				<font>font13</font>
+    				<align>left</align>
+    				<textcolor>FFFFFFFF</textcolor>
+    			</control>
+    		</control>
+    
+    		<control type="label" id="505">
+    			<posx>140</posx>
+                <posy>530</posy>
+                <width>850</width>
+                <height>40</height>
+                <align>left</align>
+                <aligny>top</aligny>
+                <label>Show Description</label>
+                <textcolor>FFFFFFFF</textcolor>
+                <font>font13</font>
+    			<wrapmultiline>true</wrapmultiline>
+            </control>
+            
+            <control type="image" id="506">
+                <description>Channel Logo</description>
+                <posx>1010</posx>
+                <posy>500</posy>
+                <width>130</width>
+                <height>75</height>
+    			<aspectratio>scale</aspectratio>
+            </control>
+        </control>
     </controls>
 </window>

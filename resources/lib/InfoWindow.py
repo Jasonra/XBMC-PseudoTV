@@ -54,13 +54,13 @@ class InfoWindow(xbmcgui.WindowXMLDialog):
     def onAction(self, act):
         self.log('onAction ' + str(act.getId()))
         action = act.getId()
-
+        
         if self.actionSemaphore.acquire(False) == False:
             self.log('Unable to get semaphore')
             return
 
         if action == ACTION_PREVIOUS_MENU:
-            self.closeEPG()
+            self.closeInfoWindow()
         elif action == ACTION_MOVE_LEFT:
             self.posOffset = self.posOffset - 1
             self.setShowInfo()

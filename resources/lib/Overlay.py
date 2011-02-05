@@ -797,7 +797,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.channelLabel[i].setVisible(False)
 
         ##ADDED BY SRANSHAFT: USED TO HIDE NEW INFO WINDOW WHEN CHANGING CHANNELS
-        self.myInfo.close()
+        self.myInfo.closeInfoWindow()
         ##
 
         self.inputChannel = -1

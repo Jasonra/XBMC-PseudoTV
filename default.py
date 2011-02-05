@@ -17,5 +17,5 @@ __cwd__        = __settings__.getAddonInfo('path')
 import resources.lib.Overlay as Overlay
 
 
-MyOverlayWindow = Overlay.TVOverlay("script.PseudoTV.TVOverlay.xml", __cwd__, "Default")
+MyOverlayWindow = Overlay.TVOverlay("script.PseudoTV.TVOverlay.xml", __cwd__, "default")
 del MyOverlayWindow

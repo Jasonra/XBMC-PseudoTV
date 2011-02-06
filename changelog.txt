@@ -1,6 +1,18 @@
 Changelog
 
 
+0.2.0
+    New default skin (thanks to Sranshaft)
+    Added an info window (again, Sranshaft).
+    There is now a PseudoTV icon (thanks bridgman).
+    Channel icons.
+    Control over button placement put into the skin.
+    Start the script on the previously viewed channel.
+    EPG speed improvement.
+    Support mixed playlists.
+    Support for future JSON modification.
+
+
 0.1.5
     Resolved the problem with not resuming the channel properly.
     Fixed the issue introduced in 0.1.4 that prevending gathering information

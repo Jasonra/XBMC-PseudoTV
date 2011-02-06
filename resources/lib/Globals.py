@@ -10,7 +10,7 @@ ADDON_ID = 'script.PseudoTV'
 ADDON_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
 ADDON_INFO = ADDON_SETTINGS.getAddonInfo('path')
 
-TIMEOUT = 10 * 1000
+TIMEOUT = 15 * 1000
 
 IMAGES_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'images')) + '/'
 CHANNELS_LOC = xbmc.translatePath('special://profile/addon_data/' + ADDON_ID + '/cache/')

@@ -19,7 +19,9 @@
         </control>
 
         <control type="group" id="102">
-            <control type="image">
+			<animation effect="fade" time="500">VisibleChange</animation>
+            
+			<control type="image">
                 <description>Info Background</description>
                 <posx>0</posx>
                 <posy>400</posy>
@@ -31,37 +33,37 @@
             <control type="grouplist">
     			<posx>140</posx>
     			<posy>500</posy>
-    			<width>750</width>
-    			<height>40</height>
+    			<width>850</width>
+    			<height>30</height>
     			<orientation>horizontal</orientation>
-    			<itemgap>10</itemgap>
+    			<itemgap>6</itemgap>
 
     			<control type="label" id="502">
     				<description>Show Name Label</description>
-    				<width min="40" max="250">auto</width>
-    				<height>40</height>
+    				<width min="40" max="600">auto</width>
+    				<height>30</height>
     				<label>Now watching</label>
-    				<font>font10</font>
+    				<font>font12</font>
     				<align>left</align>
     				<textcolor>FFFFFFFF</textcolor>
     			</control>
     
     			<control type="label" id="503">
     				<description>Show Name Label</description>
-    				<width min="40" max="300">auto</width>
-    				<height>40</height>
+    				<width min="40" max="600">auto</width>
+    				<height>30</height>
     				<label>Show Name</label>
-    				<font>font13</font>
+    				<font>font12</font>
     				<align>left</align>
     				<textcolor>FFFFFFFF</textcolor>
     			</control>
     
     			<control type="label">
     				<description>Show Name Label</description>
-    				<width>10</width>
-    				<height>40</height>
+    				<width min="10" max="50">auto</width>
+    				<height>30</height>
     				<label>•</label>
-    				<font>font10</font>
+    				<font>font12</font>
     				<align>left</align>
     				<textcolor>FFFFFFFF</textcolor>
     			</control>
@@ -69,9 +71,9 @@
     			<control type="label" id="504">
     				<description>Show Title Label</description>
     				<width min="40" max="300">auto</width>
-    				<height>40</height>
+    				<height>30</height>
     				<label>Show Title</label>
-    				<font>font13</font>
+    				<font>font12</font>
     				<align>left</align>
     				<textcolor>FFFFFFFF</textcolor>
     			</control>
@@ -81,12 +83,12 @@
     			<posx>140</posx>
                 <posy>530</posy>
                 <width>850</width>
-                <height>40</height>
+                <height>30</height>
                 <align>left</align>
                 <aligny>top</aligny>
                 <label>Show Description</label>
                 <textcolor>FFFFFFFF</textcolor>
-                <font>font13</font>
+                <font>font12</font>
     			<wrapmultiline>true</wrapmultiline>
             </control>
             

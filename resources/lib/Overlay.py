@@ -285,6 +285,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         totalchanrange = 100.0 / self.maxChannels
         itemsize = totalchanrange / len(fileList)
         lastval = 0
+        itemsadded = 0
 
         # Write each entry into the new playlist
         for i in range(len(fileList)):
@@ -297,14 +298,20 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 data = data[:600]
                 channelplaylist.write("#EXTINF:" + str(duration) + "," + data + "\n")
                 channelplaylist.write(fileList[i] + "\n")
+                itemsadded += 1
             else:
                 self.log("Can't get duration: " + fileList[i], xbmc.LOGERROR)
 
             if (i + 1) * itemsize // 1 > lastval:
-                self.updateDialog.update(updatebase + ((i + 1) * itemsize), "Updating channel list")
+                self.updateDialog.update(int(updatebase + ((i + 1) * itemsize)), "Updating channel list", 'Channel ' + str(channel))
                 lastval = (i + 1) * itemsize // 1
 
         channelplaylist.close()
+
+        if itemsadded == 0:
+            self.Error('No durations found for channel ' + str(channel))
+            return False
+
         self.log('makeChannelList return')
         return True
 
@@ -800,6 +807,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         ##ADDED BY SRANSHAFT: USED TO SHOW NEW INFO WINDOW WHEN CHANGING CHANNELS
         if self.inputChannel == -1 and self.infoOnChange == True:
+            self.infoOffset = 0
             self.showInfo(5.0)
         ##
 
@@ -892,9 +900,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                     self.background.setVisible(True)
                     self.setChannel(self.newChannel)
                     self.background.setVisible(False)
-        elif action == ACTION_MOVE_UP:
+        elif action == ACTION_MOVE_UP or action == ACTION_PAGEUP:
             self.channelUp()
-        elif action == ACTION_MOVE_DOWN:
+        elif action == ACTION_MOVE_DOWN or action == ACTION_PAGEDOWN:
             self.channelDown()
         elif action == ACTION_MOVE_LEFT:
             if self.showingInfo:

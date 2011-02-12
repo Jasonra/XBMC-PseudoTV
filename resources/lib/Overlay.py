@@ -146,7 +146,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             if os.path.exists(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u'):
                 try:
                     self.channels[-1].totalTimePlayed = int(ADDON_SETTINGS.getSetting('Channel_' + str(i + 1) + '_time'))
-                    
+
                     if self.channels[-1].setPlaylist(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u') == True:
                         self.channels[-1].isValid = True
                         validchannels += 1
@@ -276,14 +276,15 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         else:
             fileList = self.buildFileList(fle)
 
-        if len(fileList) == 0:
-            self.log("Unable to get information about channel " + str(channel), xbmc.LOGERROR)
-            return False
-
         try:
             channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")
         except:
             self.Error('Unable to open the cache file ' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', xbmc.LOGERROR)
+            return False
+
+        if len(fileList) == 0:
+            self.log("Unable to get information about channel " + str(channel), xbmc.LOGERROR)
+            channelplaylist.close()
             return False
 
         fileList = fileList[:250]

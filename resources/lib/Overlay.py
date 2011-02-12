@@ -282,13 +282,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.Error('Unable to open the cache file ' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', xbmc.LOGERROR)
             return False
 
+        channelplaylist.write("#EXTM3U\n")
+
         if len(fileList) == 0:
             self.log("Unable to get information about channel " + str(channel), xbmc.LOGERROR)
             channelplaylist.close()
             return False
 
         fileList = fileList[:250]
-        channelplaylist.write("#EXTM3U\n")
 
         # Write each entry into the new playlist
         for string in fileList:

@@ -222,6 +222,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                     thename = line[index1 + 6:index2]
                     break
 
+        thename = thename.replace('&amp;', '&')
         fl.close()
         self.log('getSmartPlaylistName return ' + thename)
         return thename
@@ -367,12 +368,17 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         try:
             xml = open(filename, "r")
         except:
-            self.log("Unable to open the smart playlist " + filename, xbmc.LOGERROR)
+            self.log("buildMixedFileList Unable to open the smart playlist " + filename, xbmc.LOGERROR)
             return fileList
 
-        dom1 = parse(xml)
-        rules = dom1.getElementsByTagName('rule')
-        order = dom1.getElementsByTagName('order')
+        try:
+            dom1 = parse(xml)
+            rules = dom1.getElementsByTagName('rule')
+            order = dom1.getElementsByTagName('order')
+        except:
+            self.log('buildMixedFileList Problem parsing playlist ' + filename, xbmc.LOGERROR)
+            xml.close()
+            return fileList
 
         for rule in rules:
             rulename = rule.childNodes[0].nodeValue
@@ -725,7 +731,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             direction = -1
 
         if self.channels[channel - 1].isValid == False:
-            return self.fixChannel(channel + direction)
+            return self.fixChannel(channel + direction, increasing)
 
         return channel
 

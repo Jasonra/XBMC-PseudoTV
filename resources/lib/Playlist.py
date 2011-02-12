@@ -123,4 +123,8 @@ class Playlist:
             line = fle.readline()
 
         fle.close()
+        
+        if len(self.itemlist) == 0:
+            return False
+
         return True

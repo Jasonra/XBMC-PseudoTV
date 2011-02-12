@@ -113,7 +113,11 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         xbmcgui.lock()
         self.removeControl(self.currentTimeBar)
         self.centerChannel = self.MyOverlayWindow.fixChannel(curchannel)
-        curchannel = self.MyOverlayWindow.fixChannel(curchannel - 2)
+        # This is done twice to guarantee we go back 2 channels.  If the previous 2 channels
+        # aren't valid, then doing a fix on curchannel - 2 may result in going back only
+        # a single valid channel.
+        curchannel = self.MyOverlayWindow.fixChannel(curchannel - 1, False)
+        curchannel = self.MyOverlayWindow.fixChannel(curchannel - 1, False)
         starttime = self.roundToHalfHour(int(starttime))
         self.setTimeLabels(starttime)
         self.shownTime = starttime
@@ -327,7 +331,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         # change controls to display the proper junks
         if self.focusRow == self.rowCount - 1:
-            self.setChannelButtons(self.shownTime, self.centerChannel + 1)
+            self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel + 1))
             self.focusRow = self.rowCount - 2
 
         self.setProperButton(self.focusRow + 1)
@@ -340,7 +344,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         # same as godown
         # change controls to display the proper junks
         if self.focusRow == 0:
-            self.setChannelButtons(self.shownTime, self.centerChannel - 1)
+            self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel - 1, False))
             self.focusRow = 1
 
         self.setProperButton(self.focusRow - 1)
@@ -425,7 +429,18 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         width = self.channelButtons[self.focusRow][self.focusIndex].getWidth()
         left = left - basex + (width / 2)
         starttime = self.shownTime + (left / (basew / 5400.0))
-        newchan = self.MyOverlayWindow.fixChannel(self.centerChannel + self.focusRow - 2)
+        
+        chnoffset = self.focusRow - 2
+        newchan = self.centerChannel
+
+        while chnoffset != 0:
+            if chnoffset > 0:
+                newchan = self.MyOverlayWindow.fixChannel(newchan + 1, True)
+                chnoffset -= 1
+            else:
+                newchan = self.MyOverlayWindow.fixChannel(newchan - 1, False)
+                chnoffset += 1
+
         plpos = self.determinePlaylistPosAtTime(starttime, newchan)
 
         if plpos == -1:
@@ -450,11 +465,21 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         width = self.channelButtons[self.focusRow][self.focusIndex].getWidth()
         left = left - basex + (width / 2)
         starttime = self.shownTime + (left / (basew / 5400.0))
-        newchan = self.MyOverlayWindow.fixChannel(self.centerChannel + self.focusRow - 2)
+        chnoffset = self.focusRow - 2
+        newchan = self.centerChannel
+
+        while chnoffset != 0:
+            if chnoffset > 0:
+                newchan = self.MyOverlayWindow.fixChannel(newchan + 1, True)
+                chnoffset -= 1
+            else:
+                newchan = self.MyOverlayWindow.fixChannel(newchan - 1, False)
+                chnoffset += 1
+
         plpos = self.determinePlaylistPosAtTime(starttime, newchan)
 
         if plpos == -1:
-            self.log('Unable to find the proper playlist to set from EPG')
+            self.log('Unable to find the proper playlist to set from EPG', xbmc.LOGERROR)
             return
 
         if self.MyOverlayWindow.channels[newchan - 1].playlistPosition != plpos:

@@ -5,6 +5,8 @@ import datetime
 import sys, re
 import random
 
+from xml.dom.minidom import parse, parseString
+
 from Playlist import Playlist
 from Globals import *
 from Channel import Channel
@@ -27,6 +29,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.timeStarted = 0
         self.infoOnChange = True
         self.infoOffset = 0
+        self.invalidatedChannelCount = 0
         self.showingInfo = False
         random.seed()
 
@@ -124,10 +127,11 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.updateDialog.create("PseudoTV", "Updating channel list")
         self.updateDialog.update(0, "Updating channel list")
         self.background.setVisible(True)
+        validchannels = 0
 
         # Go through all channels, create their arrays, and setup the new playlist
         for i in range(self.maxChannels):
-            self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel list")
+            self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel " + str(i + 1))
             self.channels.append(Channel())
             createlist = True
 
@@ -142,35 +146,44 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             if os.path.exists(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u'):
                 try:
                     self.channels[-1].totalTimePlayed = int(ADDON_SETTINGS.getSetting('Channel_' + str(i + 1) + '_time'))
-                    self.channels[-1].setPlaylist(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u')
+                    
+                    if self.channels[-1].setPlaylist(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u') == True:
+                        self.channels[-1].isValid = True
+                        validchannels += 1
 
-                    # If this channel has been watched for longer than it lasts, reset the channel
-                    # Really, this should only apply when the order is random
-                    if self.channels[-1].totalTimePlayed < self.channels[-1].getTotalDuration():
-                        createlist = forcereset
+                        # If this channel has been watched for longer than it lasts, reset the channel
+                        # Really, this should only apply when the order is random
+                        if self.channels[-1].totalTimePlayed < self.channels[-1].getTotalDuration():
+                            createlist = forcereset
+                    else:
+                        createlist = True
                 except:
                     pass
 
             if createlist:
-                if self.makeChannelList(i + 1) == False:
-                    self.updateDialog.close()
-                    return False
-
-                self.channels[-1].setPlaylist(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u')
-                self.channels[-1].totalTimePlayed = 0
-                ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', '0')
+                if self.makeChannelList(i + 1) == True:
+                    self.channels[-1].setPlaylist(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u')
+                    self.channels[-1].totalTimePlayed = 0
+                    self.channels[-1].isValid = True
+                    validchannels += 1
+                    ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', '0')
 
             self.channels[-1].name = self.getSmartPlaylistName(self.getSmartPlaylistFilename(i + 1))
 
+        if validchannels == 0:
+            self.Error("No channels have valid data")
+            return False
+
         ADDON_SETTINGS.setSetting('ForceChannelReset', 'false')
+        self.updateDialog.update(100, "Update complete")
 
         try:
-            self.currentChannel = int(ADDON_SETTINGS.getSetting('CurrentChannel'))
+            self.currentChannel = self.fixChannel(int(ADDON_SETTINGS.getSetting('CurrentChannel')))
         except:
-            self.currentChannel = 1
+            self.currentChannel = self.fixChannel(1)
 
-        if self.currentChannel > self.maxChannels or self.currentChannel < 1 or forcereset:
-            self.currentChannel = 1
+        if forcereset:
+            self.currentChannel = self.fixChannel(1)
 
         xbmc.Player().stop()
         self.updateDialog.close()
@@ -197,10 +210,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.log("Unable to open the smart playlist " + filename, xbmc.LOGERROR)
             return ''
 
-        line = fl.readline()
         thename = ''
 
-        while len(line) > 0:
+        for line in fl:
             index1 = line.find('<name>')
 
             if index1 >= 0:
@@ -209,8 +221,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 if index2 > index1 + 6:
                     thename = line[index1 + 6:index2]
                     break
-
-            line = fl.readline()
 
         fl.close()
         self.log('getSmartPlaylistName return ' + thename)
@@ -235,10 +245,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.log("Unable to open the smart playlist " + filename, xbmc.LOGERROR)
             return ''
 
-        line = fl.readline()
         thetype = ''
 
-        while len(line) > 0:
+        for line in fl:
             index1 = line.find('<smartplaylist type="')
 
             if index1 >= 0:
@@ -247,8 +256,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 if index2 > index1 + 6:
                     thetype = line[index1 + 21:index2]
                     break
-
-            line = fl.readline()
 
         fl.close()
         self.log('getSmartPlaylistType return ' + thetype)
@@ -261,7 +268,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         fle = self.getSmartPlaylistFilename(channel)
 
         if len(fle) == 0:
-            self.Error('Unable to locate the playlist for channel ' + str(channel))
+            self.log('Unable to locate the playlist for channel ' + str(channel), xbmc.LOGERROR)
             return False
 
         if self.getSmartPlaylistType(fle) == 'mixed':
@@ -270,68 +277,81 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             fileList = self.buildFileList(fle)
 
         if len(fileList) == 0:
-            self.Error("Unable to get information about channel " + str(channel))
+            self.log("Unable to get information about channel " + str(channel), xbmc.LOGERROR)
             return False
 
         try:
             channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")
         except:
-            self.Error('Unable to open the cache file ' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
+            self.Error('Unable to open the cache file ' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', xbmc.LOGERROR)
             return False
 
         fileList = fileList[:250]
         channelplaylist.write("#EXTM3U\n")
-        updatebase = (channel - 1) * 100.0 / self.maxChannels
-        totalchanrange = 100.0 / self.maxChannels
-        itemsize = totalchanrange / len(fileList)
-        lastval = 0
-        itemsadded = 0
 
         # Write each entry into the new playlist
-        for i in range(len(fileList)):
-            duration = self.getDurationForFile(fileList[i])
-
-            if duration > 0:
-                data = self.getInformation(fileList[i])
-                data = data.replace("\n", " ")
-                data = data.replace("\r", " ")
-                data = data[:600]
-                channelplaylist.write("#EXTINF:" + str(duration) + "," + data + "\n")
-                channelplaylist.write(fileList[i] + "\n")
-                itemsadded += 1
-            else:
-                self.log("Can't get duration: " + fileList[i], xbmc.LOGERROR)
-
-            if (i + 1) * itemsize // 1 > lastval:
-                self.updateDialog.update(int(updatebase + ((i + 1) * itemsize)), "Updating channel list", 'Channel ' + str(channel))
-                lastval = (i + 1) * itemsize // 1
+        for string in fileList:
+            channelplaylist.write("#EXTINF:" + string + "\n")
 
         channelplaylist.close()
-
-        if itemsadded == 0:
-            self.Error('No durations found for channel ' + str(channel))
-            return False
-
         self.log('makeChannelList return')
         return True
 
 
-    def buildFileList(self, dir_name, media_type="files", recursive="TRUE"):
+    def buildFileList(self, dir_name, media_type="video", recursive="TRUE"):
         fileList = []
-        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "%s", "recursive": "%s"}, "id": 1}' % ( self.escapeDirJSON( dir_name ), media_type, recursive )
+        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "%s", "recursive": "%s", "fields":["duration","tagline","showtitle","album","artist","plot"]}, "id": 1}' % ( self.escapeDirJSON( dir_name ), media_type, recursive )
         json_folder_detail = xbmc.executeJSONRPC(json_query)
         self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in file_detail:
-            match = re.search( '"file" *: *"(.*?)",', f )
+            match = re.search('"file" *: *"(.*?)",', f)
 
             if match:
-                if ( match.group(1).endswith( "/" ) or match.group(1).endswith( "\\" ) ):
-                    if ( recursive == "TRUE" ):
-                        fileList.extend( self.buildFileList( match.group(1), media_type, recursive ) )
+                if(match.group(1).endswith("/") or match.group(1).endswith("\\")):
+                    if(recursive == "TRUE"):
+                        fileList.extend(self.buildFileList(match.group(1), media_type, recursive))
                 else:
-                    fileList.append( match.group(1).replace("\\\\", "\\") )
+                    duration = re.search('"duration" *: *([0-9]*?),', f)
+
+                    try:
+                        if int(duration.group(1)) > 0:
+                            title = re.search('"label" *: *"(.*?)"', f)
+                            tmpstr = duration.group(1) + ','
+                            showtitle = re.search('"showtitle" *: *"(.*?)"', f)
+                            plot = re.search('"plot" *: *"(.*?)"', f)
+
+                            if plot == None:
+                                theplot = ""
+                            else:
+                                theplot = plot.group(1)
+
+                            # This is a TV show
+                            if showtitle != None:
+                                tmpstr += showtitle.group(1) + "//" + title.group(1) + "//" + theplot
+                            else:
+                                tmpstr += title.group(1) + "//"
+                                album = re.search('"album" *: *"(.*?)"', f)
+
+                                # This is a movie
+                                if album == None:
+                                    tagline = re.search('"tagline" *: *"(.*?)"', f)
+
+                                    if tagline != None:
+                                        tmpstr += tagline.group(1)
+
+                                    tmpstr += "//" + theplot
+                                else:
+                                    artist = re.search('"artist" *: *"(.*?)"', f)
+                                    tmpstr += album.group(1) + "//" + artist.group(1)
+
+                            tmpstr = tmpstr[:600]
+                            tmpstr = tmpstr.replace("\n", " ")
+                            tmpstr = tmpstr.replace("\r", " ") + '\n' + match.group(1).replace("\\\\", "\\")
+                            fileList.append(tmpstr)
+                    except:
+                        pass
             else:
                 continue
 
@@ -343,29 +363,24 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log('buildMixedFileList ' + filename)
 
         try:
-            fl = open(filename, "r")
+            xml = open(filename, "r")
         except:
             self.log("Unable to open the smart playlist " + filename, xbmc.LOGERROR)
-            return ''
+            return fileList
 
-        line = fl.readline()
+        dom1 = parse(xml)
+        rules = dom1.getElementsByTagName('rule')
+        order = dom1.getElementsByTagName('order')
 
-        while len(line) > 0:
-            index1 = line.find('<rule field="playlist"')
+        for rule in rules:
+            rulename = rule.childNodes[0].nodeValue
+            fileList.extend(self.buildFileList(xbmc.translatePath('special://profile/playlists/video/') + rulename))
 
-            if index1 >= 0:
-                index1 = line.find('>')
+        if len(order) > 0:
+            random.shuffle(fileList)
 
-                if index1 > 0:
-                    index2 = line.find('</rule>')
-
-                    if index2 > index1:
-                        fileList.extend(self.buildFileList(xbmc.translatePath('special://profile/playlists/video') + '/' + line[index1 + 1:index2]))
-
-            line = fl.readline()
-
-        fl.close()
-        random.shuffle(fileList)
+        xml.close()
+        self.log("buildMixedFileList returning")
         return fileList
 
 
@@ -376,182 +391,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         return dir_name
 
 
-    # Return a string wirh the needed show information
-    def getInformation(self, filename):
-        self.log('getInformation ' + filename)
-        fileid = self.getFileId(filename)
-        epid = self.getEpisodeId(fileid)
-
-        if epid > -1:
-            self.log('getInformation episode return')
-            return self.getEpisodeInformation(epid)
-
-        movieid = self.getMovieId(fileid)
-
-        if movieid > -1:
-            self.log('getInformation movie return')
-            return self.getMovieInformation(movieid)
-
-        self.log('getInformation music video return')
-        return self.getMusicVideoInformation(fileid)
-
-
-    def getFileId(self, filename):
-        if len(filename) == 0:
-            self.log('getFileId no filename')
-            return -1
-
-        # determine the filename and path
-        path, name = os.path.split(filename)
-
-        if filename.find('/') > -1:
-            path += '/'
-        else:
-            path += '\\'
-
-        # Get past a bug in the http api that turns all commas into semi-colons
-        name = name.replace(',', '%2C')
-        path = path.replace(',', '%2C')
-        # construct the query
-
-        query = 'select files.idFile from files where files.strFilename="' + name + '" and files.idPath in ' \
-            '(select path.idPath from path where path.strPath="' + path + '")'
-        #run the query
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-
-        try:
-            return int(self.parseQuery(data))
-        except:
-            return -1
-
-
-    def parseQuery(self, data):
-        if len(data) > 15:
-            # parse the result
-            index1 = data.find('<field>')
-
-            # parse the result
-            if index1 >= 0:
-                index2 = data.find('</field>')
-
-                if index2 > (index1 + 7):
-                    return data[index1 + 7:index2]
-
-        return ''
-
-
-    def getEpisodeInformation(self, episodeid):
-        self.log('getEpisodeInformation')
-        # Want to use JSON, but GetEpisodeDetails isn't in the mainstream release yet
-#        retv = xbmc.executeJSONRPC('{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodeDetails", "params": {"episodeid": ' + str(epid) + '}, "id": 1}')
-        # Get the TV show title
-        query = 'select tvshow.c00 from tvshow where tvshow.idShow in' \
-            '(select tvshowlinkepisode.idShow from tvshowlinkepisode where tvshowlinkepisode.idEpisode=' + str(episodeid) + ')'
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-        result = self.parseQuery(data)
-        # Get the episode title and description
-        query = 'select episode.c00 from episode where episode.idEpisode=' + str(episodeid)
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-        result += '//' + self.parseQuery(data)
-        query = 'select episode.c01 from episode where episode.idEpisode=' + str(episodeid)
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-        result += '//' + self.parseQuery(data)
-        self.log('getEpisodeInformation return')
-        return result
-
-
-    def getMovieInformation(self, movieid):
-        self.log('getMovieInformation')
-        # Get the episode title and description
-        query = 'select movie.c00 from movie where movie.idMovie=' + str(movieid)
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-        self.log('1-' + data)
-        result = self.parseQuery(data) + '//'
-        query = 'select movie.c03 from movie where movie.idMovie=' + str(movieid)
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-        self.log('2-' + data)
-        result += self.parseQuery(data) + '//'
-        query = 'select movie.c01 from movie where movie.idMovie=' + str(movieid)
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-        self.log('3-' + data)
-        result += self.parseQuery(data)
-        self.log('getMovieInformation return')
-        return result
-
-
-    def getMusicVideoInformation(self, fileid):
-        self.log('getMusicVideoInformation')
-        query = 'select musicvideo.c00 from musicvideo where musicvideo.idFile=' + str(fileid)
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-        result = self.parseQuery(data)
-        # Get the episode title and description
-        query = 'select musicvideo.c07 from musicvideo where musicvideo.idFile=' + str(fileid)
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-        result += '//' + self.parseQuery(data)
-        query = 'select musicvideo.c10 from musicvideo where musicvideo.idFile=' + str(fileid)
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-        result += '//' + self.parseQuery(data)
-        self.log('getMusicVideoInformation return')
-        return result
-
-
-    def getEpisodeId(self, fileid):
-        query = 'select episode.idEpisode from episode where episode.idFile=' + str(fileid)
-        #run the query
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-
-        try:
-            return int(self.parseQuery(data))
-        except:
-            return -1
-
-
-    def getMovieId(self, fileid):
-        query = 'select movie.idMovie from movie where movie.idFile=' + str(fileid)
-        #run the query
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-
-        try:
-            return int(self.parseQuery(data))
-        except:
-            return -1
-
-
-    # since the playlist isn't properly returning the duration, get it from the database
-    def getDurationForFile(self, filename):
-        self.log('getDurationForFile ' + filename)
-
-        if len(filename) == 0:
-            self.log('getDurationForFile return no filename')
-            return 0
-
-        # determine the filename and path
-        path, name = os.path.split(filename)
-
-        if filename.find('/') > -1:
-            path += '/'
-        else:
-            path += '\\'
-
-        # Get past a bug in the http api that turns all commas into semi-colons
-        name = name.replace(',', '%2C')
-        path = path.replace(',', '%2C')
-        # construct the query
-        query = 'select streamdetails.iVideoDuration from streamdetails where streamdetails.iStreamType=0 and streamdetails.idFile in' \
-            '(select files.idFile from files where files.strFilename="' + name + '" and files.idPath in' \
-            '(select path.idPath from path where path.strPath="' + path + '"))'
-        #run the query
-        data = xbmc.executehttpapi('QueryVideoDatabase(' + query + ')')
-
-        try:
-            x = int(self.parseQuery(data))
-            self.log('getDurationForFile return ' + str(x))
-            return x
-        except:
-            self.log('getDurationForFile return 0')
-            return 0
-
-
     def channelDown(self):
         self.log('channelDown')
 
@@ -559,12 +398,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             return
 
         self.background.setVisible(True)
-        channel = self.currentChannel
-        channel -= 1
-
-        if channel < 1:
-            channel = self.maxChannels
-
+        channel = self.fixChannel(self.currentChannel - 1, False)
         self.setChannel(channel)
         self.background.setVisible(False)
         self.log('channelDown return')
@@ -577,12 +411,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             return
 
         self.background.setVisible(True)
-        channel = self.currentChannel
-        channel += 1
-
-        if channel > self.maxChannels:
-            channel = 1
-
+        channel = self.fixChannel(self.currentChannel + 1)
         self.setChannel(channel)
         self.background.setVisible(False)
         self.log('channelUp return')
@@ -605,6 +434,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         if channel < 1 or channel > self.maxChannels:
             self.log('setChannel invalid channel ' + str(channel), xbmc.LOGERROR)
+            return
+            
+        if self.channels[channel - 1].isValid == False:
+            self.log('setChannel channel not valid ' + str(channel), xbmc.LOGERROR)
             return
 
         self.lastActionTime = 0
@@ -633,7 +466,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             xbmc.PlayList(xbmc.PLAYLIST_VIDEO).clear()
 
             if self.startPlaylist('XBMC.PlayMedia(' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u)') == False:
-                self.Error('Unable to set channel ' + str(channel))
+                self.log("Unable to set channel " + str(channel) + ". Invalidating.", xbmc.LOGERROR)
+                InvalidateChannel(channel)
                 return
 
             xbmc.executebuiltin("XBMC.PlayerControl(repeatall)")
@@ -650,11 +484,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         if self.channels[self.currentChannel - 1].playlistPosition != xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition():
             if samechannel == False:
                 if self.startPlaylist('XBMC.Playlist.PlayOffset(' + str(self.channels[self.currentChannel - 1].playlistPosition) + ')') == False:
-                    self.Error('Unable to set offset for channel ' + str(channel))
+                    self.log('Unable to set offset for channel ' + str(channel) + ". Invalidating.", xbmc.LOGERROR)
+                    InvalidateChannel(channel)
                     return
             else:
                 if self.startPlaylist('XBMC.Playlist.PlayOffset(' + str(self.channels[self.currentChannel - 1].playlistPosition - xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition()) + ')') == False:
-                    self.Error('Unable to set offset for channel ' + str(channel))
+                    self.log('Unable to set offset for channel ' + str(channel) + ". Invalidating.", xbmc.LOGERROR)
+                    InvalidateChannel(channel)
                     return
 
         # set the time offset
@@ -682,6 +518,33 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log('setChannel return')
 
 
+    def InvalidateChannel(self, channel):
+        self.log("InvalidateChannel" + str(channel))
+
+        if channel < 1 or channel > self.maxChannels:
+            self.log("InvalidateChannel invalid channel " + str(channel))
+            return
+            
+        self.channels[channel - 1].isValid = False
+        self.invalidatedChannelCount += 1
+
+        if self.invalidatedChannelCount > 3:
+            self.Error("Exceeded 3 invalidated channels. Exiting.")
+            return
+
+        remaining = 0
+
+        for i in range(self.maxChannels):
+            if self.channels[i].isValid:
+                remaining += 1
+
+        if remaining == 0:
+            self.Error("No channels available. Exiting.")
+            return
+
+        self.setChannel(self.fixChannel(channel))
+
+
     def waitForVideoPaused(self):
         self.log('waitForVideoPaused')
         sleeptime = 0
@@ -695,7 +558,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
             sleeptime += 100
         else:
-            self.Error('Timeout waiting for pause')
+            self.log('Timeout waiting for pause', xbmc.LOGERROR)
             return False
 
         self.log('waitForVideoPaused return')
@@ -714,7 +577,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
             sleeptime += 100
         else:
-            self.Error('Timeout waiting for video to stop')
+            self.log('Timeout waiting for video to stop', xbmc.LOGERROR)
             return False
 
         self.log('waitForVideoStop return')
@@ -752,7 +615,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             sleeptime += 100
 
         if sleeptime >= TIMEOUT:
-            self.Error('Timeout waiting for video to start')
+            self.log('Timeout waiting for video to start', xbmc.LOGERROR)
             return False
 
         self.log('startPlaylist return')
@@ -770,11 +633,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.getControl(502).setLabel('NOW WATCHING:')
 
         position = self.channels[self.currentChannel - 1].playlistPosition + self.infoOffset
-        channel = self.fixChannel(self.currentChannel)
-        self.getControl(503).setLabel(self.channels[channel - 1].getItemTitle(position))
-        self.getControl(504).setLabel(self.channels[channel - 1].getItemEpisodeTitle(position))
-        self.getControl(505).setLabel(self.channels[channel - 1].getItemDescription(position))
-        self.getControl(506).setImage(IMAGES_LOC + self.channels[channel - 1].name + '.png')
+        self.getControl(503).setLabel(self.channels[self.currentChannel - 1].getItemTitle(position))
+        self.getControl(504).setLabel(self.channels[self.currentChannel - 1].getItemEpisodeTitle(position))
+        self.getControl(505).setLabel(self.channels[self.currentChannel - 1].getItemDescription(position))
+        self.getControl(506).setImage(IMAGES_LOC + self.channels[self.currentChannel - 1].name + '.png')
         self.log('setShowInfo return')
 
 
@@ -842,18 +704,26 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.getControl(102).setVisible(True)
         self.showingInfo = True
         self.setShowInfo()
-        
+
         if self.infoTimer.isAlive():
             self.infoTimer.cancel()
-            
+
         self.infoTimer = threading.Timer(timer, self.hideInfo)
         self.infoTimer.start()
 
-    # return a channel in the proper range
-    def fixChannel(self, channel):
+    # return a valid channel in the proper range
+    def fixChannel(self, channel, increasing = True):
         while channel < 1 or channel > self.maxChannels:
             if channel < 1: channel = self.maxChannels + channel
             if channel > self.maxChannels: channel -= self.maxChannels
+
+        if increasing:
+            direction = 1
+        else:
+            direction = -1
+
+        if self.channels[channel - 1].isValid == False:
+            return self.fixChannel(channel + direction)
 
         return channel
 
@@ -966,7 +836,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         try:
             if self.channelLabelTimer.isAlive():
                 self.channelLabelTimer.cancel()
-                
+
             if self.infoTimer.isAlive():
                 self.infoTimer.cancel()
 
@@ -981,7 +851,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         if self.timeStarted > 0:
             for i in range(self.maxChannels):
-                ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(time.time() - self.timeStarted + self.channels[i].totalTimePlayed)))
+                if self.channels[i].isValid:
+                    ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(time.time() - self.timeStarted + self.channels[i].totalTimePlayed)))
 
         try:
             ADDON_SETTINGS.setSetting('CurrentChannel', str(self.currentChannel))

@@ -12,6 +12,7 @@ class Channel:
         self.lastAccessTime = 0
         self.totalTimePlayed = 0
         self.isPaused = False
+        self.isValid = False
 
 
     def log(self, msg):
@@ -19,7 +20,7 @@ class Channel:
 
 
     def setPlaylist(self, filename):
-        self.Playlist.load(filename)
+        return self.Playlist.load(filename)
 
 
     def setPaused(self, paused):

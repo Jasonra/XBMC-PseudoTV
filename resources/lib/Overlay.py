@@ -123,6 +123,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log('Force Reset is ' + str(forcereset))
         self.infoOnChange = ADDON_SETTINGS.getSetting("InfoOnChange") == "true"
         self.log('Show info label on channel change is ' + str(self.infoOnChange))
+        channelResetSetting = int(ADDON_SETTINGS.getSetting("ChannelResetSetting"))
+        self.log('Channel Reset Setting is ' + str(channelResetSetting))
+
+        try:
+            lastResetTime = int(ADDON_SETTINGS.getSetting("LastResetTime"))
+        except:
+            lastResetTime = 0
+
         self.startupTime = time.time()
         self.updateDialog.create("PseudoTV", "Updating channel list")
         self.updateDialog.update(0, "Updating channel list")
@@ -152,11 +160,29 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                         validchannels += 1
 
                         # If this channel has been watched for longer than it lasts, reset the channel
-                        # Really, this should only apply when the order is random
-                        if self.channels[-1].totalTimePlayed < self.channels[-1].getTotalDuration():
+                        if channelResetSetting == 0 and self.channels[-1].totalTimePlayed < self.channels[-1].getTotalDuration():
                             createlist = forcereset
-                    else:
-                        createlist = True
+                            
+                        if channelResetSetting > 0 and channelResetSetting < 4:
+                            timedif = time.time() - lastResetTime
+
+                            if channelResetSetting == 1 and timedif < (60 * 60 * 24):
+                                createlist = forcereset
+
+                            if channelResetSetting == 2 and timedif < (60 * 60 * 24 * 7):
+                                createlist = forcereset
+
+                            if channelResetSetting == 3 and timedif < (60 * 60 * 24 * 30):
+                                createlist = forcereset
+
+                            if timedif < 0:
+                                createlist = forcereset
+
+                            if createlist:
+                                ADDON_SETTINGS.setSetting('LastResetTime', str(int(time.time())))
+
+                        if channelResetSetting == 4:
+                            createlist = forcereset
                 except:
                     pass
 
@@ -323,7 +349,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                             title = re.search('"label" *: *"(.*?)"', f)
                             tmpstr = duration.group(1) + ','
                             showtitle = re.search('"showtitle" *: *"(.*?)"', f)
-                            plot = re.search('"plot" *: *"(.*?)"', f)
+                            plot = re.search('"plot" *: *"(.*?)",', f)
 
                             if plot == None:
                                 theplot = ""
@@ -350,8 +376,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                                     tmpstr += album.group(1) + "//" + artist.group(1)
 
                             tmpstr = tmpstr[:600]
-                            tmpstr = tmpstr.replace("\n", " ")
-                            tmpstr = tmpstr.replace("\r", " ") + '\n' + match.group(1).replace("\\\\", "\\")
+                            tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
+                            tmpstr = tmpstr + '\n' + match.group(1).replace("\\\\", "\\")
                             fileList.append(tmpstr)
                     except:
                         pass

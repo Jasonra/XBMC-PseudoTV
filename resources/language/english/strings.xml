@@ -2,4 +2,5 @@
     <string id="30001">Auto-off Timer(in minutes)</string>
     <string id="30002">Force all channels to be reset</string>
     <string id="30003">Show info when changing channels</string>
+    <string id="30004">Time between channel resets</string>
 </strings>

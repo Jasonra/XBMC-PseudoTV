@@ -71,11 +71,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.myEPG = EPGWindow("script.PseudoTV.EPG.xml", ADDON_INFO, "default")
         self.myEPG.MyOverlayWindow = self
         self.findMaxChannels()
-
-        if self.maxChannels == 0:
-            self.Error('Unable to find any channels. Create smart\nplaylists with file names Channel_1, Chanbel_2, etc.')
-            return
-
         # Don't allow any actions during initialization
         self.actionSemaphore.acquire()
 
@@ -85,8 +80,31 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         if self.fillInChannels:
             self.fillChannels()
 
+        if self.maxChannels == 0:
+            self.Error('Unable to find any channels. Create smart\nplaylists with file names Channel_1, Chanbel_2, etc.')
+            return
+
+        found = False
+
+        for i in range(self.maxChannels):
+            if self.channels[i].isValid:
+                found = True
+                break
+
+        if found == False:
+            self.Error("No valid channel data found")
+            return
+
         if self.sleepTimeValue > 0:
             self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
+
+        try:
+            if self.forceReset == False:
+                self.currentChannel = self.fixChannel(int(ADDON_SETTINGS.getSetting("CurrentChannel")))
+            else:
+                self.currentChannel = self.fixChannel(1)
+        except:
+            self.currentChannel = self.fixChannel(1)
 
         self.resetChannelTimes()
         self.setChannel(self.currentChannel)
@@ -139,7 +157,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.updateDialog.create("PseudoTV", "Updating channel list")
         self.updateDialog.update(0, "Updating channel list")
         self.background.setVisible(True)
-        validchannels = 0
 
         # Go through all channels, create their arrays, and setup the new playlist
         for i in range(self.maxChannels):
@@ -153,24 +170,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 self.end()
                 return False
 
-            if self.setupChannel(i + 1):
-                validchannels += 1
-
-        if validchannels == 0:
-            self.Error("No channels have valid data")
-            return False
+            self.setupChannel(i + 1)
 
         ADDON_SETTINGS.setSetting('ForceChannelReset', 'false')
         self.updateDialog.update(100, "Update complete")
-
-        try:
-            self.currentChannel = self.fixChannel(int(ADDON_SETTINGS.getSetting('CurrentChannel')))
-        except:
-            self.currentChannel = self.fixChannel(1)
-
-        if self.forceReset:
-            self.currentChannel = self.fixChannel(1)
-
         xbmc.Player().stop()
         self.updateDialog.close()
         self.log('readConfig return')
@@ -192,6 +195,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
                 if self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + postfix + '.m3u') == True:
                     self.channels[channel - 1].isValid = True
+                    self.channels[channel - 1].fileName = CHANNELS_LOC + 'channel_' + str(channel) + postfix + '.m3u'
                     returnval = True
 
                     # If this channel has been watched for longer than it lasts, reset the channel
@@ -223,11 +227,12 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         if createlist:
             if self.makeChannelList(channel, presetval) == True:
-                self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + postfix + '.m3u')
-                self.channels[channel - 1].totalTimePlayed = 0
-                self.channels[channel - 1].isValid = True
-                returnval = True
-                ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_time', '0')
+                if self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + postfix + '.m3u') == True:
+                    self.channels[channel - 1].totalTimePlayed = 0
+                    self.channels[channel - 1].isValid = True
+                    self.channels[channel - 1].fileName = CHANNELS_LOC + 'channel_' + str(channel) + postfix + '.m3u'
+                    returnval = True
+                    ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_time', '0')
 
         self.channels[channel - 1].name = self.getSmartPlaylistName(self.getSmartPlaylistFilename(channel, presetval))
         return returnval
@@ -525,7 +530,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         if channel < 1 or channel > self.maxChannels:
             self.log('setChannel invalid channel ' + str(channel), xbmc.LOGERROR)
             return
-            
+
         if self.channels[channel - 1].isValid == False:
             self.log('setChannel channel not valid ' + str(channel), xbmc.LOGERROR)
             return
@@ -554,10 +559,12 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.currentChannel = channel
             # now load the proper channel playlist
             xbmc.PlayList(xbmc.PLAYLIST_VIDEO).clear()
+            self.log('starting video')
+            self.log('filename is ' + self.channels[channel - 1].fileName)
 
-            if self.startPlaylist('XBMC.PlayMedia(' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u)') == False:
+            if self.startPlaylist('XBMC.PlayMedia(' + self.channels[channel - 1].fileName + ')') == False:
                 self.log("Unable to set channel " + str(channel) + ". Invalidating.", xbmc.LOGERROR)
-                InvalidateChannel(channel)
+                self.InvalidateChannel(channel)
                 return
 
             xbmc.executebuiltin("XBMC.PlayerControl(repeatall)")
@@ -575,12 +582,12 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             if samechannel == False:
                 if self.startPlaylist('XBMC.Playlist.PlayOffset(' + str(self.channels[self.currentChannel - 1].playlistPosition) + ')') == False:
                     self.log('Unable to set offset for channel ' + str(channel) + ". Invalidating.", xbmc.LOGERROR)
-                    InvalidateChannel(channel)
+                    self.InvalidateChannel(channel)
                     return
             else:
                 if self.startPlaylist('XBMC.Playlist.PlayOffset(' + str(self.channels[self.currentChannel - 1].playlistPosition - xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition()) + ')') == False:
                     self.log('Unable to set offset for channel ' + str(channel) + ". Invalidating.", xbmc.LOGERROR)
-                    InvalidateChannel(channel)
+                    self.InvalidateChannel(channel)
                     return
 
         # set the time offset
@@ -614,7 +621,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         if channel < 1 or channel > self.maxChannels:
             self.log("InvalidateChannel invalid channel " + str(channel))
             return
-            
+
         self.channels[channel - 1].isValid = False
         self.invalidatedChannelCount += 1
 

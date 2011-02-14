@@ -11,6 +11,7 @@ class Channel:
         self.showTimeOffset = 0
         self.lastAccessTime = 0
         self.totalTimePlayed = 0
+        self.fileName = ''
         self.isPaused = False
         self.isValid = False
 

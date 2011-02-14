@@ -3,4 +3,5 @@
     <setting id="InfoOnChange" type="bool" label="30003" default="true"/>
     <setting id="ForceChannelReset" type="bool" label="30002" default="false"/>
     <setting id="ChannelResetSetting" type="enum" label="30004" values="Automatic|Every Day|Every Week|Every Month|Never" default="0"/>
+    <setting id="FillInChannels" type="bool" label="30005" default="true"/>
 </settings>

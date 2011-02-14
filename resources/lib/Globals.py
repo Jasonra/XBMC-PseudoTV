@@ -11,9 +11,10 @@ ADDON_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
 ADDON_INFO = ADDON_SETTINGS.getAddonInfo('path')
 
 TIMEOUT = 15 * 1000
+TOTAL_FILL_CHANNELS = 20
 
 IMAGES_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'images')) + '/'
-DEFAULT_PLAYLISTS_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'playlists')) + '/'
+PRESETS_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'presets')) + '/'
 CHANNELS_LOC = xbmc.translatePath('special://profile/addon_data/' + ADDON_ID + '/cache/')
 
 TIME_BAR = 'pstvTimeBar.png'

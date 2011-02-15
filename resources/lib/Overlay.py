@@ -729,7 +729,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         elif self.infoOffset == 0:
             self.getControl(502).setLabel('NOW WATCHING:')
 
-        position = self.channels[self.currentChannel - 1].playlistPosition + self.infoOffset
+        position = xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition() + self.infoOffset
         self.getControl(503).setLabel(self.channels[self.currentChannel - 1].getItemTitle(position))
         self.getControl(504).setLabel(self.channels[self.currentChannel - 1].getItemEpisodeTitle(position))
         self.getControl(505).setLabel(self.channels[self.currentChannel - 1].getItemDescription(position))

@@ -11,6 +11,7 @@ from Playlist import Playlist
 from Globals import *
 from Channel import Channel
 from EPGWindow import EPGWindow
+from VideoParser import VideoParser
 
 
 
@@ -69,6 +70,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 return
 
         self.myEPG = EPGWindow("script.PseudoTV.EPG.xml", ADDON_INFO, "default")
+        self.videoParser = VideoParser()
         self.myEPG.MyOverlayWindow = self
         self.findMaxChannels()
         # Don't allow any actions during initialization
@@ -404,11 +406,19 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                         fileList.extend(self.buildFileList(match.group(1), media_type, recursive))
                 else:
                     duration = re.search('"duration" *: *([0-9]*?),', f)
+                    
+                    try:
+                        dur = int(duration.group(1))
+                    except:
+                        dur = 0
+
+                    if dur == 0:
+                        dur = self.videoParser.getVideoLength(match.group(1).replace("\\\\", "\\"))
 
                     try:
-                        if int(duration.group(1)) > 0:
+                        if dur > 0:
                             title = re.search('"label" *: *"(.*?)"', f)
-                            tmpstr = duration.group(1) + ','
+                            tmpstr = str(dur) + ','
                             showtitle = re.search('"showtitle" *: *"(.*?)"', f)
                             plot = re.search('"plot" *: *"(.*?)",', f)
 

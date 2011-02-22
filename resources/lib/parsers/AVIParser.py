@@ -145,6 +145,7 @@ class AVIParser:
 
         if data.datatype != 2:
             self.log("Not an avi")
+            return 0
 
         if data.fourcc[0:4] != "AVI ":
             self.log("Not a basic AVI: " + data.fourcc[:2])

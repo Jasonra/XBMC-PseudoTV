@@ -167,6 +167,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.channelResetSetting = int(ADDON_SETTINGS.getSetting("ChannelResetSetting"))
         self.log('Channel Reset Setting is ' + str(self.channelResetSetting))
         self.fillInChannels = ADDON_SETTINGS.getSetting("FillInChannels") == "true"
+        self.log('Filling in channels - ' + str(self.fillInChannels))
+
 
         try:
             self.lastResetTime = int(ADDON_SETTINGS.getSetting("LastResetTime"))
@@ -424,7 +426,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                         fileList.extend(self.buildFileList(match.group(1), media_type, recursive))
                 else:
                     duration = re.search('"duration" *: *([0-9]*?),', f)
-                    
+
                     try:
                         dur = int(duration.group(1))
                     except:
@@ -596,6 +598,21 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 return
 
             xbmc.executebuiltin("XBMC.PlayerControl(repeatall)")
+
+            if xbmc.getInfoLabel('Playlist.Random').lower() == 'random':
+                self.log('Random on.  Disabling.')
+                xbmc.PlayList(0).unshuffle()
+                xbmc.PlayList(1).unshuffle()
+                xbmc.PlayList(xbmc.PLAYLIST_VIDEO).clear()
+                self.log('starting video')
+                self.log('filename is ' + self.channels[channel - 1].fileName)
+    
+                if self.startPlaylist('XBMC.PlayMedia(' + self.channels[channel - 1].fileName + ')') == False:
+                    self.log("Unable to set channel " + str(channel) + ". Invalidating.", xbmc.LOGERROR)
+                    self.InvalidateChannel(channel)
+                    return
+    
+                xbmc.executebuiltin("XBMC.PlayerControl(repeatall)")
 
         timedif += (time.time() - self.channels[self.currentChannel - 1].lastAccessTime)
 

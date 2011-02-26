@@ -40,7 +40,7 @@ class VideoParser:
 
     def getVideoLength(self, filename):
         self.log("getVideoLength " + filename)
-        filename = self.correctFilename(filename)
+        filename = xbmc.makeLegalFilename(filename)
 
         if len(filename) == 0:
             self.log("No file name specified")
@@ -65,6 +65,3 @@ class VideoParser:
 
         return self.parser.determineLength(filename)
 
-    def correctFilename(self, filename):
-        filename = filename.replace('smb://', '\\\\')
-        return filename

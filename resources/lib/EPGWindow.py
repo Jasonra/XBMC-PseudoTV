@@ -45,6 +45,8 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             self.mediaPath = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'skins', xbmc.getSkinDir(), 'media')) + '/'
         elif os.path.exists(xbmc.translatePath('special://skin/media/' + TIME_BAR)):
             self.mediaPath = xbmc.translatePath('special://skin/media/')
+        elif xbmc.skinHasImage(TIME_BAR):
+            self.mediaPath = ''
         else:
             self.mediaPath = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'skins', 'default', 'media')) + '/'
 

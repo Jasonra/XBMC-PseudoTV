@@ -597,22 +597,20 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 self.InvalidateChannel(channel)
                 return
 
-            xbmc.executebuiltin("XBMC.PlayerControl(repeatall)")
-
+            # Disable auto playlist shuffling if it's on
             if xbmc.getInfoLabel('Playlist.Random').lower() == 'random':
                 self.log('Random on.  Disabling.')
                 xbmc.PlayList(0).unshuffle()
                 xbmc.PlayList(1).unshuffle()
                 xbmc.PlayList(xbmc.PLAYLIST_VIDEO).clear()
                 self.log('starting video')
-                self.log('filename is ' + self.channels[channel - 1].fileName)
-    
+
                 if self.startPlaylist('XBMC.PlayMedia(' + self.channels[channel - 1].fileName + ')') == False:
                     self.log("Unable to set channel " + str(channel) + ". Invalidating.", xbmc.LOGERROR)
                     self.InvalidateChannel(channel)
                     return
-    
-                xbmc.executebuiltin("XBMC.PlayerControl(repeatall)")
+
+            xbmc.executebuiltin("XBMC.PlayerControl(repeatall)")
 
         timedif += (time.time() - self.channels[self.currentChannel - 1].lastAccessTime)
 

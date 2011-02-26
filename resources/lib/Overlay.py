@@ -879,6 +879,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.log('Unable to get semaphore')
             return
 
+        # Don't force the 2 second rule on the stop command since it will
+        # be done anyway.
+        if action == ACTION_STOP:
+            self.end()
+            self.actionSemaphore.release()
+            self.log('onAction return')
+            return
+
         lastaction = time.time() - self.lastActionTime
 
         # during certain times we just want to discard all input
@@ -922,8 +930,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             if self.showingInfo:
                 self.infoOffset += 1
                 self.showInfo(10.0)
-        elif action == ACTION_STOP:
-            self.end()
         elif action == ACTION_PREVIOUS_MENU:
             if self.showingInfo:
                 self.hideInfo()

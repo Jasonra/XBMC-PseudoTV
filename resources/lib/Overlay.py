@@ -306,31 +306,31 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
 
     # Open the smart playlist and read the name out of it...this is the channel name
-    def getSmartPlaylistName(self, filename):
-        self.log('getSmartPlaylistName ' + filename)
+    def getSmartPlaylistName(self, fle):
+        self.log('getSmartPlaylistName')
 
         try:
-            fl = open(filename, "r")
+            xml = open(fle, "r")
         except:
-            self.log("Unable to open the smart playlist " + filename, xbmc.LOGERROR)
+            self.log("getSmartPlaylisyName Unable to open the smart playlist " + fle, xbmc.LOGERROR)
             return ''
 
-        thename = ''
+        try:
+            dom = parse(xml)
+        except:
+            self.log('getSmartPlaylistName Problem parsing playlist ' + fle, xbmc.LOGERROR)
+            xml.close()
+            return ''
 
-        for line in fl:
-            index1 = line.find('<name>')
+        xml.close()
 
-            if index1 >= 0:
-                index2 = line.find('</name>')
-
-                if index2 > index1 + 6:
-                    thename = line[index1 + 6:index2]
-                    break
-
-        thename = thename.replace('&amp;', '&')
-        fl.close()
-        self.log('getSmartPlaylistName return ' + thename)
-        return thename
+        try:
+            plname = dom.getElementsByTagName('name')
+            self.log('getSmartPlaylistName return ' + plname[0].childNodes[0].nodeValue)
+            return plname[0].childNodes[0].nodeValue
+        except:
+            self.log("Unable to get the playlist name.", xbmc.LOGERROR)
+            return ''
 
 
     # handle fatal errors: log it, show the dialog, and exit
@@ -342,30 +342,15 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.end()
 
 
-    def getSmartPlaylistType(self, filename):
-        self.log('getSmartPlaylistType ' + filename)
+    def getSmartPlaylistType(self, dom):
+        self.log('getSmartPlaylistType')
 
         try:
-            fl = open(filename, "r")
+            pltype = dom.getElementsByTagName('smartplaylist')
+            return pltype[0].attributes['type'].value
         except:
-            self.log("Unable to open the smart playlist " + filename, xbmc.LOGERROR)
+            self.log("Unable to get the playlist type.", xbmc.LOGERROR)
             return ''
-
-        thetype = ''
-
-        for line in fl:
-            index1 = line.find('<smartplaylist type="')
-
-            if index1 >= 0:
-                index2 = line.find('">')
-
-                if index2 > index1 + 6:
-                    thetype = line[index1 + 21:index2]
-                    break
-
-        fl.close()
-        self.log('getSmartPlaylistType return ' + thetype)
-        return thetype
 
 
     # Based on a smart playlist, create a normal playlist that can actually be used by us
@@ -381,8 +366,23 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.log('Unable to locate the playlist for channel ' + str(channel), xbmc.LOGERROR)
             return False
 
-        if self.getSmartPlaylistType(fle) == 'mixed':
-            fileList = self.buildMixedFileList(fle)
+        try:
+            xml = open(fle, "r")
+        except:
+            self.log("makeChannelList Unable to open the smart playlist " + fle, xbmc.LOGERROR)
+            return False
+
+        try:
+            dom = parse(xml)
+        except:
+            self.log('makeChannelList Problem parsing playlist ' + fle, xbmc.LOGERROR)
+            xml.close()
+            return False
+
+        xml.close()
+
+        if self.getSmartPlaylistType(dom) == 'mixed':
+            fileList = self.buildMixedFileList(dom)
         else:
             fileList = self.buildFileList(fle)
 
@@ -398,6 +398,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.log("Unable to get information about channel " + str(channel), xbmc.LOGERROR)
             channelplaylist.close()
             return False
+
+        try:
+            order = dom.getElementsByTagName('order')
+
+            if order[0].childNodes[0].nodeValue.lower() == 'random':
+                random.shuffle(fileList)
+        except:
+            pass
 
         fileList = fileList[:250]
 
@@ -478,18 +486,11 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         return fileList
 
 
-    def buildMixedFileList(self, filename):
+    def buildMixedFileList(self, dom1):
         fileList = []
-        self.log('buildMixedFileList ' + filename)
+        self.log('buildMixedFileList')
 
         try:
-            xml = open(filename, "r")
-        except:
-            self.log("buildMixedFileList Unable to open the smart playlist " + filename, xbmc.LOGERROR)
-            return fileList
-
-        try:
-            dom1 = parse(xml)
             rules = dom1.getElementsByTagName('rule')
             order = dom1.getElementsByTagName('order')
         except:
@@ -501,10 +502,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             rulename = rule.childNodes[0].nodeValue
             fileList.extend(self.buildFileList(xbmc.translatePath('special://profile/playlists/video/') + rulename))
 
-        if len(order) > 0:
-            random.shuffle(fileList)
-
-        xml.close()
         self.log("buildMixedFileList returning")
         return fileList
 

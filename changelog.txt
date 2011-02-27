@@ -5,7 +5,8 @@ Changelog
     Crazy jump in version to 1.0 because I can.
     Turn off shuffling if it's on.
     Playlist parsing is completely minidom now.
-    Mamually shuffle playlists when the order is random.
+    Manually shuffle playlists when the order is random.
+    Allow the stop button inside of the 2 second window.
 
 
 0.2.0

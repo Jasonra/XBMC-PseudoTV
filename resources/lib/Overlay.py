@@ -50,6 +50,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.infoOffset = 0
         self.invalidatedChannelCount = 0
         self.showingInfo = False
+        self.showChannelBug = False
         random.seed()
 
         for i in range(3):
@@ -168,7 +169,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log('Channel Reset Setting is ' + str(self.channelResetSetting))
         self.fillInChannels = ADDON_SETTINGS.getSetting("FillInChannels") == "true"
         self.log('Filling in channels - ' + str(self.fillInChannels))
-
+        self.showChannelBug = ADDON_SETTINGS.getSetting("ShowChannelBug") == "true"
+        self.log('Show channel bug - ' + str(self.showChannelBug))
 
         try:
             self.lastResetTime = int(ADDON_SETTINGS.getSetting("LastResetTime"))
@@ -808,6 +810,12 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         if self.inputChannel == -1 and self.infoOnChange == True:
             self.infoOffset = 0
             self.showInfo(5.0)
+
+        if self.showChannelBug == True:
+            try:
+                self.getControl(103).setImage(IMAGES_LOC + self.channels[self.currentChannel - 1].name + '.png')
+            except:
+                pass
         ##
 
         self.channelLabelTimer.start()

@@ -86,3 +86,12 @@ channels by setting up some using preset playlists.  If you'd prefer to only
 use channels that you've defined, you may turn this off.
 
     Show Channel Logo: Always display the current channel logo.
+
+
+-------
+Credits
+-------
+Developer: Jason102
+Code Additions: Sranshaft, TheOddLinguist
+Skins: Sranshaft, Zepfan
+Preset Playlists and Images: Jtucker1972

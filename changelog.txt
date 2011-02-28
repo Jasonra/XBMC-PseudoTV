@@ -7,6 +7,11 @@ Changelog
     Playlist parsing is completely minidom now.
     Manually shuffle playlists when the order is random.
     Allow the stop button inside of the 2 second window.
+    Added the Confluence skin (thanks Sranshaft).
+    Added the Transparency skin (thanks Zepfan).
+    Now have channel icons for most presets (thanks jtucker1972).
+    Fixed an uncaught exception in video parsers.
+    Works if onClick isn't called in the EPG.
 
 
 0.2.0

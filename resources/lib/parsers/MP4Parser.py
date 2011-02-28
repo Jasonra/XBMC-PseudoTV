@@ -72,17 +72,32 @@ class MP4Parser:
             return 0
 
         # Skip past the file header
-        self.File.seek(data.size, 1)
+        try:
+            self.File.seek(data.size, 1)
+        except:
+            self.log('Error while seeking')
+            return 0
+
         data = self.readBlock()
 
         while data.boxtype != 'moov' and data.size > 0:
-            self.File.seek(data.size, 1)
+            try:
+                self.File.seek(data.size, 1)
+            except:
+                self.log('Error while seeking')
+                return 0
+
             data = self.readBlock()
 
         data = self.readBlock()
 
         while data.boxtype != 'mvhd' and data.size > 0:
-            self.File.seek(data.size, 1)
+            try:
+                self.File.seek(data.size, 1)
+            except:
+                self.log('Error while seeking')
+                return 0
+
             data = self.readBlock()
 
         self.readMovieHeader()

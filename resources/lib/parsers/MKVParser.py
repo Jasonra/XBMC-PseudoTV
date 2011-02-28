@@ -82,7 +82,11 @@ class MKVParser:
                 if timecode != 0 and duration != 0:
                     break
             else:
-                self.File.seek(datasize, 1)
+                try:
+                    self.File.seek(datasize, 1)
+                except:
+                    self.log('Error while seeking')
+                    return 0
 
         if duration > 0 and timecode > 0:
             dur = (duration * timecode) / 1000000000
@@ -101,13 +105,25 @@ class MKVParser:
             return 0
 
         datasize = self.getDataSize()
-        self.File.seek(datasize, 1)
+        
+        try:
+            self.File.seek(datasize, 1)
+        except:
+            self.log('Error while seeking')
+            return 0
+
         data = self.getEBMLId()
 
         # Look for the segment header
         while data != 0x18538067 and self.File.tell() < filesize and data > 0 and datasize > 0:
             datasize = self.getDataSize()
-            self.File.seek(datasize, 1)
+
+            try:
+                self.File.seek(datasize, 1)
+            except:
+                self.log('Error while seeking')
+                return 0
+
             data = self.getEBMLId()
 
         datasize = self.getDataSize()
@@ -116,7 +132,13 @@ class MKVParser:
         # Find segment info
         while data != 0x1549A966 and self.File.tell() < filesize and data > 0 and datasize > 0:
             datasize = self.getDataSize()
-            self.File.seek(datasize, 1)
+
+            try:
+                self.File.seek(datasize, 1)
+            except:
+                self.log('Error while seeking')
+                return 0
+
             data = self.getEBMLId()
 
         datasize = self.getDataSize()

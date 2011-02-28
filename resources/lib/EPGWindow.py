@@ -38,6 +38,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.rowCount = 6
         self.channelButtons = [None] * self.rowCount
         self.actionSemaphore = threading.BoundedSemaphore()
+        self.lastActionTime = time.time()
 
         # Decide whether to use the current skin or the default skin.  If the current skin has the proper
         # image, then it should work.
@@ -299,6 +300,13 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         elif action == ACTION_STOP:
             self.closeEPG()
             self.MyOverlayWindow.end()
+        elif action == ACTION_SELECT_ITEM:
+            lastaction = time.time() - self.lastActionTime
+
+            if lastaction >= 2:
+                self.selectShow()
+                self.closeEPG()
+                self.lastActionTime = time.time()
 
         self.actionSemaphore.release()
         self.log('onAction return')
@@ -328,20 +336,26 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             self.log('Unable to get semaphore')
             return
 
-        selectedbutton = self.getControl(controlid)
+        lastaction = time.time() - self.lastActionTime
 
-        for i in range(self.rowCount):
-            for x in range(len(self.channelButtons[i])):
-                if selectedbutton == self.channelButtons[i][x]:
-                    self.focusRow = i
-                    self.focusIndex = x
-                    self.selectShow()
-                    self.closeEPG()
-                    self.actionSemaphore.release()
-                    self.log('onClick found button return')
-                    return
+        if lastaction >= 2:
+            selectedbutton = self.getControl(controlid)
 
-        self.closeEPG()
+            for i in range(self.rowCount):
+                for x in range(len(self.channelButtons[i])):
+                    if selectedbutton == self.channelButtons[i][x]:
+                        self.focusRow = i
+                        self.focusIndex = x
+                        self.selectShow()
+                        self.closeEPG()
+                        self.lastActionTime = time.time()
+                        self.actionSemaphore.release()
+                        self.log('onClick found button return')
+                        return
+
+            self.lastActionTime = time.time()
+            self.closeEPG()
+
         self.actionSemaphore.release()
         self.log('onClick return')
 

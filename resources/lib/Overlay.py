@@ -88,7 +88,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 self.Error('Unable to create the cache directory')
                 return
 
-        self.myEPG = EPGWindow("script.PseudoTV.EPG.xml", ADDON_INFO, "default")
+        self.myEPG = EPGWindow("script.pseudotv.EPG.xml", ADDON_INFO, "default")
         self.videoParser = VideoParser()
         self.myEPG.MyOverlayWindow = self
         self.findMaxChannels()

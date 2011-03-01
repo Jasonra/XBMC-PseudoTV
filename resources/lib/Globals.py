@@ -24,7 +24,7 @@ def log(msg, level = xbmc.LOGDEBUG):
     xbmc.log(ADDON_ID + '-' + msg, level)
 
 
-ADDON_ID = 'script.PseudoTV'
+ADDON_ID = 'script.pseudotv'
 ADDON_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
 ADDON_INFO = ADDON_SETTINGS.getAddonInfo('path')
 

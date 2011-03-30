@@ -12,6 +12,7 @@ Changelog
     Allow the user to specify a directory for channel logos.
     Allow the use of the OSD.
     Added an FLV parser.
+    New skins from Zepfan.
 
 
 1.0.1

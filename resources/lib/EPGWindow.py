@@ -39,6 +39,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.channelButtons = [None] * self.rowCount
         self.actionSemaphore = threading.BoundedSemaphore()
         self.lastActionTime = time.time()
+        self.channelLogos = ''
 
         # Decide whether to use the current skin or the default skin.  If the current skin has the proper
         # image, then it should work.
@@ -159,7 +160,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 pass
 
             try:
-                self.getControl(321 + i).setImage(IMAGES_LOC + self.MyOverlayWindow.channels[curchannel - 1].name + ".png")
+                self.getControl(321 + i).setImage(self.channelLogos + self.MyOverlayWindow.channels[curchannel - 1].name + ".png")
             except:
                 pass
 
@@ -484,7 +485,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.getControl(500).setLabel(self.MyOverlayWindow.channels[newchan - 1].getItemTitle(plpos))
         self.getControl(501).setLabel(self.MyOverlayWindow.channels[newchan - 1].getItemEpisodeTitle(plpos))
         self.getControl(502).setLabel(self.MyOverlayWindow.channels[newchan - 1].getItemDescription(plpos))
-        self.getControl(503).setImage(IMAGES_LOC + self.MyOverlayWindow.channels[newchan - 1].name + '.png')
+        self.getControl(503).setImage(self.channelLogos + self.MyOverlayWindow.channels[newchan - 1].name + '.png')
         self.log('setShowInfo return')
 
 

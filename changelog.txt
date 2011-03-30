@@ -4,7 +4,7 @@ Changelog
 1.1.0
     Added the channel configuration utility.
     Fixed a potential crash in the mp4 parser.
-    Seperated the channel creation code into a different module.
+    Separated the channel creation code into a different module.
     Changed a few of the configuration strings.
     Added the ability to refresh channels on every start.
     Improved the channel changing speed.

@@ -10,6 +10,8 @@ Changelog
     Improved the channel changing speed.
     Resume a channel at the proper time when switching between channels.
     Allow the user to specify a directory for channel logos.
+    Allow the use of the OSD.
+    Added an FLV parser.
 
 
 1.0.1

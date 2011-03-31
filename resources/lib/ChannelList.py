@@ -376,13 +376,19 @@ class ChannelList:
 
         self.writeXSPHeader(fle, "episodes", self.getChannelName(1, network))
         network = network.lower()
+        added = False
 
         for i in range(len(self.showList)):
             if self.showList[i][1].lower() == network:
                 fle.write('    <rule field="tvshow" operator="is">' + self.showList[i][0] + '</rule>\n')
+                added = True
 
         self.writeXSPFooter(fle, 250, "random")
         fle.close()
+
+        if added == False:
+            return ''
+
         return flename
 
 
@@ -524,7 +530,6 @@ class ChannelList:
 
         self.networkList.sort(key=lambda x: x.lower())
         self.showGenreList.sort(key=lambda x: x.lower())
-#        self.showList.sort(key=lambda x: x.lower())
         self.log("found shows " + str(self.showList))
         self.log("found genres " + str(self.showGenreList))
         self.log("fillTVInfo return " + str(self.networkList))

@@ -485,9 +485,9 @@ class ChannelList:
         fle.write('    <limit>' + str(limit) + '</limit>\n')
         fle.write('    <order direction="ascending">' + order + '</order>\n')
         fle.write('</smartplaylist>\n')
-        
-        
-    def cleanString(self, string)
+
+
+    def cleanString(self, string):
         newstr = string
         newstr = newstr.replace('&', '&amp;')
         newstr = newstr.replace('>', '&gt;')

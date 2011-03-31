@@ -85,12 +85,18 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         self.log("saveSettings channel " + str(self.channel))
         chantype = 9999
         chan = str(self.channel)
+        set1 = ''
+        set2 = ''
 
         try:
             chantype = int(__settings__.getSetting("Channel_" + chan + "_type"))
+            set1 = __settings__.getSetting("Channel_" + chan + "_1")
+            set2 = __settings__.getSetting("Channel_" + chan + "_2")
         except:
             self.log("Unable to get channel type")
 
+        self.log('type is ' + str(chantype))
+        self.log('Detected current values - ' + set1 + ', ' + set2)
         setting1 = "Channel_" + chan + "_1"
         setting2 = "Channel_" + chan + "_2"
 
@@ -108,7 +114,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             __settings__.setSetting(setting1, self.getControl(182).getLabel())
         elif chantype == 6:
             __settings__.setSetting(setting1, self.getControl(192).getLabel())
-            
+
             if self.getControl(194).isSelected():
                 __settings__.setSetting(setting2, str(MODE_SERIAL))
         elif chantype == 9999:
@@ -125,6 +131,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         except:
             pass
 
+        self.log('Detected new values - ' + set1 + ', ' + set2)
         if chantype != self.channel_type or set1 != self.setting1 or set2 != self.setting2:
             __settings__.setSetting('Channel_' + chan + '_changed', 'True')
 

@@ -480,11 +480,12 @@ class ChannelList:
         self.log("fillTVInfo")
         json_query = '{"jsonrpc": "2.0", "method": "VideoLibrary.GetTVShows", "params": {"fields":["studio", "genre"]}, "id": 1}'
         json_folder_detail = xbmc.executeJSONRPC(json_query)
-#        self.log(json_folder_detail)
+        self.log(json_folder_detail)
         detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in detail:
             match = re.search('"studio" *: *"(.*?)",', f)
+            network = ''
 
             if match:
                 found = False

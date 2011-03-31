@@ -91,8 +91,8 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         except:
             self.log("Unable to get channel type")
 
-        setting1 = "Channel_" + str(chan) + "_1"
-        setting2 = "Channel_" + str(chan) + "_2"
+        setting1 = "Channel_" + chan + "_1"
+        setting2 = "Channel_" + chan + "_2"
 
         if chantype == 0:
             __settings__.setSetting(setting1, self.getControl(130).getLabel2())
@@ -126,7 +126,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             pass
 
         if chantype != self.channel_type or set1 != self.setting1 or set2 != self.setting2:
-            __settings__.setSetting('Channel_' + str(chan) + '_changed', 'True')
+            __settings__.setSetting('Channel_' + chan + '_changed', 'True')
 
         self.log("saveSettings return")
 

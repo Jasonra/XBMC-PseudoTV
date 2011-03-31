@@ -36,6 +36,8 @@ def migrate():
 
     if compareVersions(curver, VERSION) < 0:
         if compareVersions(curver, "1.0.2") < 0:
+            log("Migrating to 1.0.2")
+
             # Migrate to 1.0.2
             for i in range(200):
                 if os.path.exists(xbmc.translatePath('special://profile/playlists/video') + '/Channel_' + str(i + 1) + '.xsp'):
@@ -49,12 +51,12 @@ def migrate():
 
             for i in range(TOTAL_FILL_CHANNELS):
                 chantype = 9999
-                
+
                 try:
                     chantype = int(ADDON_SETTINGS.getSetting("Channel_" + str(i + 1) + "_type"))
                 except:
                     pass
-                    
+
                 if chantype == 9999:
                     addPreset(i + 1, currentpreset)
                     currentpreset += 1

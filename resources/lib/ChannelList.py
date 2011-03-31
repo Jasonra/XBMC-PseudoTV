@@ -380,7 +380,8 @@ class ChannelList:
 
         for i in range(len(self.showList)):
             if self.showList[i][1].lower() == network:
-                fle.write('    <rule field="tvshow" operator="is">' + self.showList[i][0] + '</rule>\n')
+                theshow = self.cleanString(self.showList[i][0])
+                fle.write('    <rule field="tvshow" operator="is">' + theshow + '</rule>\n')
                 added = True
 
         self.writeXSPFooter(fle, 250, "random")
@@ -412,6 +413,7 @@ class ChannelList:
             return ''
 
         self.writeXSPHeader(fle, 'episodes', self.getChannelName(6, show))
+        show = self.cleanString(show)
         fle.write('    <rule field="tvshow" operator="is">' + show + '</rule>\n')
         self.writeXSPFooter(fle, 250, order)
         fle.close()
@@ -447,6 +449,7 @@ class ChannelList:
             return ''
 
         self.writeXSPHeader(fle, pltype, self.getChannelName(chtype, genre))
+        genre = self.cleanString(genre)
         fle.write('    <rule field="genre" operator="is">' + genre + '</rule>\n')
         self.writeXSPFooter(fle, 250, "random")
         fle.close()
@@ -461,8 +464,9 @@ class ChannelList:
         except:
             self.Error('Unable to open the cache file ' + flename, xbmc.LOGERROR)
             return ''
-
+            
         self.writeXSPHeader(fle, "movies", self.getChannelName(2, studio))
+        studio = self.cleanString(studio)
         fle.write('    <rule field="studio" operator="is">' + studio + '</rule>\n')
         self.writeXSPFooter(fle, 250, "random")
         fle.close()
@@ -472,6 +476,7 @@ class ChannelList:
     def writeXSPHeader(self, fle, pltype, plname):
         fle.write('<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>\n')
         fle.write('<smartplaylist type="' + pltype + '">\n')
+        plname = self.cleanString(plname)
         fle.write('    <name>' + plname + '</name>\n')
         fle.write('    <match>one</match>\n')
 
@@ -480,6 +485,14 @@ class ChannelList:
         fle.write('    <limit>' + str(limit) + '</limit>\n')
         fle.write('    <order direction="ascending">' + order + '</order>\n')
         fle.write('</smartplaylist>\n')
+        
+        
+    def cleanString(self, string)
+        newstr = string
+        newstr = newstr.replace('&', '&amp;')
+        newstr = newstr.replace('>', '&gt;')
+        newstr = newstr.replace('<', '&lt;')
+        return newstr
 
 
     def fillTVInfo(self):
@@ -498,7 +511,7 @@ class ChannelList:
                 network = match.group(1).strip()
 
                 for item in self.networkList:
-                    if item == network:
+                    if item.lower() == network.lower():
                         found = True
                         break
 

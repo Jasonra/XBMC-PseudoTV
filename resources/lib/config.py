@@ -89,9 +89,9 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         set2 = ''
 
         try:
-            chantype = int(__settings__.getSetting("Channel_" + chan + "_type"))
-            set1 = __settings__.getSetting("Channel_" + chan + "_1")
-            set2 = __settings__.getSetting("Channel_" + chan + "_2")
+            chantype = int(ADDON_SETTINGS.getSetting("Channel_" + chan + "_type"))
+            set1 = ADDON_SETTINGS.getSetting("Channel_" + chan + "_1")
+            set2 = ADDON_SETTINGS.getSetting("Channel_" + chan + "_2")
         except:
             self.log("Unable to get channel type")
 
@@ -101,39 +101,39 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         setting2 = "Channel_" + chan + "_2"
 
         if chantype == 0:
-            __settings__.setSetting(setting1, self.getControl(130).getLabel2())
+            ADDON_SETTINGS.setSetting(setting1, self.getControl(130).getLabel2())
         elif chantype == 1:
-            __settings__.setSetting(setting1, self.getControl(142).getLabel())
+            ADDON_SETTINGS.setSetting(setting1, self.getControl(142).getLabel())
         elif chantype == 2:
-            __settings__.setSetting(setting1, self.getControl(152).getLabel())
+            ADDON_SETTINGS.setSetting(setting1, self.getControl(152).getLabel())
         elif chantype == 3:
-            __settings__.setSetting(setting1, self.getControl(162).getLabel())
+            ADDON_SETTINGS.setSetting(setting1, self.getControl(162).getLabel())
         elif chantype == 4:
-            __settings__.setSetting(setting1, self.getControl(172).getLabel())
+            ADDON_SETTINGS.setSetting(setting1, self.getControl(172).getLabel())
         elif chantype == 5:
-            __settings__.setSetting(setting1, self.getControl(182).getLabel())
+            ADDON_SETTINGS.setSetting(setting1, self.getControl(182).getLabel())
         elif chantype == 6:
-            __settings__.setSetting(setting1, self.getControl(192).getLabel())
+            ADDON_SETTINGS.setSetting(setting1, self.getControl(192).getLabel())
 
             if self.getControl(194).isSelected():
-                __settings__.setSetting(setting2, str(MODE_SERIAL))
+                ADDON_SETTINGS.setSetting(setting2, str(MODE_SERIAL))
         elif chantype == 9999:
-            __settings__.setSetting(setting1, '')
-            __settings__.setSetting(setting2, '')
+            ADDON_SETTINGS.setSetting(setting1, '')
+            ADDON_SETTINGS.setSetting(setting2, '')
 
         # Check to see if the user changed anything
         set1 = ''
         set2 = ''
 
         try:
-            set1 = __settings__.getSetting(setting1)
-            set2 = __settings__.getSetting(setting2)
+            set1 = ADDON_SETTINGS.getSetting(setting1)
+            set2 = ADDON_SETTINGS.getSetting(setting2)
         except:
             pass
 
         self.log('Detected new values - ' + set1 + ', ' + set2)
         if chantype != self.channel_type or set1 != self.setting1 or set2 != self.setting2:
-            __settings__.setSetting('Channel_' + chan + '_changed', 'True')
+            ADDON_SETTINGS.setSetting('Channel_' + chan + '_changed', 'True')
 
         self.log("saveSettings return")
 
@@ -244,7 +244,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         chantype = 0
 
         try:
-            chantype = int(__settings__.getSetting("Channel_" + str(channel) + "_type"))
+            chantype = int(ADDON_SETTINGS.getSetting("Channel_" + str(channel) + "_type"))
         except:
             self.log("Unable to get channel type")
 
@@ -260,15 +260,15 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             elif chantype == NUMBER_CHANNEL_TYPES:
                 chantype = 9999
 
-            __settings__.setSetting("Channel_" + str(channel) + "_type", str(chantype))
+            ADDON_SETTINGS.setSetting("Channel_" + str(channel) + "_type", str(chantype))
         else:
             self.channel_type = chantype
             self.setting1 = ''
             self.setting2 = ''
 
             try:
-                self.setting1 = __settings__.getSetting("Channel_" + str(channel) + "_1")
-                self.setting2 = __settings__.getSetting("Channel_" + str(channel) + "_2")
+                self.setting1 = ADDON_SETTINGS.getSetting("Channel_" + str(channel) + "_1")
+                self.setting2 = ADDON_SETTINGS.getSetting("Channel_" + str(channel) + "_2")
             except:
                 pass
 
@@ -296,9 +296,9 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         chansetting2 = ''
 
         try:
-            chantype = int(__settings__.getSetting("Channel_" + str(channel) + "_type"))
-            chansetting1 = __settings__.getSetting("Channel_" + str(channel) + "_1")
-            chansetting2 = __settings__.getSetting("Channel_" + str(channel) + "_2")
+            chantype = int(ADDON_SETTINGS.getSetting("Channel_" + str(channel) + "_type"))
+            chansetting1 = ADDON_SETTINGS.getSetting("Channel_" + str(channel) + "_1")
+            chansetting2 = ADDON_SETTINGS.getSetting("Channel_" + str(channel) + "_2")
         except:
             self.log("Unable to get some setting")
 
@@ -406,9 +406,9 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             newlabel = ''
 
             try:
-                chantype = int(__settings__.getSetting("Channel_" + str(i + 1) + "_type"))
-                chansetting1 = __settings__.getSetting("Channel_" + str(i + 1) + "_1")
-                chansetting2 = __settings__.getSetting("Channel_" + str(i + 1) + "_2")
+                chantype = int(ADDON_SETTINGS.getSetting("Channel_" + str(i + 1) + "_type"))
+                chansetting1 = ADDON_SETTINGS.getSetting("Channel_" + str(i + 1) + "_1")
+                chansetting2 = ADDON_SETTINGS.getSetting("Channel_" + str(i + 1) + "_2")
             except:
                 pass
 
@@ -428,9 +428,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
 
 
 
-__settings__   = xbmcaddon.Addon(id='script.pseudotv')
-__language__   = __settings__.getLocalizedString
-__cwd__        = __settings__.getAddonInfo('path')
+__cwd__        = REAL_SETTINGS.getAddonInfo('path')
 
 
 mydialog = ConfigWindow("script.pseudotv.ChannelConfig.xml", __cwd__, "default")

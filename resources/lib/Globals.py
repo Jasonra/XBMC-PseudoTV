@@ -18,6 +18,7 @@
 
 import os
 import xbmcaddon, xbmc
+import Settings
 
 
 
@@ -62,7 +63,7 @@ def migrate():
                     currentpreset += 1
 
     ADDON_SETTINGS.setSetting("Version", VERSION)
-    
+
     
 def addPreset(channel, presetnum):
     networks = ['ABC', 'AMC', 'Bravo', 'CBS', 'Comedy Central', 'Food Network', 'FOX', 'FX', 'HBO', 'NBC', 'SciFi', 'The WB']
@@ -105,8 +106,9 @@ def compareVersions(version1, version2):
 
 
 ADDON_ID = 'script.pseudotv'
-ADDON_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
-ADDON_INFO = ADDON_SETTINGS.getAddonInfo('path')
+ADDON_SETTINGS = Settings.Settings()
+REAL_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
+ADDON_INFO = REAL_SETTINGS.getAddonInfo('path')
 
 VERSION = "1.0.2"
 

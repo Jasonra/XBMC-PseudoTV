@@ -158,14 +158,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     def readConfig(self):
         self.log('readConfig')
         # Sleep setting is in 30 minute incriments...so multiply by 30, and then 60 (min to sec)
-        self.sleepTimeValue = int(ADDON_SETTINGS.getSetting('AutoOff')) * 1800
+        self.sleepTimeValue = int(REAL_SETTINGS.getSetting('AutoOff')) * 1800
         self.log('Auto off is ' + str(self.sleepTimeValue))
-        self.infoOnChange = ADDON_SETTINGS.getSetting("InfoOnChange") == "true"
+        self.infoOnChange = REAL_SETTINGS.getSetting("InfoOnChange") == "true"
         self.log('Show info label on channel change is ' + str(self.infoOnChange))
-        self.showChannelBug = ADDON_SETTINGS.getSetting("ShowChannelBug") == "true"
+        self.showChannelBug = REAL_SETTINGS.getSetting("ShowChannelBug") == "true"
         self.log('Show channel bug - ' + str(self.showChannelBug))
-        self.forceReset = ADDON_SETTINGS.getSetting('ForceChannelReset') == "true"
-        self.channelLogos = xbmc.translatePath(ADDON_SETTINGS.getSetting('ChannelLogoFolder'))
+        self.forceReset = REAL_SETTINGS.getSetting('ForceChannelReset') == "true"
+        self.channelLogos = xbmc.translatePath(REAL_SETTINGS.getSetting('ChannelLogoFolder'))
 
         if os.path.exists(self.channelLogos) == False:
             self.channelLogos = IMAGES_LOC

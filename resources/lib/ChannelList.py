@@ -46,9 +46,9 @@ class ChannelList:
         self.channels = []
         self.videoParser = VideoParser()
         self.findMaxChannels()
-        self.channelResetSetting = int(ADDON_SETTINGS.getSetting("ChannelResetSetting"))
+        self.channelResetSetting = int(REAL_SETTINGS.getSetting("ChannelResetSetting"))
         self.log('Channel Reset Setting is ' + str(self.channelResetSetting))
-        self.forceReset = ADDON_SETTINGS.getSetting('ForceChannelReset') == "true"
+        self.forceReset = REAL_SETTINGS.getSetting('ForceChannelReset') == "true"
         self.log('Force Reset is ' + str(self.forceReset))
         self.updateDialog = xbmcgui.DialogProgress()
         self.updateDialog.create("PseudoTV", "Updating channel list")
@@ -72,7 +72,7 @@ class ChannelList:
 
             self.setupChannel(i + 1)
 
-        ADDON_SETTINGS.setSetting('ForceChannelReset', 'false')
+        REAL_SETTINGS.setSetting('ForceChannelReset', 'false')
         self.updateDialog.update(100, "Update complete")
         self.updateDialog.close()
 

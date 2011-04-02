@@ -230,6 +230,7 @@ class ChannelList:
     # Open the smart playlist and read the name out of it...this is the channel name
     def getSmartPlaylistName(self, fle):
         self.log('getSmartPlaylistName')
+        fle = xbmc.translatePath(fle)
 
         try:
             xml = open(fle, "r")

@@ -17,7 +17,12 @@
 # along with PseudoTV.  If not, see <http://www.gnu.org/licenses/>.
 
 import xbmc, xbmcgui, xbmcaddon
-import sys, re, os
+import subprocess, os
+import time, threading
+import datetime
+import sys, re
+import random
+
 from xml.dom.minidom import parse, parseString
 from Globals import *
 from ChannelList import ChannelList
@@ -67,14 +72,14 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         if action == ACTION_PREVIOUS_MENU:
             if self.showingList == False:
                 self.saveSettings()
-                self.getControl(105).setVisible(True)
                 self.getControl(106).setVisible(False)
 
                 for i in range(NUMBER_CHANNEL_TYPES):
                     self.getControl(120 + i).setVisible(False)
 
                 self.setFocusId(102)
-                self.updateListing()
+                self.updateListing(self.channel)
+                self.getControl(105).setVisible(True)
                 self.showingList = True
                 self.listcontrol.selectItem(self.channel - 1)
             else:
@@ -90,13 +95,9 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
 
         try:
             chantype = int(ADDON_SETTINGS.getSetting("Channel_" + chan + "_type"))
-            set1 = ADDON_SETTINGS.getSetting("Channel_" + chan + "_1")
-            set2 = ADDON_SETTINGS.getSetting("Channel_" + chan + "_2")
         except:
             self.log("Unable to get channel type")
 
-        self.log('type is ' + str(chantype))
-        self.log('Detected current values - ' + set1 + ', ' + set2)
         setting1 = "Channel_" + chan + "_1"
         setting2 = "Channel_" + chan + "_2"
 
@@ -131,7 +132,6 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         except:
             pass
 
-        self.log('Detected new values - ' + set1 + ', ' + set2)
         if chantype != self.channel_type or set1 != self.setting1 or set2 != self.setting2:
             ADDON_SETTINGS.setSetting('Channel_' + chan + '_changed', 'True')
 
@@ -201,7 +201,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
 
         if found == True:
             index += val
-            
+
         while index < 0:
             index += len(thelist)
 
@@ -214,10 +214,12 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
 
     def getSmartPlaylistName(self, fle):
         self.log("getSmartPlaylistName " + fle)
+        fle = xbmc.translatePath(fle)
 
         try:
             xml = open(fle, "r")
         except:
+            self.log('Unable to open smart playlist')
             return ''
 
         try:
@@ -234,14 +236,14 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             self.log("getSmartPlaylistName return " + plname[0].childNodes[0].nodeValue)
             return plname[0].childNodes[0].nodeValue
         except:
-            pass
-            
+            self.playlisy('Unable to find element name')
+
         self.log("getSmartPlaylistName return")
 
 
     def changeChanType(self, channel, val):
         self.log("changeChanType " + str(channel) + ", " + str(val))
-        chantype = 0
+        chantype = 9999
 
         try:
             chantype = int(ADDON_SETTINGS.getSetting("Channel_" + str(channel) + "_type"))
@@ -356,6 +358,8 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             return "Mixed Genre"
         elif chantype == 6:
             return "TV Show"
+        elif chantype == 9999:
+            return "None"
 
         return ''
 
@@ -366,9 +370,12 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         self.getControl(106).setVisible(False)
         self.dlg = xbmcgui.DialogProgress()
         self.dlg.create("PseudoTV", "Preparing Configuration")
+        self.dlg.update(1)
         chnlst = ChannelList()
         chnlst.fillTVInfo()
+        self.dlg.update(40)
         chnlst.fillMovieInfo()
+        self.dlg.update(80)
         self.mixedGenreList = chnlst.makeMixedList(chnlst.showGenreList, chnlst.movieGenreList)
         self.networkList = chnlst.networkList
         self.studioList = chnlst.studioList
@@ -379,7 +386,6 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             self.showList.append(chnlst.showList[i][0])
 
         self.mixedGenreList.sort(key=lambda x: x.lower())
-        self.dlg.close()
         self.listcontrol = self.getControl(102)
 
         for i in range(200):
@@ -388,17 +394,25 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             self.listcontrol.addItem(theitem)
 
 
+        self.dlg.update(90)
         self.updateListing()
+        self.dlg.close()
         self.getControl(105).setVisible(True)
         self.getControl(106).setVisible(False)
         self.setFocusId(102)
         self.log("prepareConfig return")
 
 
-    def updateListing(self):
+    def updateListing(self, channel = -1):
         self.log("updateListing")
+        start = 0
+        end = 200
 
-        for i in range(200):
+        if channel > -1:
+            start = channel - 1
+            end = channel
+
+        for i in range(start, end):
             theitem = self.listcontrol.getListItem(i)
             chantype = 9999
             chansetting1 = ''
@@ -428,7 +442,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
 
 
 
-__cwd__        = REAL_SETTINGS.getAddonInfo('path')
+__cwd__ = REAL_SETTINGS.getAddonInfo('path')
 
 
 mydialog = ConfigWindow("script.pseudotv.ChannelConfig.xml", __cwd__, "default")

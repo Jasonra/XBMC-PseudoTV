@@ -18,6 +18,7 @@
 
 import xbmc, xbmcaddon
 import sys, re, os
+import time
 
 
 ADDON_ID = 'script.pseudotv'
@@ -27,10 +28,31 @@ REAL_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
 class Settings:
     def __init__(self):
         self.logfile = xbmc.translatePath('special://profile/addon_data/' + ADDON_ID + '/settings2.xml')
+        self.currentSettings = []
+        self.loadSettings()
+
+
+    def loadSettings(self):
+        if os.path.exists(self.logfile):
+            try:
+                fle = open(self.logfile, "r")
+                curset = fle.readlines()
+                fle.close()
+            except:
+                pass
+
+            for line in curset:
+                name = re.search('setting id="(.*?)"', line)
+
+                if name:
+                    val = re.search(' value="(.*?)"', line)
+
+                    if val:
+                        self.currentSettings.append([name.group(1), val.group(1)])
 
 
     def log(self, msg, level = xbmc.LOGDEBUG):
-        log('Settings: ' + msg, level)
+        xbmc.log('Settings: ' + msg, level)
 
 
     def getSetting(self, name):
@@ -43,34 +65,9 @@ class Settings:
 
 
     def getSettingNew(self, name):
-        result = ''
-        found = False
-
-        if os.path.exists(self.logfile) == False:
-            return None
-
-        try:
-            fle = open(self.logfile, "r")
-        except:
-            self.log("Unable to open the settings file for reading")
-            return None
-
-        for line in fle:
-            match = re.search('setting id="(.*?)"', line)
-
-            if match:
-                if name == match.group(1):
-                    match = re.search(' value="(.*?)"', line)
-
-                    if match:
-                        result = match.group(1)
-                        found = True
-                        break
-
-        fle.close()
-
-        if found:
-            return result
+        for i in range(len(self.currentSettings)):
+            if self.currentSettings[i][0] == name:
+                return self.currentSettings[i][1]
 
         return None
 
@@ -84,44 +81,32 @@ class Settings:
 
 
     def setSetting(self, name, value):
-        curdata = []
-        matchindex = -1
+        self.log("setSetting " + name + "=" + value)
+        found = False
 
-        if os.path.exists(self.logfile):
-            try:
-                fle = open(self.logfile, "r")
-                curdata = fle.readlines()
-                fle.close()
-            except:
-                pass
+        for i in range(len(self.currentSettings)):
+            if self.currentSettings[i][0] == name:
+                self.currentSettings[i][1] = value
+                found = True
+                break
 
+        if found == False:
+            self.currentSettings.append([name, value])
+
+        self.writeSettings()
+
+
+    def writeSettings(self):
         try:
             fle = open(self.logfile, "w")
         except:
             self.log("Unable to open the file for writing")
             return
 
-        index = 0
-
-        for line in curdata:
-            match = re.search('setting id="(.*?)"', line)
-
-            if match:
-                if name == match.group(1):
-                    matchindex = index
-                    break
-
-            index += 1
-
         fle.write("<settings>\n")
 
-        for i in range(len(curdata)):
-            if i != matchindex:
-                match = re.search('setting id="(.*?)"', curdata[i])
+        for i in range(len(self.currentSettings)):
+            fle.write('    <setting id="' + self.currentSettings[i][0] + '" value="' + self.currentSettings[i][1] + '" />\n')
 
-                if match:
-                    fle.write(curdata[i])
-
-        fle.write('    <setting id="' + name + '" value="' + value + '" />\n')
         fle.write('</settings>\n')
         fle.close()

@@ -81,7 +81,6 @@ class Settings:
 
 
     def setSetting(self, name, value):
-        self.log("setSetting " + name + "=" + value)
         found = False
 
         for i in range(len(self.currentSettings)):

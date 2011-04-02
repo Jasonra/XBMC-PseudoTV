@@ -71,17 +71,8 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
 
         if action == ACTION_PREVIOUS_MENU:
             if self.showingList == False:
-                self.saveSettings()
-                self.getControl(106).setVisible(False)
-
-                for i in range(NUMBER_CHANNEL_TYPES):
-                    self.getControl(120 + i).setVisible(False)
-
-                self.setFocusId(102)
-                self.updateListing(self.channel)
-                self.getControl(105).setVisible(True)
-                self.showingList = True
-                self.listcontrol.selectItem(self.channel - 1)
+                self.cancelChan()
+                self.hideChanDetails()
             else:
                 self.close()
 
@@ -138,6 +129,25 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         self.log("saveSettings return")
 
 
+    def cancelChan(self):
+        ADDON_SETTINGS.setSetting("Channel_" + str(self.channel) + "_type", str(self.channel_type))
+        ADDON_SETTINGS.setSetting("Channel_" + str(self.channel) + "_1", self.setting1)
+        ADDON_SETTINGS.setSetting("Channel_" + str(self.channel) + "_2", self.setting2)
+
+
+    def hideChanDetails(self):
+        self.getControl(106).setVisible(False)
+
+        for i in range(NUMBER_CHANNEL_TYPES):
+            self.getControl(120 + i).setVisible(False)
+
+        self.setFocusId(102)
+        self.getControl(105).setVisible(True)
+        self.showingList = True
+        self.updateListing(self.channel)
+        self.listcontrol.selectItem(self.channel - 1)
+
+
     def onClick(self, controlId):
         self.log("onClick " + str(controlId))
 
@@ -152,6 +162,12 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             self.changeChanType(self.channel, -1)
         elif controlId == 111:
             self.changeChanType(self.channel, 1)
+        elif controlId == 112:
+            self.saveSettings()
+            self.hideChanDetails()
+        elif controlId == 113:
+            self.cancelChan()
+            self.hideChanDetails()
         elif controlId == 130:
             dlg = xbmcgui.Dialog()
             retval = dlg.browse(1, "Channel " + str(self.channel) + " Playlist", "files", ".xsp", False, False, "special://videoplaylists/")

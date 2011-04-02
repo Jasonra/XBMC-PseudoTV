@@ -255,6 +255,36 @@
                 <onleft>110</onleft>
                 <onright>110</onright>
             </control>
+
+            <control type="button" id="112">
+                <posx>90</posx>
+                <posy>320</posy>
+                <width>120</width>
+                <height>40</height>
+                <label>Ok</label>
+                <texturefocus>pstvButtonFocus.png</texturefocus>
+                <texturenofocus border="2,2,2,2">pstvBorder2.png</texturenofocus>
+                <textcolor>FF000000</textcolor>
+                <onup>110</onup>
+                <onleft>113</onleft>
+                <onright>113</onright>
+                <align>center</align>
+            </control>
+
+            <control type="button" id="113">
+                <posx>390</posx>
+                <posy>320</posy>
+                <width>120</width>
+                <height>40</height>
+                <label>Cancel</label>
+                <texturefocus>pstvButtonFocus.png</texturefocus>
+                <texturenofocus border="2,2,2,2">pstvBorder2.png</texturenofocus>
+                <textcolor>FF000000</textcolor>
+                <onup>111</onup>
+                <onleft>112</onleft>
+                <onright>112</onright>
+                <align>center</align>
+            </control>
         </control>
 
         <!-- Controls for type Custom Playlist -->
@@ -282,6 +312,7 @@
                 <height>30</height>
                 <textcolor>FF000000</textcolor>
                 <onup>110</onup>
+                <ondown>112</ondown>
             </control>
         </control>
 
@@ -322,6 +353,7 @@
                 <texturefocus>pstvDownFocus.png</texturefocus>
                 <texturenofocus border="4,4,4,4">pstvDownNoFocus.png</texturenofocus>
                 <onup>110</onup>
+                <ondown>112</ondown>
                 <onleft>141</onleft>
                 <onright>141</onright>
             </control>
@@ -334,6 +366,7 @@
                 <texturefocus>pstvUpFocus.png</texturefocus>
                 <texturenofocus border="4,4,4,4">pstvUpNoFocus.png</texturenofocus>
                 <onup>111</onup>
+                <ondown>113</ondown>
                 <onleft>140</onleft>
                 <onright>140</onright>
             </control>
@@ -376,6 +409,7 @@
                 <texturefocus>pstvDownFocus.png</texturefocus>
                 <texturenofocus border="4,4,4,4">pstvDownNoFocus.png</texturenofocus>
                 <onup>110</onup>
+                <ondown>112</ondown>
                 <onleft>151</onleft>
                 <onright>151</onright>
             </control>
@@ -388,6 +422,7 @@
                 <texturefocus>pstvUpFocus.png</texturefocus>
                 <texturenofocus border="4,4,4,4">pstvUpNoFocus.png</texturenofocus>
                 <onup>111</onup>
+                <ondown>113</ondown>
                 <onleft>150</onleft>
                 <onright>150</onright>
             </control>
@@ -430,6 +465,7 @@
                 <texturefocus>pstvDownFocus.png</texturefocus>
                 <texturenofocus border="4,4,4,4">pstvDownNoFocus.png</texturenofocus>
                 <onup>110</onup>
+                <ondown>112</ondown>
                 <onleft>161</onleft>
                 <onright>161</onright>
             </control>
@@ -442,6 +478,7 @@
                 <texturefocus>pstvUpFocus.png</texturefocus>
                 <texturenofocus border="4,4,4,4">pstvUpNoFocus.png</texturenofocus>
                 <onup>111</onup>
+                <ondown>113</ondown>
                 <onleft>160</onleft>
                 <onright>160</onright>
             </control>
@@ -484,6 +521,7 @@
                 <texturefocus>pstvDownFocus.png</texturefocus>
                 <texturenofocus border="4,4,4,4">pstvDownNoFocus.png</texturenofocus>
                 <onup>110</onup>
+                <ondown>112</ondown>
                 <onleft>171</onleft>
                 <onright>171</onright>
             </control>
@@ -496,6 +534,7 @@
                 <texturefocus>pstvUpFocus.png</texturefocus>
                 <texturenofocus border="4,4,4,4">pstvUpNoFocus.png</texturenofocus>
                 <onup>111</onup>
+                <ondown>113</ondown>
                 <onleft>170</onleft>
                 <onright>170</onright>
             </control>
@@ -538,6 +577,7 @@
                 <texturefocus>pstvDownFocus.png</texturefocus>
                 <texturenofocus border="4,4,4,4">pstvDownNoFocus.png</texturenofocus>
                 <onup>110</onup>
+                <ondown>112</ondown>
                 <onleft>181</onleft>
                 <onright>181</onright>
             </control>
@@ -550,6 +590,7 @@
                 <texturefocus>pstvUpFocus.png</texturefocus>
                 <texturenofocus border="4,4,4,4">pstvUpNoFocus.png</texturenofocus>
                 <onup>111</onup>
+                <ondown>113</ondown>
                 <onleft>180</onleft>
                 <onright>180</onright>
             </control>
@@ -628,6 +669,7 @@
                 <height>30</height>
                 <label></label>
                 <onup>190</onup>
+                <ondown>112</ondown>
             </control>
         </control>
     </controls>

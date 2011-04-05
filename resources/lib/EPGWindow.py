@@ -40,6 +40,8 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.actionSemaphore = threading.BoundedSemaphore()
         self.lastActionTime = time.time()
         self.channelLogos = ''
+        self.textcolor = "FFFFFFFF"
+        self.focusedcolor = "FF7d7d7d"
 
         # Decide whether to use the current skin or the default skin.  If the current skin has the proper
         # image, then it should work.
@@ -98,6 +100,18 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         timeh = self.getControl(120).getHeight()
         self.currentTimeBar = xbmcgui.ControlImage(timex, timey, timew, timeh, self.mediaPath + TIME_BAR)
         self.addControl(self.currentTimeBar)
+
+        try:
+            textcolor = int(self.getControl(100).getLabel(), 16)
+            focusedcolor = int(self.getControl(100).getLabel2(), 16)
+
+            if textcolor > 0:
+                self.textcolor = hex(textcolor)[2:-1]
+
+            if focusedcolor > 0:
+                self.focusedcolor = hex(focusedcolor)[2:-1]
+        except:
+            pass
 
         if self.setChannelButtons(time.time(), self.MyOverlayWindow.currentChannel) == False:
             self.log('Unable to add channel buttons')
@@ -214,7 +228,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         # if the channel is paused, then only 1 button needed
         if self.MyOverlayWindow.channels[curchannel - 1].isPaused:
-            self.channelButtons[row].append(xbmcgui.ControlButton(basex, basey, basew, baseh, self.MyOverlayWindow.channels[curchannel - 1].getCurrentTitle() + " (paused)", focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor='FFFFFFFF', focusedColor='FF7d7d7d'))
+            self.channelButtons[row].append(xbmcgui.ControlButton(basex, basey, basew, baseh, self.MyOverlayWindow.channels[curchannel - 1].getCurrentTitle() + " (paused)", focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor=self.textcolor, focusedColor=self.focusedcolor))
             self.addControl(self.channelButtons[row][0])
         else:
             # Find the show that was running at the given time
@@ -268,7 +282,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                     width = basex + basew - xpos
 
                 if shouldskip == False and width > 30:
-                    self.channelButtons[row].append(xbmcgui.ControlButton(xpos, basey, width, baseh, self.MyOverlayWindow.channels[curchannel - 1].getItemTitle(playlistpos), focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor='FFFFFFFF', focusedColor='FF7d7d7d'))
+                    self.channelButtons[row].append(xbmcgui.ControlButton(xpos, basey, width, baseh, self.MyOverlayWindow.channels[curchannel - 1].getItemTitle(playlistpos), focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor=self.textcolor, focusedColor=self.focusedcolor))
                     self.addControl(self.channelButtons[row][-1])
 
                 totaltime += tmpdur

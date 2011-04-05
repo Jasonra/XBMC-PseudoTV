@@ -214,7 +214,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         # if the channel is paused, then only 1 button needed
         if self.MyOverlayWindow.channels[curchannel - 1].isPaused:
-            self.channelButtons[row].append(xbmcgui.ControlButton(basex, basey, basew, baseh, self.MyOverlayWindow.channels[curchannel - 1].getCurrentTitle(), focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor='FFFFFFFF', focusedColor='FF7d7d7d'))
+            self.channelButtons[row].append(xbmcgui.ControlButton(basex, basey, basew, baseh, self.MyOverlayWindow.channels[curchannel - 1].getCurrentTitle() + " (paused)", focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor='FFFFFFFF', focusedColor='FF7d7d7d'))
             self.addControl(self.channelButtons[row][0])
         else:
             # Find the show that was running at the given time

@@ -314,7 +314,6 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             self.GoRight()
         elif action == ACTION_STOP:
             self.closeEPG()
-            self.MyOverlayWindow.end()
         elif action == ACTION_SELECT_ITEM:
             lastaction = time.time() - self.lastActionTime
 

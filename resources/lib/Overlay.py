@@ -36,16 +36,23 @@ from ChannelList import ChannelList
 class MyPlayer(xbmc.Player):
     def __init__(self):
         xbmc.Player.__init__(self, xbmc.PLAYER_CORE_AUTO)
-        
-        
+        self.stopped = False
+
+
     def log(self, msg, level = xbmc.LOGDEBUG):
         log('Player: ' + msg, level)
-        
-        
-    def onPlayBackStopped(self):
-        self.log('Playback stopped')
-        self.overlay.end()
 
+
+    def onPlayBackStopped(self):
+        if self.stopped == False:
+            self.log('Playback stopped')
+
+            if self.overlay.sleepTimeValue == 0:
+                self.overlay.sleepTimer = threading.Timer(1, self.overlay.sleepAction)
+    
+            self.overlay.sleepTimeValue = 1
+            self.overlay.startSleepTimer()
+            self.stopped = True
 
 
 
@@ -488,14 +495,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.log('Unable to get semaphore')
             return
 
-        # Don't force the 2 second rule on the stop command since it will
-        # be done anyway.
-#         if action == ACTION_STOP:
-#             self.end()
-#             self.actionSemaphore.release()
-#             self.log('onAction return')
-#             return
-
         lastaction = time.time() - self.lastActionTime
 
         # during certain times we just want to discard all input
@@ -581,7 +580,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         if self.sleepTimeValue == 0:
             return
 
-        # Cancel the timer if itbis still running
+        # Cancel the timer if it is still running
         if self.sleepTimer.isAlive():
             self.sleepTimer.cancel()
             self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)

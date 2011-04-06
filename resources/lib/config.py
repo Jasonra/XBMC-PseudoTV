@@ -207,6 +207,11 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         curval = self.getControl(controlid).getLabel()
         found = False
         index = 0
+        
+        if len(thelist) == 0:
+            self.getControl(controlid).setLabel('')
+            self.log("changeListData return Empty list")
+            return
 
         for item in thelist:
             if item == curval:

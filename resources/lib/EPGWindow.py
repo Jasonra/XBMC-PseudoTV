@@ -530,7 +530,18 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             self.log('Unable to find the proper playlist to set from EPG', xbmc.LOGERROR)
             return
 
-        if self.MyOverlayWindow.channels[newchan - 1].playlistPosition != plpos:
+        timedif = (time.time() - self.MyOverlayWindow.channels[newchan - 1].lastAccessTime)
+        pos = self.MyOverlayWindow.channels[newchan - 1].playlistPosition
+        showoffset = self.MyOverlayWindow.channels[newchan - 1].showTimeOffset
+
+        # adjust the show and time offsets to properly position inside the playlist
+        while showoffset + timedif > self.MyOverlayWindow.channels[newchan - 1].getItemDuration(pos):
+            timedif -= self.MyOverlayWindow.channels[newchan - 1].getItemDuration(pos) - showoffset
+            pos = self.MyOverlayWindow.channels[newchan - 1].fixPlaylistIndex(pos + 1)
+            showoffset = 0
+
+        if pos != plpos:
+            self.MyOverlayWindow.channels[newchan - 1].setShowPosition(plpos)
             self.MyOverlayWindow.channels[newchan - 1].setShowPosition(plpos)
             self.MyOverlayWindow.channels[newchan - 1].setShowTime(0)
             self.MyOverlayWindow.channels[newchan - 1].setAccessTime(time.time())

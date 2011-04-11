@@ -13,6 +13,9 @@ Changelog
     Allow the use of the OSD.
     Added an FLV parser.
     New skins from Zepfan.
+    Fixed a problem with shows not being resumed properly from the EPG.
+    Gave skinners the ability to change the EPG button text color.
+    Updates to nearly all skins (thanks Zepfan and Sranshaft).
 
 
 1.0.1

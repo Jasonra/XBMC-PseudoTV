@@ -678,14 +678,14 @@ class ChannelList:
                                 theplot = plot.group(1)
 
                             # This is a TV show
-                            if showtitle != None:
+                            if showtitle != None and len(showtitle.group(1)) > 0:
                                 tmpstr += showtitle.group(1) + "//" + title.group(1) + "//" + theplot
                             else:
                                 tmpstr += title.group(1) + "//"
                                 album = re.search('"album" *: *"(.*?)"', f)
 
                                 # This is a movie
-                                if album == None:
+                                if album == None or len(album.group(1)) == 0:
                                     tagline = re.search('"tagline" *: *"(.*?)"', f)
 
                                     if tagline != None:

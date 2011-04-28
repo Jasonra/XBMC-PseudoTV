@@ -606,10 +606,16 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         try:
             if self.channelLabelTimer.isAlive():
                 self.channelLabelTimer.cancel()
+        except:
+            pass
 
+        try:
             if self.infoTimer.isAlive():
                 self.infoTimer.cancel()
+        except:
+            pass
 
+        try:
             if self.sleepTimeValue > 0:
                 if self.sleepTimer.isAlive():
                     self.sleepTimer.cancel()

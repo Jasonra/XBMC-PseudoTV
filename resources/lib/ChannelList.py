@@ -51,6 +51,8 @@ class ChannelList:
         self.forceReset = REAL_SETTINGS.getSetting('ForceChannelReset') == "true"
         self.log('Force Reset is ' + str(self.forceReset))
         self.updateDialog = xbmcgui.DialogProgress()
+        self.startMode = int(REAL_SETTINGS.getSetting("StartMode"))
+        self.log('Start Mode is ' + str(self.startMode))
         self.updateDialog.create("PseudoTV", "Updating channel list")
         self.updateDialog.update(0, "Updating channel list")
 
@@ -58,6 +60,11 @@ class ChannelList:
             self.lastResetTime = int(ADDON_SETTINGS.getSetting("LastResetTime"))
         except:
             self.lastResetTime = 0
+            
+        try:
+            self.lastResetTime = int(ADDON_SETTINGS.getSetting("LastExitTime"))
+        except:
+            self.lastResetTime = int(time.time())
 
         # Go through all channels, create their arrays, and setup the new playlist
         for i in range(self.maxChannels):
@@ -187,8 +194,31 @@ class ChannelList:
             if chsetting2 == str(MODE_SERIAL):
                 self.channels[channel - 1].mode = MODE_SERIAL
 
+        # if there is no start mode in the channel mode flags, set it to the default
+        if self.channels[channel - 1].mode & MODE_STARTMODES == 0:
+            if self.startMode == 0:
+                self.channels[channel - 1].mode = MODE_RESUME
+            elif self.startMode == 1:
+                self.channels[channel - 1].mode = MODE_REALTIME
+            elif self.startMode == 2:
+                self.channels[channel - 1].mode = MODE_RANDOM
+
         if self.channels[channel - 1].mode & MODE_ALWAYSPAUSE > 0:
             self.channels[channel - 1].isPaused = True
+
+        if self.channels[channel - 1].mode & MODE_RANDOM > 0:
+            self.channels[channel - 1].showTimeOffset = random.randint(0, self.channels[channel - 1].getTotalDuration())
+            
+        if self.channels[channel - 1].mode & MODE_REALTIME > 0:
+            chantime = 0
+
+            try:
+                chantime = int(ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_time'))
+            except:
+                pass
+
+            timedif = self.lastResetTime - int(time.time()) + chantime
+            self.channels[channel - 1].showTimeOffset = timedif
 
         if self.channels[channel - 1].mode & MODE_RESUME > 0:
             self.channels[channel - 1].totalTimePlayed = 0
@@ -201,9 +231,9 @@ class ChannelList:
 
             self.channels[channel - 1].showTimeOffset = chantime
 
-            while self.channels[channel - 1].showTimeOffset > self.channels[channel - 1].getCurrentDuration():
-                self.channels[channel - 1].showTimeOffset -= self.channels[channel - 1].getCurrentDuration()
-                self.channels[channel - 1].addShowPosition(1)
+        while self.channels[channel - 1].showTimeOffset > self.channels[channel - 1].getCurrentDuration():
+            self.channels[channel - 1].showTimeOffset -= self.channels[channel - 1].getCurrentDuration()
+            self.channels[channel - 1].addShowPosition(1)
 
         self.channels[channel - 1].name = self.getChannelName(chtype, chsetting1)
         return returnval

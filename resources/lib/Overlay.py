@@ -648,5 +648,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
+        ADDON_SETTINGS.setSetting('LastExitTime', str(int(time.time())))
         self.background.setVisible(False)
         self.close()

@@ -62,9 +62,9 @@ class ChannelList:
             self.lastResetTime = 0
             
         try:
-            self.lastResetTime = int(ADDON_SETTINGS.getSetting("LastExitTime"))
+            self.lastExitTime = int(ADDON_SETTINGS.getSetting("LastExitTime"))
         except:
-            self.lastResetTime = int(time.time())
+            self.lastExitTime = int(time.time())
 
         # Go through all channels, create their arrays, and setup the new playlist
         for i in range(self.maxChannels):
@@ -208,7 +208,7 @@ class ChannelList:
 
         if self.channels[channel - 1].mode & MODE_RANDOM > 0:
             self.channels[channel - 1].showTimeOffset = random.randint(0, self.channels[channel - 1].getTotalDuration())
-            
+
         if self.channels[channel - 1].mode & MODE_REALTIME > 0:
             chantime = 0
 
@@ -217,7 +217,7 @@ class ChannelList:
             except:
                 pass
 
-            timedif = self.lastResetTime - int(time.time()) + chantime
+            timedif = int(self.lastExitTime) - int(time.time()) + chantime
             self.channels[channel - 1].showTimeOffset = timedif
 
         if self.channels[channel - 1].mode & MODE_RESUME > 0:

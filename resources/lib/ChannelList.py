@@ -217,8 +217,8 @@ class ChannelList:
             except:
                 pass
 
-            timedif = int(self.lastExitTime) - int(time.time()) + chantime
-            self.channels[channel - 1].showTimeOffset = timedif
+            timedif = int(time.time()) - self.lastExitTime
+            self.channels[channel - 1].totalTimePlayed += timedif
 
         if self.channels[channel - 1].mode & MODE_RESUME > 0:
             self.channels[channel - 1].totalTimePlayed = 0

@@ -622,6 +622,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
+        xbmc.executebuiltin("self.PlayerControl(repeatoff)")
+
         if self.Player.isPlaying():
             self.Player.stop()
 

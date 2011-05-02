@@ -6,6 +6,7 @@ Changelog
         time), or random.
     Fixed issues when used in Eden.
     No longer sometimes crashes on exit.
+    Turns off repeat when exiting.
 
 
 1.1.0

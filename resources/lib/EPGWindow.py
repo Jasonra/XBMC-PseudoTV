@@ -134,7 +134,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             if curtime >= starttime and curtime <= endtime:
                 self.focusIndex = i
                 self.setFocus(self.channelButtons[2][i])
-                self.focusTime = starttime + 30
+                self.focusTime = int(time.time())
                 self.focusEndTime = endtime
                 break
 

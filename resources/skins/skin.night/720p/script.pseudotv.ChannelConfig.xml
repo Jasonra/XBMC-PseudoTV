@@ -15,7 +15,7 @@
             <width>600</width>
             <height>520</height>
             <description>Background</description>
-            <texture>pstvBorder.png</texture>
+            <texture>confluence/DialogBack1.png</texture>
         </control>
 
         <control type="label">
@@ -53,7 +53,7 @@
                 <posy>0</posy>
                 <width>515</width>
                 <height>375</height>
-                <texture>pstvBorder.png</texture>
+                <texture>confluence/DialogBack1.png</texture>
             </control>
 
             <control type="label">
@@ -83,7 +83,7 @@
                 <posy>37</posy>
                 <width>515</width>
                 <height>2</height>
-                <texture>separator.png</texture>
+                <texture>confluence/separator.png</texture>
                 <colordiffuse>mainblue</colordiffuse>
             </control>
 
@@ -93,13 +93,13 @@
                 <onleft>102</onleft>
                 <onright>102</onright>
                 <posx>45r</posx>
-                <posy>40</posy>
+                <posy>35</posy>
                 <width>20</width>
-                <height>325</height>
+                <height>340</height>
                 <visible>Control.IsVisible(102)</visible>
-                <texturesliderbackground border="5">pstvScrollBar.png</texturesliderbackground>
-                <texturesliderbar>pstvScrollBarNofocus.png</texturesliderbar> 
-                <texturesliderbarfocus>pstvScrollBarFocus.png</texturesliderbarfocus>
+                <texturesliderbackground border="0,14,0,14">ScrollBarV.png</texturesliderbackground>
+                <texturesliderbarfocus border="0,14,0,14">ScrollBarV_Nib_Focus1.png</texturesliderbarfocus>
+				<texturesliderbar border="0,14,0,14">ptvScrollBarNoFocus.png</texturesliderbar>
                 <orientation>vertical</orientation>
             </control>
 
@@ -146,7 +146,7 @@
                         <posy>0</posy>
                         <width>495</width>
                         <height>30</height>
-                        <texture border="5">pstvButtonFocus.png</texture>
+                        <texture border="5">confluence/button-focus.png</texture>
                     </control>
 
                     <control type="label">
@@ -196,7 +196,7 @@
                 <posy>50</posy>
                 <width>600</width>
                 <height>2</height>
-                <texture>separator.png</texture>
+                <texture>confluence/separator.png</texture>
                 <colordiffuse>mainblue</colordiffuse>
             </control>
 
@@ -227,8 +227,8 @@
                 <posy>65</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvDownFocus.png</texturefocus>
-                <texturenofocus>pstvDownNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_down.png</texturefocus>
+                <texturenofocus>scroll_down.png</texturenofocus>
                 <onleft>111</onleft>
                 <onright>111</onright>
             </control>
@@ -238,8 +238,8 @@
                 <posy>65</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvUpFocus.png</texturefocus>
-                <texturenofocus>pstvUpNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_up.png</texturefocus>
+                <texturenofocus>scroll_up.png</texturenofocus>
                 <onleft>110</onleft>
                 <onright>110</onright>
             </control>
@@ -248,7 +248,7 @@
                 <posy>340</posy>
                 <width>600</width>
                 <height>2</height>
-                <texture>separator.png</texture>
+                <texture>confluence/separator.png</texture>
                 <colordiffuse>mainblue</colordiffuse>
             </control>
             
@@ -302,8 +302,8 @@
 				<textoffsetx>10</textoffsetx>
                 <textcolor>FF000000</textcolor>
 				<focusedcolor>FFFFFFFF</focusedcolor>
-				<texturefocus border="4">pstvButtonFocus.png</texturefocus>
-				<texturenofocus border="4">pstvBorder2.png</texturenofocus>
+				<texturefocus border="4">confluence/button-focus.png</texturefocus>
+				<texturenofocus border="4">confluence/black-back2.png</texturenofocus>
                 <onup>110</onup>
 				<ondown>112</ondown>
             </control>
@@ -343,8 +343,8 @@
                 <posy>105</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvDownFocus.png</texturefocus>
-                <texturenofocus>pstvDownNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_down.png</texturefocus>
+                <texturenofocus>scroll_down.png</texturenofocus>
                 <onup>110</onup>
 				<ondown>112</ondown>
                 <onleft>141</onleft>
@@ -356,8 +356,8 @@
                 <posy>105</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvUpFocus.png</texturefocus>
-                <texturenofocus>pstvUpNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_up.png</texturefocus>
+                <texturenofocus>scroll_up.png</texturenofocus>
                 <onup>111</onup>
 				<ondown>113</ondown>
                 <onleft>140</onleft>
@@ -399,8 +399,8 @@
                 <posy>105</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvDownFocus.png</texturefocus>
-                <texturenofocus>pstvDownNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_down.png</texturefocus>
+                <texturenofocus>scroll_down.png</texturenofocus>
                 <onup>110</onup>
 				<ondown>112</ondown>
                 <onleft>151</onleft>
@@ -412,8 +412,8 @@
                 <posy>105</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvUpFocus.png</texturefocus>
-                <texturenofocus>pstvUpNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_up.png</texturefocus>
+                <texturenofocus>scroll_up.png</texturenofocus>
                 <onup>111</onup>
 				<ondown>113</ondown>
                 <onleft>150</onleft>
@@ -455,8 +455,8 @@
                 <posy>105</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvDownFocus.png</texturefocus>
-                <texturenofocus>pstvDownNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_down.png</texturefocus>
+                <texturenofocus>scroll_down.png</texturenofocus>
                 <onup>110</onup>
 				<ondown>112</ondown>
                 <onleft>161</onleft>
@@ -468,8 +468,8 @@
                 <posy>105</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvUpFocus.png</texturefocus>
-                <texturenofocus>pstvUpNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_up.png</texturefocus>
+                <texturenofocus>scroll_up.png</texturenofocus>
                 <onup>111</onup>
 				<ondown>113</ondown>
                 <onleft>160</onleft>
@@ -511,8 +511,8 @@
                 <posy>105</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvDownFocus.png</texturefocus>
-                <texturenofocus>pstvDownNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_down.png</texturefocus>
+                <texturenofocus>scroll_down.png</texturenofocus>
                 <onup>110</onup>
 				<ondown>112</ondown>
                 <onleft>171</onleft>
@@ -524,8 +524,8 @@
                 <posy>105</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvUpFocus.png</texturefocus>
-                <texturenofocus>pstvUpNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_up.png</texturefocus>
+                <texturenofocus>scroll_up.png</texturenofocus>
                 <onup>111</onup>
 				<ondown>112</ondown>
                 <onleft>170</onleft>
@@ -567,8 +567,8 @@
                 <posy>105</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvDownFocus.png</texturefocus>
-                <texturenofocus>pstvDownNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_down.png</texturefocus>
+                <texturenofocus>scroll_down.png</texturenofocus>
                 <onup>110</onup>
 				<ondown>112</ondown>
                 <onleft>181</onleft>
@@ -580,8 +580,8 @@
                 <posy>105</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvUpFocus.png</texturefocus>
-                <texturenofocus>pstvUpNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_up.png</texturefocus>
+                <texturenofocus>scroll_up.png</texturenofocus>
                 <onup>111</onup>
 				<ondown>113</ondown>
                 <onleft>180</onleft>
@@ -623,8 +623,8 @@
                 <posy>105</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvDownFocus.png</texturefocus>
-                <texturenofocus>pstvDownNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_down.png</texturefocus>
+                <texturenofocus>scroll_down.png</texturenofocus>
                 <onup>110</onup>
                 <ondown>194</ondown>
                 <onleft>191</onleft>
@@ -636,8 +636,8 @@
                 <posy>105</posy>
                 <width>20</width>
                 <height>20</height>
-                <texturefocus>pstvUpFocus.png</texturefocus>
-                <texturenofocus>pstvUpNoFocus.png</texturenofocus>
+                <texturefocus>settings_arrow_button_up.png</texturefocus>
+                <texturenofocus>scroll_up.png</texturenofocus>
                 <onup>111</onup>
                 <ondown>194</ondown>
                 <onleft>190</onleft>

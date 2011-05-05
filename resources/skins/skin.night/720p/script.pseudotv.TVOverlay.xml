@@ -17,10 +17,10 @@
         </control>		
 		<control type="image" id="103">
 			<description>Channel Bug</description>
-			<posx>50</posx>
-			<posy>50</posy>
-			<width>150</width>
-			<height>100</height>
+			<posx>1160</posx>
+			<posy>30</posy>
+			<width>100</width>
+			<height>58</height>
 			<aspectratio>keep</aspectratio>
 			<animation effect="fade" start="50" end="50" condition="True">Conditional</animation>
 		</control>
@@ -114,10 +114,10 @@
 			<posy>690</posy>
 			<width>695</width>
 			<height>19</height>
-			<texturebg>osd_progress_back1.png</texturebg>
-			<lefttexture>left.png</lefttexture>
-			<midtexture>mid.png</midtexture>
-			<righttexture>pstvScrollBarFocus.png</righttexture>
+			<texturebg>osd/osd_progress_back1.png</texturebg>
+			<lefttexture>osd/left.png</lefttexture>
+			<midtexture>osd/mid.png</midtexture>
+			<righttexture>osd/new_pause2.png</righttexture>
 			<info>Player.Progress</info>
 			<visible>true</visible>
 		</control>			

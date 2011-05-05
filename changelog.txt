@@ -7,6 +7,8 @@ Changelog
     Fixed issues when used in Eden.
     No longer sometimes crashes on exit.
     Turns off repeat when exiting.
+    Added Spanish translation (thanks CyberXaz).
+    Updated the Night skin (thanks Steveb).
 
 
 1.1.0

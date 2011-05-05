@@ -30,6 +30,7 @@ from Globals import *
 from Channel import Channel
 from EPGWindow import EPGWindow
 from ChannelList import ChannelList
+from ChannelListThread import ChannelListThread
 
 
 
@@ -69,6 +70,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.channelLabel = []
         self.lastActionTime = 0
         self.actionSemaphore = threading.BoundedSemaphore()
+        self.channelThread = ChannelListThread()
+        self.channelThread.myOverlay = self
         self.setCoordinateResolution(1)
         self.timeStarted = 0
         self.infoOnChange = True
@@ -156,6 +159,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.timeStarted = time.time()
         self.background.setVisible(False)
         self.startSleepTimer()
+        self.channelThread.start()
         self.actionSemaphore.release()
         self.log('onInit return')
 
@@ -621,6 +625,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                     self.sleepTimer.cancel()
         except:
             pass
+
+        if self.channelThread.isAlive():
+            self.channelThread.shouldExit = True
+            self.channelThread.join()
 
         xbmc.executebuiltin("self.PlayerControl(repeatoff)")
 

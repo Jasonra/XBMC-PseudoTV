@@ -40,11 +40,11 @@ class ChannelList:
         self.showGenreList = []
         self.movieGenreList = []
         self.showList = []
+        self.videoParser = VideoParser()
 
 
     def setupList(self):
         self.channels = []
-        self.videoParser = VideoParser()
         self.findMaxChannels()
         self.channelResetSetting = int(REAL_SETTINGS.getSetting("ChannelResetSetting"))
         self.log('Channel Reset Setting is ' + str(self.channelResetSetting))
@@ -60,7 +60,7 @@ class ChannelList:
             self.lastResetTime = int(ADDON_SETTINGS.getSetting("LastResetTime"))
         except:
             self.lastResetTime = 0
-            
+
         try:
             self.lastExitTime = int(ADDON_SETTINGS.getSetting("LastExitTime"))
         except:
@@ -190,6 +190,8 @@ class ChannelList:
                     ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_time', '0')
                     ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_changed', 'False')
 
+        self.clearPlaylistHistory(channel)
+
         if chtype == 6:
             if chsetting2 == str(MODE_SERIAL):
                 self.channels[channel - 1].mode = MODE_SERIAL
@@ -237,6 +239,47 @@ class ChannelList:
 
         self.channels[channel - 1].name = self.getChannelName(chtype, chsetting1)
         return returnval
+
+
+    def clearPlaylistHistory(self, channel):
+        self.log("clearPlaylistHistory")
+
+        if self.channels[channel - 1].isValid == False:
+            self.log("channel not valid, ignoring")
+            return
+
+        # if we actually need to clear anything
+        if self.channels[channel - 1].totalTimePlayed > 60 * 60 * 24:
+            try:
+                fle = open(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', 'w')
+            except:
+                self.log("clearPlaylistHistory Unable to open the smart playlist", xbmc.LOGERROR)
+                return
+
+            fle.write("#EXTM3U\n")
+            tottime = 0
+            timeremoved = 0
+
+            for i in range(self.channels[channel - 1].Playlist.size()):
+                tottime += self.channels[channel - 1].getItemDuration(i)
+
+                if tottime > (self.channels[channel - 1].totalTimePlayed - (60 * 60 * 24)):
+                    tmpstr = str(self.channels[channel - 1].getItemDuration(i)) + ','
+                    tmpstr += self.channels[channel - 1].getItemTitle(i) + "//" + self.channels[channel - 1].getItemEpisodeTitle(i) + "//" + self.channels[channel - 1].getItemDescription(i)
+                    tmpstr = tmpstr[:600]
+                    tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
+                    tmpstr = tmpstr + '\n' + self.channels[channel - 1].getItemFilename(i)
+                    fle.write("#EXTINF:" + tmpstr + "\n")
+                else:
+                    timeremoved = tottime
+
+            fle.close()
+            
+            if timeremoved > 0:
+                self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
+
+            self.channels[channel - 1].totalTimePlayed -= timeremoved
+
 
 
     def getChannelName(self, chtype, setting1):
@@ -287,7 +330,7 @@ class ChannelList:
 
 
     # Based on a smart playlist, create a normal playlist that can actually be used by us
-    def makeChannelList(self, channel, chtype, setting1, setting2):
+    def makeChannelList(self, channel, chtype, setting1, setting2, append = False):
         self.log('makeChannelList ' + str(channel))
 
         if chtype == 0:
@@ -322,12 +365,16 @@ class ChannelList:
             fileList = self.buildFileList(fle)
 
         try:
-            channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")
+            if append == True:
+                channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "a")
+            else:
+                channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")
         except:
             self.Error('Unable to open the cache file ' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', xbmc.LOGERROR)
             return False
 
-        channelplaylist.write("#EXTM3U\n")
+        if append == False:
+            channelplaylist.write("#EXTM3U\n")
 
         if len(fileList) == 0:
             self.log("Unable to get information about channel " + str(channel), xbmc.LOGERROR)
@@ -351,6 +398,23 @@ class ChannelList:
         channelplaylist.close()
         self.log('makeChannelList return')
         return True
+
+
+    def appendChannel(self, channel):
+        self.log("appendChannel")
+        chtype = 9999
+        chsetting1 = ''
+        chsetting2 = ''
+
+        try:
+            chtype = int(ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_type'))
+            chsetting1 = ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_1')
+            chsetting2 = ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_2')
+        except:
+            self.log("appendChannel unable to get channel settings")
+            return False
+
+        return self.makeChannelList(channel, chtype, chsetting1, chsetting2, True)
 
 
     def makeTypePlaylist(self, chtype, setting1, setting2):
@@ -495,7 +559,7 @@ class ChannelList:
         except:
             self.Error('Unable to open the cache file ' + flename, xbmc.LOGERROR)
             return ''
-            
+
         self.writeXSPHeader(fle, "movies", self.getChannelName(2, studio))
         studio = self.cleanString(studio)
         fle.write('    <rule field="studio" operator="is">' + studio + '</rule>\n')
@@ -530,7 +594,7 @@ class ChannelList:
         self.log("fillTVInfo")
         json_query = '{"jsonrpc": "2.0", "method": "VideoLibrary.GetTVShows", "params": {"fields":["studio", "genre"]}, "id": 1}'
         json_folder_detail = xbmc.executeJSONRPC(json_query)
-        self.log(json_folder_detail)
+#        self.log(json_folder_detail)
         detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in detail:

@@ -366,11 +366,12 @@ class ChannelList:
 
         try:
             if append == True:
-                channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "a")
+                channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "r+")
+                channelplaylist.seek(0, 2)
             else:
                 channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")
         except:
-            self.Error('Unable to open the cache file ' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', xbmc.LOGERROR)
+            self.log('Unable to open the cache file ' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', xbmc.LOGERROR)
             return False
 
         if append == False:

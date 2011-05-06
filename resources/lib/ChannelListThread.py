@@ -49,12 +49,15 @@ class ChannelListThread(threading.Thread):
 
         for i in range(self.myOverlay.maxChannels):
             modified = True
-            self.log("In loop")
-            self.log("cur dur - " + str(self.myOverlay.channels[i].getTotalDuration()))
 
             while modified == True and self.myOverlay.channels[i].isValid and self.myOverlay.channels[i].getTotalDuration() < PREP_CHANNEL_TIME:
-                self.log("Adding")
                 modified = False
+                sleeptime = 0
+                
+                # sleep for 30 seconds so that any slowdowns aren't constant
+                while sleeptime < 30 and self.shouldExit == False:
+                    time.sleep(2)
+                    sleeptime += 2
 
                 if self.shouldExit == True:
                     self.log("Closing thread")
@@ -64,8 +67,6 @@ class ChannelListThread(threading.Thread):
                 chanlist = ChannelList()
                 chanlist.appendChannel(i + 1)
                 self.myOverlay.channels[i].setPlaylist(CHANNELS_LOC + "channel_" + str(i + 1) + ".m3u")
-                self.log("old dur - " + str(curtotal))
-                self.log("new dur - " + str(self.myOverlay.channels[i].getTotalDuration()))
 
                 if self.myOverlay.channels[i].getTotalDuration() > curtotal:
                     modified = True

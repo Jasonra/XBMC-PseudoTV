@@ -542,7 +542,6 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         if pos != plpos:
             self.MyOverlayWindow.channels[newchan - 1].setShowPosition(plpos)
-            self.MyOverlayWindow.channels[newchan - 1].setShowPosition(plpos)
             self.MyOverlayWindow.channels[newchan - 1].setShowTime(0)
             self.MyOverlayWindow.channels[newchan - 1].setAccessTime(time.time())
 

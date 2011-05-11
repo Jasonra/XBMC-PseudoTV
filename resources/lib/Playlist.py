@@ -18,6 +18,7 @@
 
 import xbmcgui, xbmc
 import threading
+import time
 
 
 
@@ -143,6 +144,8 @@ class Playlist:
 
         # past the header, so get the info
         while len(line) > 0:
+            time.sleep(0)
+
             if line[:8] == '#EXTINF:':
                 tmpitem = PlaylistItem()
                 index = line.find(',')

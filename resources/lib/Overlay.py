@@ -628,6 +628,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         if self.channelThread.isAlive():
             self.channelThread.shouldExit = True
+            self.channelThread.chanlist.exitThread = True
             self.channelThread.join()
 
         xbmc.executebuiltin("self.PlayerControl(repeatoff)")

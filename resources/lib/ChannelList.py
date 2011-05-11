@@ -22,6 +22,9 @@ import time, threading
 import datetime
 import sys, re
 import random
+import httplib
+import base64
+
 
 from xml.dom.minidom import parse, parseString
 
@@ -41,6 +44,9 @@ class ChannelList:
         self.movieGenreList = []
         self.showList = []
         self.videoParser = VideoParser()
+        self.httpJSON = True
+        self.sleepTime = 0
+        self.exitThread = False
 
 
     def setupList(self):
@@ -116,6 +122,40 @@ class ChannelList:
                     self.maxChannels = i + 1
 
         self.log('findMaxChannels return ' + str(self.maxChannels))
+
+
+    # Code for sending JSON through http adapted from code by sffjunkie (forum.xbmc.org/showthread.php?t=92196)
+    def sendJSON(self, command, username='xbmc', password=''):
+        self.log('sendJSON')
+        data = ''
+
+        # If there have been problems using the server, just skip the attempt and use executejsonrpc
+        if self.httpJSON == True:
+            payload = command.encode('utf-8')
+            headers = {'Content-Type': 'application/json-rpc; charset=utf-8'}
+
+            if username != '':
+                userpass = base64.encodestring('%s:%s' % (username, password))[:-1]
+                headers['Authorization'] = 'Basic %s' % userpass
+
+            xbmc_host = '127.0.0.1'
+            xbmc_port = 8080
+            conn = httplib.HTTPConnection(xbmc_host, xbmc_port)
+            conn.request('POST', '/jsonrpc', payload, headers)
+            response = conn.getresponse()
+
+            if response.status == 200:
+                data = response.read()
+            else:
+                self.log("sendJSON invalid response, using normal command")
+                self.httpJSON = False
+                data = xbmc.executeJSONRPC(command)
+
+            conn.close()
+        else:
+            data = xbmc.executeJSONRPC(command)
+
+        return data
 
 
     def setupChannel(self, channel):
@@ -223,15 +263,8 @@ class ChannelList:
             self.channels[channel - 1].totalTimePlayed += timedif
 
         if self.channels[channel - 1].mode & MODE_RESUME > 0:
+            self.channels[channel - 1].showTimeOffset = self.channels[channel - 1].totalTimePlayed
             self.channels[channel - 1].totalTimePlayed = 0
-            chantime = 0
-
-            try:
-                chantime = int(ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_time'))
-            except:
-                pass
-
-            self.channels[channel - 1].showTimeOffset = chantime
 
         while self.channels[channel - 1].showTimeOffset > self.channels[channel - 1].getCurrentDuration():
             self.channels[channel - 1].showTimeOffset -= self.channels[channel - 1].getCurrentDuration()
@@ -274,7 +307,7 @@ class ChannelList:
                     timeremoved = tottime
 
             fle.close()
-            
+
             if timeremoved > 0:
                 self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
 
@@ -475,6 +508,10 @@ class ChannelList:
         added = False
 
         for i in range(len(self.showList)):
+            if self.threadPause() == False:
+                fle.close()
+                return ''
+
             if self.showList[i][1].lower() == network:
                 theshow = self.cleanString(self.showList[i][0])
                 fle.write('    <rule field="tvshow" operator="is">' + theshow + '</rule>\n')
@@ -594,11 +631,17 @@ class ChannelList:
     def fillTVInfo(self):
         self.log("fillTVInfo")
         json_query = '{"jsonrpc": "2.0", "method": "VideoLibrary.GetTVShows", "params": {"fields":["studio", "genre"]}, "id": 1}'
-        json_folder_detail = xbmc.executeJSONRPC(json_query)
+        json_folder_detail = self.sendJSON(json_query)
 #        self.log(json_folder_detail)
         detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in detail:
+            if self.threadPause() == False:
+                del self.networkList[:]
+                del self.showList[:]
+                del self.showGenreList[:]
+                break
+
             match = re.search('"studio" *: *"(.*?)",', f)
             network = ''
 
@@ -648,11 +691,17 @@ class ChannelList:
         self.log("fillMovieInfo")
         studioList = []
         json_query = '{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovies", "params": {"fields":["studio", "genre"]}, "id": 1}'
-        json_folder_detail = xbmc.executeJSONRPC(json_query)
+        json_folder_detail = self.sendJSON(json_query)
 #        self.log(json_folder_detail)
         detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in detail:
+            if self.threadPause() == False:
+                del self.movieGenreList[:]
+                del self.studioList[:]
+                del studioList[:]
+                break
+
             match = re.search('"genre" *: *"(.*?)",', f)
 
             if match:
@@ -738,11 +787,15 @@ class ChannelList:
         self.log("buildFileList")
         fileList = []
         json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "%s", "fields":["duration","tagline","showtitle","album","artist","plot"]}, "id": 1}' % ( self.escapeDirJSON( dir_name ), media_type )
-        json_folder_detail = xbmc.executeJSONRPC(json_query)
+        json_folder_detail = self.sendJSON(json_query)
         self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in file_detail:
+            if self.threadPause() == False:
+                del fileList[:]
+                break
+
             match = re.search('"file" *: *"(.*?)",', f)
 
             if match:
@@ -800,8 +853,7 @@ class ChannelList:
             else:
                 continue
 
-	self.videoParser.finish()
-
+        self.videoParser.finish()
         return fileList
 
 
@@ -827,6 +879,16 @@ class ChannelList:
 
         self.log("buildMixedFileList returning")
         return fileList
+
+
+    def threadPause(self):
+        if threading.activeCount() > 1:
+            if self.exitThread == True:
+                return False
+
+            time.sleep(self.sleepTime)
+
+        return True
 
 
     def escapeDirJSON(self, dir_name):

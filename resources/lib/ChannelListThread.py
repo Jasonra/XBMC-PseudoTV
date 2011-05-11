@@ -33,6 +33,9 @@ class ChannelListThread(threading.Thread):
         threading.Thread.__init__(self)
         self.myOverlay = None
         self.shouldExit = False
+        sys.setcheckinterval(25)
+        self.chanlist = ChannelList()
+        self.chanlist.sleepTime = 0.1
 
 
     def log(self, msg, level = xbmc.LOGDEBUG):
@@ -42,6 +45,7 @@ class ChannelListThread(threading.Thread):
     def run(self):
         self.log("Starting")
         self.shouldExit = False
+        self.chanlist.exitThread = False
 
         if self.myOverlay == None:
             self.log("Overlay not defined. Exiting.")
@@ -52,24 +56,24 @@ class ChannelListThread(threading.Thread):
 
             while modified == True and self.myOverlay.channels[i].isValid and self.myOverlay.channels[i].getTotalDuration() < PREP_CHANNEL_TIME:
                 modified = False
-                sleeptime = 0
-                
-                # sleep for 30 seconds so that any slowdowns aren't constant
-                while sleeptime < 30 and self.shouldExit == False:
-                    time.sleep(2)
-                    sleeptime += 2
 
                 if self.shouldExit == True:
                     self.log("Closing thread")
                     return
 
+                time.sleep(2)
                 curtotal = self.myOverlay.channels[i].getTotalDuration()
-                chanlist = ChannelList()
-                chanlist.appendChannel(i + 1)
+                self.chanlist.appendChannel(i + 1)
+
+                if self.shouldExit == True:
+                    self.log("Closing thread")
+                    return
+
+                time.sleep(2)
                 self.myOverlay.channels[i].setPlaylist(CHANNELS_LOC + "channel_" + str(i + 1) + ".m3u")
 
                 if self.myOverlay.channels[i].getTotalDuration() > curtotal:
                     modified = True
-                    
+
         self.log("All channels up to date.  Exiting thread.")
 

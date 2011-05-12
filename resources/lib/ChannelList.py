@@ -47,6 +47,7 @@ class ChannelList:
         self.httpJSON = True
         self.sleepTime = 0
         self.exitThread = False
+        self.discoveredWebServer = False
 
 
     def setupList(self):
@@ -124,33 +125,78 @@ class ChannelList:
         self.log('findMaxChannels return ' + str(self.maxChannels))
 
 
+    def determineWebServer(self):
+        if self.discoveredWebServer:
+            return
+
+        self.discoveredWebServer = True
+        self.webPort = 8080
+        self.webUsername = ''
+        self.webPassword = ''
+        fle = xbmc.translatePath("special://profile/guisettings.xml")
+
+        try:
+            xml = open(fle, "r")
+        except:
+            self.log("determineWebServer Unable to open the settings file", xbmc.LOGERROR)
+            self.httpJSON = False
+            return
+
+        try:
+            dom = parse(xml)
+        except:
+            self.log('determineWebServer Unable to parse settings file', xbmc.LOGERROR)
+            self.httpJSON = False
+            return
+
+        xml.close()
+
+        try:
+            plname = dom.getElementsByTagName('webserver')
+            self.httpJSON = (plname[0].childNodes[0].nodeValue.lower() == 'true')
+            self.log('determineWebServer is ' + str(self.httpJSON))
+
+            if self.httpJSON == True:
+                plname = dom.getElementsByTagName('webserverport')
+                self.webPort = int(plname[0].childNodes[0].nodeValue)
+                self.log('determineWebServer port ' + str(self.webPort))
+                plname = dom.getElementsByTagName('webserverusername')
+                self.webUsername = plname[0].childNodes[0].nodeValue
+                self.log('determineWebServer username ' + self.webUsername)
+                plname = dom.getElementsByTagName('webserverpassword')
+                self.webPassword = plname[0].childNodes[0].nodeValue
+                self.log('determineWebServer password is ' + self.webPassword)
+        except:
+            return
+
+
     # Code for sending JSON through http adapted from code by sffjunkie (forum.xbmc.org/showthread.php?t=92196)
-    def sendJSON(self, command, username='xbmc', password=''):
+    def sendJSON(self, command):
         self.log('sendJSON')
         data = ''
         usedhttp = False
+
+        self.determineWebServer()
 
         # If there have been problems using the server, just skip the attempt and use executejsonrpc
         if self.httpJSON == True:
             payload = command.encode('utf-8')
             headers = {'Content-Type': 'application/json-rpc; charset=utf-8'}
 
-            if username != '':
-                userpass = base64.encodestring('%s:%s' % (username, password))[:-1]
+            if self.webUsername != '':
+                userpass = base64.encodestring('%s:%s' % (self.webUsername, self.webPassword))[:-1]
                 headers['Authorization'] = 'Basic %s' % userpass
 
-            xbmc_host = '127.0.0.1'
-            xbmc_port = 8080
+            self.webPort = 8080
 
             try:
-                conn = httplib.HTTPConnection(xbmc_host, xbmc_port)
+                conn = httplib.HTTPConnection('127.0.0.1', self.webPort)
                 conn.request('POST', '/jsonrpc', payload, headers)
                 response = conn.getresponse()
 
                 if response.status == 200:
                     data = response.read()
                     usedhttp = True
-                    self.log("used http")
 
                 conn.close()
             except:

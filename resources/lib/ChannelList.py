@@ -128,6 +128,7 @@ class ChannelList:
     def sendJSON(self, command, username='xbmc', password=''):
         self.log('sendJSON')
         data = ''
+        usedhttp = False
 
         # If there have been problems using the server, just skip the attempt and use executejsonrpc
         if self.httpJSON == True:
@@ -140,19 +141,23 @@ class ChannelList:
 
             xbmc_host = '127.0.0.1'
             xbmc_port = 8080
-            conn = httplib.HTTPConnection(xbmc_host, xbmc_port)
-            conn.request('POST', '/jsonrpc', payload, headers)
-            response = conn.getresponse()
 
-            if response.status == 200:
-                data = response.read()
-            else:
-                self.log("sendJSON invalid response, using normal command")
-                self.httpJSON = False
-                data = xbmc.executeJSONRPC(command)
+            try:
+                conn = httplib.HTTPConnection(xbmc_host, xbmc_port)
+                conn.request('POST', '/jsonrpc', payload, headers)
+                response = conn.getresponse()
 
-            conn.close()
-        else:
+                if response.status == 200:
+                    data = response.read()
+                    usedhttp = True
+                    self.log("used http")
+
+                conn.close()
+            except:
+                pass
+
+        if usedhttp == False:
+            self.httpJSON = False
             data = xbmc.executeJSONRPC(command)
 
         return data

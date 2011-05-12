@@ -811,7 +811,7 @@ class ChannelList:
                         dur = 0
 
                     if dur == 0:
-                        duration = re.search('"runtime" *: *([0-9]*?),', f)
+                        duration = re.search('"runtime" *: *"([0-9]*?)",', f)
 
                         try:
                             # Runtime is reported in minutes

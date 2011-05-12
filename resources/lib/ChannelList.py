@@ -786,7 +786,7 @@ class ChannelList:
     def buildFileList(self, dir_name, media_type="video", recursive="TRUE"):
         self.log("buildFileList")
         fileList = []
-        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "%s", "fields":["duration","tagline","showtitle","album","artist","plot"]}, "id": 1}' % ( self.escapeDirJSON( dir_name ), media_type )
+        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "%s", "fields":["duration","runtime","tagline","showtitle","album","artist","plot"]}, "id": 1}' % ( self.escapeDirJSON( dir_name ), media_type )
         json_folder_detail = self.sendJSON(json_query)
         self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
@@ -811,7 +811,16 @@ class ChannelList:
                         dur = 0
 
                     if dur == 0:
-                        dur = self.videoParser.getVideoLength(match.group(1).replace("\\\\", "\\"))
+                        duration = re.search('"runtime" *: *([0-9]*?),', f)
+
+                        try:
+                            # Runtime is reported in minutes
+                            dur = int(duration.group(1)) * 60
+                        except:
+                            dur = 0
+
+                        if dur == 0:
+                            dur = self.videoParser.getVideoLength(match.group(1).replace("\\\\", "\\"))
 
                     try:
                         if dur > 0:

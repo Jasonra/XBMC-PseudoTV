@@ -353,7 +353,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         lastaction = time.time() - self.lastActionTime
 
         if lastaction >= 2:
-            selectedbutton = self.getControl(controlid)
+            try:
+                selectedbutton = self.getControl(controlid)
+            except:
+                self.actionSemaphore.release()
+                self.log('onClick unknown controlid ' + str(controlid))
+                return
 
             for i in range(self.rowCount):
                 for x in range(len(self.channelButtons[i])):

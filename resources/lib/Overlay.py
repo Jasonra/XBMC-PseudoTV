@@ -50,7 +50,7 @@ class MyPlayer(xbmc.Player):
 
             if self.overlay.sleepTimeValue == 0:
                 self.overlay.sleepTimer = threading.Timer(1, self.overlay.sleepAction)
-    
+
             self.overlay.sleepTimeValue = 1
             self.overlay.startSleepTimer()
             self.stopped = True
@@ -606,6 +606,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     # cleanup and end
     def end(self):
         self.log('end')
+        self.background.setVisible(True)
+        xbmc.executebuiltin("self.PlayerControl(repeatoff)")
+
+        if self.Player.isPlaying():
+            # Prevent the player from setting the sleep timer
+            self.Player.stopped = True
+            self.Player.stop()
 
         try:
             if self.channelLabelTimer.isAlive():
@@ -630,11 +637,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.channelThread.shouldExit = True
             self.channelThread.chanlist.exitThread = True
             self.channelThread.join()
-
-        xbmc.executebuiltin("self.PlayerControl(repeatoff)")
-
-        if self.Player.isPlaying():
-            self.Player.stop()
 
         if self.timeStarted > 0:
             for i in range(self.maxChannels):

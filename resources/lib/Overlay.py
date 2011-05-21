@@ -292,7 +292,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.log('Random on.  Disabling.')
             xbmc.PlayList(xbmc.PLAYLIST_MUSIC).unshuffle()
 
-        xbmc.executebuiltin("self.PlayerControl(repeatall)")
+        xbmc.executebuiltin("PlayerControl(repeatall)")
 
         timedif += (time.time() - self.channels[self.currentChannel - 1].lastAccessTime)
 
@@ -543,10 +543,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             if self.showingInfo:
                 self.infoOffset -= 1
                 self.showInfo(10.0)
+            else:
+                xbmc.executebuiltin("PlayerControl(SmallSkipBackward)")
         elif action == ACTION_MOVE_RIGHT:
             if self.showingInfo:
                 self.infoOffset += 1
                 self.showInfo(10.0)
+            else:
+                xbmc.executebuiltin("PlayerControl(SmallSkipForward)")
         elif action == ACTION_PREVIOUS_MENU:
             if self.showingInfo:
                 self.hideInfo()
@@ -612,7 +616,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     def end(self):
         self.log('end')
         self.background.setVisible(True)
-        xbmc.executebuiltin("self.PlayerControl(repeatoff)")
+        xbmc.executebuiltin("PlayerControl(repeatoff)")
 
         if self.Player.isPlaying():
             # Prevent the player from setting the sleep timer

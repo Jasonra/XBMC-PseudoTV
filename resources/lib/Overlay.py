@@ -159,7 +159,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.timeStarted = time.time()
         self.background.setVisible(False)
         self.startSleepTimer()
-        self.channelThread.start()
+
+        if self.channelResetSetting == "0":
+            self.channelThread.start()
+
         self.actionSemaphore.release()
         self.log('onInit return')
 
@@ -176,6 +179,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.showChannelBug = REAL_SETTINGS.getSetting("ShowChannelBug") == "true"
         self.log('Show channel bug - ' + str(self.showChannelBug))
         self.forceReset = REAL_SETTINGS.getSetting('ForceChannelReset') == "true"
+        self.channelResetSetting = REAL_SETTINGS.getSetting('ChannelResetSetting')
+        self.log("Channel reset setting - " + str(self.channelResetSetting))
         self.channelLogos = xbmc.translatePath(REAL_SETTINGS.getSetting('ChannelLogoFolder'))
 
         if os.path.exists(self.channelLogos) == False:

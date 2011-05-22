@@ -545,6 +545,11 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             pos = self.MyOverlayWindow.channels[newchan - 1].fixPlaylistIndex(pos + 1)
             showoffset = 0
 
+        if self.MyOverlayWindow.currentChannel == newchan:
+            if plpos == xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition():
+                self.log('selectShow return current show')
+                return
+
         if pos != plpos:
             self.MyOverlayWindow.channels[newchan - 1].setShowPosition(plpos)
             self.MyOverlayWindow.channels[newchan - 1].setShowTime(0)

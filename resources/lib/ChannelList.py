@@ -140,9 +140,14 @@ class ChannelList:
 
             xbmc_host = '127.0.0.1'
             xbmc_port = 8080
-            conn = httplib.HTTPConnection(xbmc_host, xbmc_port)
-            conn.request('POST', '/jsonrpc', payload, headers)
-            response = conn.getresponse()
+
+            try:
+                conn = httplib.HTTPConnection(xbmc_host, xbmc_port)
+                conn.request('POST', '/jsonrpc', payload, headers)
+                response = conn.getresponse()
+            except:
+                self.httpJSON = False
+                return xbmc.executeJSONRPC(command)
 
             if response.status == 200:
                 data = response.read()

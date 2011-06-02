@@ -65,6 +65,7 @@ class VideoParser:
                 self.log("Unable to open the file")
                 return 0
 
+        self.log("getVideoLength past handleSMB")
         base, ext = os.path.splitext(filename)
         ext = ext.lower()
 
@@ -96,8 +97,11 @@ class VideoParser:
 
 
     def mountPosixSMB(self, filename):
+        self.log("mountPosixSMB " + str(filename))
         if not os.path.exists(xbmc.translatePath('special://profile/addon_data/script.pseudotv/mountpnt/')):
+            self.log("mountPosixSMB creating directory")
             os.makedirs(xbmc.translatePath('special://profile/addon_data/script.pseudotv/mountpnt/'))
+            self.log("mountPosixSMB directory created")
 
         if self.mountedFS == True:
             newfilename = xbmc.translatePath('special://profile/addon_data/script.pseudotv/mountpnt/') + os.path.split(filename)[1]
@@ -105,6 +109,7 @@ class VideoParser:
             if os.path.exists(newfilename):
                 return newfilename
 
+            self.log("mountPosixSMB unmounting FS")
             pipe = os.popen("umount \"" + xbmc.translatePath('special://profile/addon_data/script.pseudotv/mountpnt') + "\"")
             self.mountedFS = False
 
@@ -124,24 +129,33 @@ class VideoParser:
 
 
     def mountFs(self, filename, fstype):
+        self.log("mountFs " + filename + ", " + fstype)
         dirpart, filename = os.path.split(filename)
+        self.log("mountFs mount 1")
         pipe = os.popen("mount -t " + fstype + " \"" + dirpart + "\" \"" + xbmc.translatePath('special://profile/addon_data/script.pseudotv/mountpnt') + "\"")
         newfilename = xbmc.translatePath('special://profile/addon_data/script.pseudotv/mountpnt/') + filename
 
         if os.path.exists(newfilename):
+            self.log("mountFs return")
             return newfilename
 
         # Only try adding "Guest" if there is no username already there
         if dirpart.find('@') == -1:
+            self.log("mountFs adding guest")
             dirpart = "//Guest:@" + dirpart[2:]
+            self.log("mountFs mount 2")
             pipe = os.popen("mount -t " + fstype + " \"" + dirpart + "\" \"" + xbmc.translatePath('special://profile/addon_data/script.pseudotv/mountpnt') + "\"")
 
             if os.path.exists(newfilename):
+                self.log("mountFs return")
                 return newfilename
 
+        self.log("mountFs seperating")
         # Seperate the username and password and try that
         username = dirpart[2:dirpart.find(':')]
         password = dirpart[dirpart.find(':') + 1:dirpart.find('@')]
         dirpart = '//' + dirpart[dirpart.find('@') + 1:]
+        self.log("mountFs mount 3")
         pipe = os.popen("mount -t cifs \"" + dirpart + "\" \"" + xbmc.translatePath('special://profile/addon_data/script.pseudotv/mountpnt') + "\" -o username=" + username + ",password=" + password)
+        self.log("mountFs return")
         return newfilename

@@ -35,6 +35,7 @@ class MKVParser:
             self.log("Unable to open the file")
             return
 
+        self.log("Finding header")
         size = self.findHeader()
 
         if size == 0:
@@ -48,6 +49,7 @@ class MKVParser:
 
 
     def parseHeader(self, size):
+        self.log("parseHeader")
         duration = 0
         timecode = 0
         fileend = self.File.tell() + size
@@ -90,12 +92,15 @@ class MKVParser:
 
         if duration > 0 and timecode > 0:
             dur = (duration * timecode) / 1000000000
+            self.log("parseHeader return " + str(dur))
             return dur
 
+        self.log("parseHeader return 0")
         return 0
 
 
     def findHeader(self):
+        self.log("findHeader")
         filesize = self.getFileSize()
         data = self.getEBMLId()
 
@@ -126,6 +131,7 @@ class MKVParser:
 
             data = self.getEBMLId()
 
+        self.log("findHeader outside loop 1")
         datasize = self.getDataSize()
         data = self.getEBMLId()
 
@@ -141,28 +147,36 @@ class MKVParser:
 
             data = self.getEBMLId()
 
+        self.log("findHeader outside loop 2")
         datasize = self.getDataSize()
 
         if self.File.tell() < filesize:
+            self.log("findHeader return " + str(datasize))
             return datasize
 
+        self.log("findHeader return 0")
         return 0
 
 
     def getFileSize(self):
+        self.log("getFileSize")
         pos = self.File.tell()
         self.File.seek(0, 2)
         size = self.File.tell()
         self.File.seek(pos, 0)
+        self.log("getFileSize return " + str(size))
         return size
 
 
     def getData(self, datasize):
+        self.log("getData " + str(datasize))
         data = self.File.read(datasize)
+        self.log("getData return")
         return data
 
 
     def getDataSize(self):
+        self.log("getDataSize")
         data = self.File.read(1)
         
         try:
@@ -186,10 +200,12 @@ class MKVParser:
         except:
             datasize = 0
 
+        self.log("getDataSize return " + str(datasize))
         return datasize
 
 
     def getEBMLId(self):
+        self.log("getEBMLId")
         data = self.File.read(1)
         
         try:
@@ -205,4 +221,5 @@ class MKVParser:
         except:
             ID = 0
 
+        self.log("getEBMLId return " + str(ID))
         return ID

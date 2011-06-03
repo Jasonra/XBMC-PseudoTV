@@ -32,6 +32,7 @@ from Playlist import Playlist
 from Globals import *
 from Channel import Channel
 from VideoParser import VideoParser
+from FileLock import FileLock
 
 
 
@@ -44,9 +45,11 @@ class ChannelList:
         self.movieGenreList = []
         self.showList = []
         self.videoParser = VideoParser()
+        self.fileLock = FileLock()
         self.httpJSON = True
         self.sleepTime = 0
         self.exitThread = False
+        self.discoveredWebServer = False
 
 
     def setupList(self):
@@ -74,7 +77,7 @@ class ChannelList:
 
         # Go through all channels, create their arrays, and setup the new playlist
         for i in range(self.maxChannels):
-            self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel " + str(i + 1))
+            self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel " + str(i + 1), "waiting for file lock")
             self.channels.append(Channel())
 
             # If the user pressed cancel, stop everything and exit
@@ -83,6 +86,9 @@ class ChannelList:
                 self.updateDialog.close()
                 return None
 
+            # Block until the file is unlocked
+            # This also has the affect of removing any stray locks (given, after 15 seconds).
+            self.fileLock.isFileLocked(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u', True)
             self.setupChannel(i + 1)
 
         REAL_SETTINGS.setSetting('ForceChannelReset', 'false')
@@ -124,40 +130,85 @@ class ChannelList:
         self.log('findMaxChannels return ' + str(self.maxChannels))
 
 
+    def determineWebServer(self):
+        if self.discoveredWebServer:
+            return
+
+        self.discoveredWebServer = True
+        self.webPort = 8080
+        self.webUsername = ''
+        self.webPassword = ''
+        fle = xbmc.translatePath("special://profile/guisettings.xml")
+
+        try:
+            xml = open(fle, "r")
+        except:
+            self.log("determineWebServer Unable to open the settings file", xbmc.LOGERROR)
+            self.httpJSON = False
+            return
+
+        try:
+            dom = parse(xml)
+        except:
+            self.log('determineWebServer Unable to parse settings file', xbmc.LOGERROR)
+            self.httpJSON = False
+            return
+
+        xml.close()
+
+        try:
+            plname = dom.getElementsByTagName('webserver')
+            self.httpJSON = (plname[0].childNodes[0].nodeValue.lower() == 'true')
+            self.log('determineWebServer is ' + str(self.httpJSON))
+            
+            if self.httpJSON == True:
+                plname = dom.getElementsByTagName('webserverport')
+                self.webPort = int(plname[0].childNodes[0].nodeValue)
+                self.log('determineWebServer port ' + str(self.webPort))
+                plname = dom.getElementsByTagName('webserverusername')
+                self.webUsername = plname[0].childNodes[0].nodeValue
+                self.log('determineWebServer username ' + self.webUsername)
+                plname = dom.getElementsByTagName('webserverpassword')
+                self.webPassword = plname[0].childNodes[0].nodeValue
+                self.log('determineWebServer password is ' + self.webPassword)
+        except:
+            return
+
+
     # Code for sending JSON through http adapted from code by sffjunkie (forum.xbmc.org/showthread.php?t=92196)
-    def sendJSON(self, command, username='xbmc', password=''):
+    def sendJSON(self, command):
         self.log('sendJSON')
         data = ''
+        usedhttp = False
+
+        self.determineWebServer()
 
         # If there have been problems using the server, just skip the attempt and use executejsonrpc
         if self.httpJSON == True:
             payload = command.encode('utf-8')
             headers = {'Content-Type': 'application/json-rpc; charset=utf-8'}
 
-            if username != '':
-                userpass = base64.encodestring('%s:%s' % (username, password))[:-1]
+            if self.webUsername != '':
+                userpass = base64.encodestring('%s:%s' % (self.webUsername, self.webPassword))[:-1]
                 headers['Authorization'] = 'Basic %s' % userpass
 
-            xbmc_host = '127.0.0.1'
-            xbmc_port = 8080
+            self.webPort = 8080
 
             try:
-                conn = httplib.HTTPConnection(xbmc_host, xbmc_port)
+                conn = httplib.HTTPConnection('127.0.0.1', self.webPort)
                 conn.request('POST', '/jsonrpc', payload, headers)
                 response = conn.getresponse()
+
+                if response.status == 200:
+                    data = response.read()
+                    usedhttp = True
+
+                conn.close()
             except:
-                self.httpJSON = False
-                return xbmc.executeJSONRPC(command)
+                pass
 
-            if response.status == 200:
-                data = response.read()
-            else:
-                self.log("sendJSON invalid response, using normal command")
-                self.httpJSON = False
-                data = xbmc.executeJSONRPC(command)
-
-            conn.close()
-        else:
+        if usedhttp == False:
+            self.httpJSON = False
             data = xbmc.executeJSONRPC(command)
 
         return data
@@ -226,6 +277,9 @@ class ChannelList:
                 pass
 
         if createlist or needsreset:
+            self.fileLock.lockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', True)
+            self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Updating channel " + str(channel), "adding videos")
+
             if self.makeChannelList(channel, chtype, chsetting1, chsetting2) == True:
                 if self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u') == True:
                     self.channels[channel - 1].totalTimePlayed = 0
@@ -235,6 +289,9 @@ class ChannelList:
                     ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_time', '0')
                     ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_changed', 'False')
 
+            self.fileLock.unlockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
+
+        self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Updating channel " + str(channel), "clearing history")
         self.clearPlaylistHistory(channel)
 
         if chtype == 6:
@@ -287,11 +344,12 @@ class ChannelList:
             return
 
         # if we actually need to clear anything
-        if self.channels[channel - 1].totalTimePlayed > 60 * 60 * 24:
+        if (self.channels[channel - 1].totalTimePlayed > 60 * 60 * 24) and self.fileLock.lockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u'):
             try:
                 fle = open(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', 'w')
             except:
                 self.log("clearPlaylistHistory Unable to open the smart playlist", xbmc.LOGERROR)
+                self.fileLock.unlockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
                 return
 
             fle.write("#EXTM3U\n")
@@ -317,7 +375,7 @@ class ChannelList:
                 self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
 
             self.channels[channel - 1].totalTimePlayed -= timeremoved
-
+            self.fileLock.unlockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
 
 
     def getChannelName(self, chtype, setting1):
@@ -791,7 +849,7 @@ class ChannelList:
     def buildFileList(self, dir_name, media_type="video", recursive="TRUE"):
         self.log("buildFileList")
         fileList = []
-        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "%s", "fields":["duration","tagline","showtitle","album","artist","plot"]}, "id": 1}' % ( self.escapeDirJSON( dir_name ), media_type )
+        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "%s", "fields":["duration","runtime","tagline","showtitle","album","artist","plot"]}, "id": 1}' % ( self.escapeDirJSON( dir_name ), media_type )
         json_folder_detail = self.sendJSON(json_query)
         self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
@@ -816,7 +874,16 @@ class ChannelList:
                         dur = 0
 
                     if dur == 0:
-                        dur = self.videoParser.getVideoLength(match.group(1).replace("\\\\", "\\"))
+                        duration = re.search('"runtime" *: *"([0-9]*?)",', f)
+
+                        try:
+                            # Runtime is reported in minutes
+                            dur = int(duration.group(1)) * 60
+                        except:
+                            dur = 0
+
+                        if dur == 0:
+                            dur = self.videoParser.getVideoLength(match.group(1).replace("\\\\", "\\"))
 
                     try:
                         if dur > 0:

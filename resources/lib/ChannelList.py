@@ -192,8 +192,6 @@ class ChannelList:
                 userpass = base64.encodestring('%s:%s' % (self.webUsername, self.webPassword))[:-1]
                 headers['Authorization'] = 'Basic %s' % userpass
 
-            self.webPort = 8080
-
             try:
                 conn = httplib.HTTPConnection('127.0.0.1', self.webPort)
                 conn.request('POST', '/jsonrpc', payload, headers)

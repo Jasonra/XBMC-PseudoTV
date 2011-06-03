@@ -87,11 +87,14 @@ class VideoParser:
     def handleSMB(self, filename):
         self.log("handleSMB")
         # On Windows, replace smb:// with \\ so that python can access it
-        if os.name.lower() == 'nt':
-            filename = '\\\\' + filename[6:]
-        elif os.name.lower() == 'posix':
-            newfilename = '//' + filename[6:]
-            return self.mountPosixSMB(newfilename)
+        try:
+            if os.name.lower() == 'nt':
+                filename = '\\\\' + filename[6:]
+            elif os.name.lower() == 'posix':
+                newfilename = '//' + filename[6:]
+                return self.mountPosixSMB(newfilename)
+        except:
+            self.log("Exception in handleSMB")
 
         return filename
 

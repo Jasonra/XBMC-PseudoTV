@@ -522,6 +522,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 self.inputChannel = -1
             else:
                 # Otherwise, show the EPG
+                if self.channelThread.isAlive():
+                    self.channelThread.pause()
+
                 if self.sleepTimeValue > 0:
                     if self.sleepTimer.isAlive():
                         self.sleepTimer.cancel()
@@ -530,6 +533,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 self.hideInfo()
                 self.newChannel = 0
                 self.myEPG.doModal()
+
+                if self.channelThread.isAlive():
+                    self.channelThread.unpause()
 
                 if self.newChannel != 0:
                     self.background.setVisible(True)

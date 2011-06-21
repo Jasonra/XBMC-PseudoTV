@@ -701,7 +701,7 @@ class ChannelList:
                 del self.networkList[:]
                 del self.showList[:]
                 del self.showGenreList[:]
-                break
+                return
 
             match = re.search('"studio" *: *"(.*?)",', f)
             network = ''
@@ -711,6 +711,12 @@ class ChannelList:
                 network = match.group(1).strip()
 
                 for item in self.networkList:
+                    if self.threadPause() == False:
+                        del self.networkList[:]
+                        del self.showList[:]
+                        del self.showGenreList[:]
+                        return
+
                     if item.lower() == network.lower():
                         found = True
                         break
@@ -734,6 +740,12 @@ class ChannelList:
                     curgenre = genre.lower().strip()
 
                     for g in self.showGenreList:
+                        if self.threadPause() == False:
+                            del self.networkList[:]
+                            del self.showList[:]
+                            del self.showGenreList[:]
+                            return
+
                         if curgenre == g.lower():
                             found = True
                             break

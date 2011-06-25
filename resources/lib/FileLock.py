@@ -7,7 +7,7 @@ from Globals import *
 FILE_LOCK_TIMEOUT = 15.0
 
 
-class FileLock():
+class FileLock:
     def log(self, msg, level = xbmc.LOGDEBUG):
         log('FileLock: ' + msg, level)
 

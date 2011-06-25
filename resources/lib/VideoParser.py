@@ -65,7 +65,6 @@ class VideoParser:
                 self.log("Unable to open the file")
                 return 0
 
-        self.log("getVideoLength past handleSMB")
         base, ext = os.path.splitext(filename)
         ext = ext.lower()
 

@@ -120,7 +120,7 @@ class AVIParser:
         self.StreamHeader = AVIStreamHeader()
 
 
-    def log(self, msg, level = xbmc.LOGDEBUG):
+    def log(self, msg, level = xbmc.LOGERROR):
         xbmc.log('AVIParser: ' + msg, level)
 
 
@@ -140,12 +140,16 @@ class AVIParser:
 
 
     def readHeader(self):
+        self.log("readHeader")
         # AVI Chunk
         data = self.getChunkOrList()
+        self.log("got data")
 
         if data.datatype != 2:
             self.log("Not an avi")
             return 0
+
+        self.log("Valid avi")
 
         if data.fourcc[0:4] != "AVI ":
             self.log("Not a basic AVI: " + data.fourcc[:2])
@@ -153,6 +157,7 @@ class AVIParser:
 
         # Header List
         data = self.getChunkOrList()
+        self.log("Header list")
 
         if data.fourcc != "hdrl":
             self.log("Header not found: " + data.fourcc)
@@ -160,6 +165,7 @@ class AVIParser:
 
         # Header chunk
         data = self.getChunkOrList()
+        self.log("Header chunk")
 
         if data.fourcc != 'avih':
             self.log('Header chunk not found: ' + data.fourcc)
@@ -168,9 +174,12 @@ class AVIParser:
         self.parseHeader(data)
         # Stream list
         data = self.getChunkOrList()
+        self.log("got streams data")
 
         if self.Header.dwStreams > 10:
             self.Header.dwStreams = 10
+            
+        self.log("stream count is " + str(self.Header.dwStreams))
 
         for i in range(self.Header.dwStreams):
             if data.datatype != 2:
@@ -191,6 +200,8 @@ class AVIParser:
             # If this is the video header, determine the duration
             if self.StreamHeader.fccType == 'vids':
                 return self.getStreamDuration()
+
+            self.log("Not vids, its " + self.StreamHeader.fccType)
 
             # If this isn't the video header, skip through the rest of these
             # stream chunks
@@ -255,6 +266,7 @@ class AVIParser:
 
 
     def getChunkOrList(self):
+        self.log("getChunkOrList")
         data = self.File.read(4)
 
         if data == "RIFF" or data == "LIST":
@@ -266,6 +278,7 @@ class AVIParser:
             dataclass = AVIChunk()
             dataclass.fourcc = data
 
+        self.log("getChunkOrList got type " + str(dataclass.datatype))
         # Fill in the chunk or list info
         dataclass.read(self.File)
         return dataclass

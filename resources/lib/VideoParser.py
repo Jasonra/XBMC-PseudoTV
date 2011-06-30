@@ -32,7 +32,7 @@ from Globals import *
 class VideoParser:
     def __init__(self):
         self.AVIExts = ['.avi']
-        self.MP4Exts = ['.mp4', '.m4v', '.3gp', '.3g2', '.f4v']
+        self.MP4Exts = ['.mp4', '.m4v', '.3gp', '.3g2', '.f4v', '.mov']
         self.MKVExts = ['.mkv']
         self.FLVExts = ['.flv']
         self.mountedFS = False

@@ -111,8 +111,8 @@ class Playlist:
         self.totalDuration = 0
 
 
-    def log(self, msg):
-        xbmc.log('XBTV - Playlist: ' + msg)
+    def log(self, msg, level = xbmc.LOGDEBUG):
+        xbmc.log('script.pseudotv-Playlist: ' + msg, level)
 
 
     def load(self, filename):

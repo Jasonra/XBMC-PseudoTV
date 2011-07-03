@@ -186,6 +186,7 @@
             </control>
         </control>
 
+        <!-- Controls for configuring a single channel -->
         <control type="group" id="106">
             <posx>340</posx>
             <posy>220</posy>
@@ -255,6 +256,20 @@
                 <onleft>110</onleft>
                 <onright>110</onright>
             </control>
+            
+            <control type="button" id="114">
+                <posx>60</posx>
+                <posy>260</posy>
+                <width>300</width>
+                <height>30</height>
+                <label>Advanced Channel Rules</label>
+                <texturefocus>pstvButtonFocus.png</texturefocus>
+                <texturenofocus border="2,2,2,2">pstvBorder2.png</texturenofocus>
+                <textcolor>FF000000</textcolor>
+                <onup>110</onup>
+                <ondown>112</ondown>
+                <align>center</align>
+            </control>
 
             <control type="button" id="112">
                 <posx>90</posx>
@@ -265,7 +280,7 @@
                 <texturefocus>pstvButtonFocus.png</texturefocus>
                 <texturenofocus border="2,2,2,2">pstvBorder2.png</texturenofocus>
                 <textcolor>FF000000</textcolor>
-                <onup>110</onup>
+                <onup>114</onup>
                 <onleft>113</onleft>
                 <onright>113</onright>
                 <align>center</align>
@@ -280,7 +295,7 @@
                 <texturefocus>pstvButtonFocus.png</texturefocus>
                 <texturenofocus border="2,2,2,2">pstvBorder2.png</texturenofocus>
                 <textcolor>FF000000</textcolor>
-                <onup>111</onup>
+                <onup>114</onup>
                 <onleft>112</onleft>
                 <onright>112</onright>
                 <align>center</align>
@@ -669,6 +684,35 @@
                 <height>30</height>
                 <label></label>
                 <onup>190</onup>
+                <ondown>112</ondown>
+            </control>
+        </control>
+
+        <!-- Controls for type Directory -->
+        <control type="group" id="127">
+            <posx>340</posx>
+            <posy>220</posy>
+            <width>600</width>
+            <height>400</height>
+
+            <control type="label">
+                <posx>60</posx>
+                <posy>100</posy>
+                <width>200</width>
+                <height>30</height>
+                <textcolor>FF000000</textcolor>
+                <label>Directory:</label>
+                <aligny>center</aligny>
+                <align>left</align>
+            </control>
+
+            <control type="button" id="200">
+                <posx>210</posx>
+                <posy>100</posy>
+                <width>360</width>
+                <height>30</height>
+                <textcolor>FF000000</textcolor>
+                <onup>110</onup>
                 <ondown>112</ondown>
             </control>
         </control>

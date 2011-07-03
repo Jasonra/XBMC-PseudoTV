@@ -291,13 +291,16 @@ class ChannelList:
             except:
                 pass
 
-        if (createlist or needsreset) and makenewlist:
-            self.fileLock.lockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', True)
-
+        if createlist or needsreset:
             try:
                 os.remove(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
             except:
                 pass
+
+            self.channels[channel - 1].isValid = False
+
+        if (createlist or needsreset) and makenewlist:
+            self.fileLock.lockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', True)
 
             if background == False:
                 self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Updating channel " + str(channel), "adding videos")
@@ -706,6 +709,7 @@ class ChannelList:
 
 
     def createDirectoryPlaylist(self, setting1):
+        self.log("createDirectoryPlaylist " + setting1)
         fileList = []
 
         if setting1[-1] == '/' or setting1[-1] == '\\':
@@ -717,7 +721,7 @@ class ChannelList:
             for afile in files:
                 if self.threadPause() == False:
                     return []
-                
+
                 dur = self.videoParser.getVideoLength(os.path.join(root, afile))
 
                 if dur > 0:
@@ -728,6 +732,7 @@ class ChannelList:
                     tmpstr += "\n" + os.path.join(root, afile)
                     fileList.append(tmpstr)
 
+        self.log("returning")
         return fileList
 
 

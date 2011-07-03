@@ -24,6 +24,7 @@ import sys, re
 import random
 
 from ChannelList import ChannelList
+from Channel import Channel
 from Globals import *
 
 
@@ -47,40 +48,84 @@ class ChannelListThread(threading.Thread):
         self.log("Starting")
         self.shouldExit = False
         self.chanlist.exitThread = False
+        self.chanlist.readConfig()
 
         if self.myOverlay == None:
             self.log("Overlay not defined. Exiting.")
             return
 
         for i in range(self.myOverlay.maxChannels):
-            modified = True
+            self.chanlist.channels.append(Channel())
 
-            while modified == True and self.myOverlay.channels[i].isValid and self.myOverlay.channels[i].getTotalDuration() < PREP_CHANNEL_TIME:
-                modified = False
-
-                if self.shouldExit == True:
-                    self.log("Closing thread")
-                    return
-
-                time.sleep(2)
-                curtotal = self.myOverlay.channels[i].getTotalDuration()
-                self.chanlist.appendChannel(i + 1)
-
-                # A do-while loop for the paused state
+            if self.myOverlay.channels[i].isValid == False:
                 while True:
                     if self.shouldExit == True:
                         self.log("Closing thread")
                         return
 
-                    time.sleep(2)
+                    time.sleep(1)
 
                     if self.paused == False:
                         break
 
-                self.myOverlay.channels[i].setPlaylist(CHANNELS_LOC + "channel_" + str(i + 1) + ".m3u")
+                self.chanlist.channels[i].setAccessTime(self.myOverlay.channels[i].lastAccessTime)
 
-                if self.myOverlay.channels[i].getTotalDuration() > curtotal:
-                    modified = True
+                if self.chanlist.setupChannel(i + 1, True, True) == True:
+                    while self.paused == True:
+                        if self.shouldExit == True:
+                            return
+                            
+                        time.sleep(1)
+
+                    self.myOverlay.channels[i] = self.chanlist.channels[i]
+                    xbmc.executebuiltin("Notification(PseudoTV, Channel " + str(i + 1) + " Added, 4000)")
+
+        REAL_SETTINGS.setSetting('ForceChannelReset', 'false')
+
+        while True:
+            for i in range(self.myOverlay.maxChannels):
+                modified = True
+
+                while modified == True and self.myOverlay.channels[i].getTotalDuration() < PREP_CHANNEL_TIME:
+                    modified = False
+
+                    if self.shouldExit == True:
+                        self.log("Closing thread")
+                        return
+
+                    time.sleep(2)
+                    curtotal = self.myOverlay.channels[i].getTotalDuration()
+                    self.chanlist.appendChannel(i + 1)
+
+                    # A do-while loop for the paused state
+                    while True:
+                        if self.shouldExit == True:
+                            self.log("Closing thread")
+                            return
+
+                        time.sleep(2)
+
+                        if self.paused == False:
+                            break
+
+                    if self.myOverlay.channels[i].setPlaylist(CHANNELS_LOC + "channel_" + str(i + 1) + ".m3u") and self.myOverlay.channels[i].isValid == False:
+                        self.myOverlay.channels[i].totalTimePlayed = 0
+                        self.myOverlay.channels[i].isValid = True
+                        self.myOverlay.channels[i].fileName = CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u'
+                        ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', '0')
+                        ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_changed', 'False')
+
+                    if self.myOverlay.channels[i].getTotalDuration() > curtotal:
+                        modified = True
+                        
+                timeslept = 0
+                
+                while timeslept < 10:
+                    if self.shouldExit == True:
+                        return
+                        
+                    time.sleep(2)
+                    timeslept += 2
 
         self.log("All channels up to date.  Exiting thread.")
 

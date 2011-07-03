@@ -44,6 +44,7 @@ class ChannelList:
         self.showGenreList = []
         self.movieGenreList = []
         self.showList = []
+        self.channels = []
         self.videoParser = VideoParser()
         self.fileLock = FileLock()
         self.httpJSON = True
@@ -52,8 +53,7 @@ class ChannelList:
         self.discoveredWebServer = False
 
 
-    def setupList(self):
-        self.channels = []
+    def readConfig(self):
         self.findMaxChannels()
         self.channelResetSetting = int(REAL_SETTINGS.getSetting("ChannelResetSetting"))
         self.log('Channel Reset Setting is ' + str(self.channelResetSetting))
@@ -62,9 +62,7 @@ class ChannelList:
         self.updateDialog = xbmcgui.DialogProgress()
         self.startMode = int(REAL_SETTINGS.getSetting("StartMode"))
         self.log('Start Mode is ' + str(self.startMode))
-        self.updateDialog.create("PseudoTV", "Updating channel list")
-        self.updateDialog.update(0, "Updating channel list")
-
+        
         try:
             self.lastResetTime = int(ADDON_SETTINGS.getSetting("LastResetTime"))
         except:
@@ -75,9 +73,16 @@ class ChannelList:
         except:
             self.lastExitTime = int(time.time())
 
+
+    def setupList(self):
+        self.readConfig()
+        self.updateDialog.create("PseudoTV", "Updating channel list")
+        self.updateDialog.update(0, "Updating channel list")
+        foundvalid = False
+
         # Go through all channels, create their arrays, and setup the new playlist
         for i in range(self.maxChannels):
-            self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel " + str(i + 1), "waiting for file lock")
+            self.updateDialog.update(i * 100 // self.maxChannels, "Loading channel " + str(i + 1), "waiting for file lock")
             self.channels.append(Channel())
 
             # If the user pressed cancel, stop everything and exit
@@ -89,9 +94,21 @@ class ChannelList:
             # Block until the file is unlocked
             # This also has the affect of removing any stray locks (given, after 15 seconds).
             self.fileLock.isFileLocked(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u', True)
-            self.setupChannel(i + 1)
+            self.setupChannel(i + 1, False, False)
+            
+            if self.channels[i].isValid:
+                foundvalid = True
+                
+        if foundvalid == False:
+            for i in range(self.maxChannels):
+                self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel " + str(i + 1), "waiting for file lock")
+                self.fileLock.isFileLocked(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u', True)
+                self.setupChannel(i + 1, False, True)
+            
+                if self.channels[i].isValid:
+                    foundvalid = True
+                    break
 
-        REAL_SETTINGS.setSetting('ForceChannelReset', 'false')
         self.updateDialog.update(100, "Update complete")
         self.updateDialog.close()
 
@@ -123,7 +140,7 @@ class ChannelList:
             if chtype == 0:
                 if os.path.exists(xbmc.translatePath(chsetting1)):
                     self.maxChannels = i + 1
-            elif chtype < 7:
+            elif chtype < 8:
                 if len(chsetting1) > 0:
                     self.maxChannels = i + 1
 
@@ -160,7 +177,7 @@ class ChannelList:
             plname = dom.getElementsByTagName('webserver')
             self.httpJSON = (plname[0].childNodes[0].nodeValue.lower() == 'true')
             self.log('determineWebServer is ' + str(self.httpJSON))
-            
+
             if self.httpJSON == True:
                 plname = dom.getElementsByTagName('webserverport')
                 self.webPort = int(plname[0].childNodes[0].nodeValue)
@@ -212,7 +229,7 @@ class ChannelList:
         return data
 
 
-    def setupChannel(self, channel):
+    def setupChannel(self, channel, background = False, makenewlist = False):
         self.log('setupChannel ' + str(channel))
         returnval = False
         createlist = True
@@ -274,9 +291,16 @@ class ChannelList:
             except:
                 pass
 
-        if createlist or needsreset:
+        if (createlist or needsreset) and makenewlist:
             self.fileLock.lockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', True)
-            self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Updating channel " + str(channel), "adding videos")
+
+            try:
+                os.remove(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
+            except:
+                pass
+
+            if background == False:
+                self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Updating channel " + str(channel), "adding videos")
 
             if self.makeChannelList(channel, chtype, chsetting1, chsetting2) == True:
                 if self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u') == True:
@@ -289,7 +313,9 @@ class ChannelList:
 
             self.fileLock.unlockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
 
-        self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Updating channel " + str(channel), "clearing history")
+        if background == False:
+            self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Loading channel " + str(channel), "clearing history")
+
         self.clearPlaylistHistory(channel)
 
         if chtype == 6:
@@ -390,6 +416,11 @@ class ChannelList:
             return setting1 + " TV"
         elif chtype == 4:
             return setting1 + " Movies"
+        elif chtype == 7:
+            if setting1[-1] == '/' or setting1[-1] == '\\':
+                return os.path.split(setting1[:-1])[1]
+            else:
+                return os.path.split(setting1)[1]
 
         return ''
 
@@ -426,37 +457,49 @@ class ChannelList:
     # Based on a smart playlist, create a normal playlist that can actually be used by us
     def makeChannelList(self, channel, chtype, setting1, setting2, append = False):
         self.log('makeChannelList ' + str(channel))
+        israndom = False
+        fileList = []
 
         if chtype == 0:
             fle = setting1
+        elif chtype == 7:
+            fileList = self.createDirectoryPlaylist(setting1)
+            israndom = True
         else:
             fle = self.makeTypePlaylist(chtype, setting1, setting2)
+            fle = xbmc.translatePath(fle)
 
-        fle = xbmc.translatePath(fle)
+            if len(fle) == 0:
+                self.log('Unable to locate the playlist for channel ' + str(channel), xbmc.LOGERROR)
+                return False
 
-        if len(fle) == 0:
-            self.log('Unable to locate the playlist for channel ' + str(channel), xbmc.LOGERROR)
-            return False
+            try:
+                xml = open(fle, "r")
+            except:
+                self.log("makeChannelList Unable to open the smart playlist " + fle, xbmc.LOGERROR)
+                return False
 
-        try:
-            xml = open(fle, "r")
-        except:
-            self.log("makeChannelList Unable to open the smart playlist " + fle, xbmc.LOGERROR)
-            return False
+            try:
+                dom = parse(xml)
+            except:
+                self.log('makeChannelList Problem parsing playlist ' + fle, xbmc.LOGERROR)
+                xml.close()
+                return False
 
-        try:
-            dom = parse(xml)
-        except:
-            self.log('makeChannelList Problem parsing playlist ' + fle, xbmc.LOGERROR)
             xml.close()
-            return False
 
-        xml.close()
+            if self.getSmartPlaylistType(dom) == 'mixed':
+                fileList = self.buildMixedFileList(dom)
+            else:
+                fileList = self.buildFileList(fle)
 
-        if self.getSmartPlaylistType(dom) == 'mixed':
-            fileList = self.buildMixedFileList(dom)
-        else:
-            fileList = self.buildFileList(fle)
+            try:
+                order = dom.getElementsByTagName('order')
+
+                if order[0].childNodes[0].nodeValue.lower() == 'random':
+                    israndom = True
+            except:
+                pass
 
         try:
             if append == True:
@@ -476,15 +519,10 @@ class ChannelList:
             channelplaylist.close()
             return False
 
-        try:
-            order = dom.getElementsByTagName('order')
+        if israndom:
+            random.shuffle(fileList)
 
-            if order[0].childNodes[0].nodeValue.lower() == 'random':
-                random.shuffle(fileList)
-        except:
-            pass
-
-        fileList = fileList[:250]
+#        fileList = fileList[:250]
 
         # Write each entry into the new playlist
         for string in fileList:
@@ -578,7 +616,7 @@ class ChannelList:
                 fle.write('    <rule field="tvshow" operator="is">' + theshow + '</rule>\n')
                 added = True
 
-        self.writeXSPFooter(fle, 250, "random")
+        self.writeXSPFooter(fle, 0, "random")
         fle.close()
 
         if added == False:
@@ -609,7 +647,7 @@ class ChannelList:
         self.writeXSPHeader(fle, 'episodes', self.getChannelName(6, show))
         show = self.cleanString(show)
         fle.write('    <rule field="tvshow" operator="is">' + show + '</rule>\n')
-        self.writeXSPFooter(fle, 250, order)
+        self.writeXSPFooter(fle, 0, order)
         fle.close()
         return flename
 
@@ -628,7 +666,7 @@ class ChannelList:
         self.writeXSPHeader(fle, 'mixed', self.getChannelName(5, genre))
         fle.write('    <rule field="playlist" operator="is">' + epname + '</rule>\n')
         fle.write('    <rule field="playlist" operator="is">' + moname + '</rule>\n')
-        self.writeXSPFooter(fle, 250, "random")
+        self.writeXSPFooter(fle, 0, "random")
         fle.close()
         return flename
 
@@ -645,7 +683,7 @@ class ChannelList:
         self.writeXSPHeader(fle, pltype, self.getChannelName(chtype, genre))
         genre = self.cleanString(genre)
         fle.write('    <rule field="genre" operator="is">' + genre + '</rule>\n')
-        self.writeXSPFooter(fle, 250, "random")
+        self.writeXSPFooter(fle, 0, "random")
         fle.close()
         return flename
 
@@ -662,9 +700,35 @@ class ChannelList:
         self.writeXSPHeader(fle, "movies", self.getChannelName(2, studio))
         studio = self.cleanString(studio)
         fle.write('    <rule field="studio" operator="is">' + studio + '</rule>\n')
-        self.writeXSPFooter(fle, 250, "random")
+        self.writeXSPFooter(fle, 0, "random")
         fle.close()
         return flename
+
+
+    def createDirectoryPlaylist(self, setting1):
+        fileList = []
+
+        if setting1[-1] == '/' or setting1[-1] == '\\':
+            thedir = os.path.split(setting1[:-1])[1]
+        else:
+            thedir = os.path.split(setting1)[1]
+
+        for root, dirs, files in os.walk(setting1):
+            for afile in files:
+                if self.threadPause() == False:
+                    return []
+                
+                dur = self.videoParser.getVideoLength(os.path.join(root, afile))
+
+                if dur > 0:
+                    tmpstr = str(dur) + ','
+                    tmpstr += afile + "//" + thedir + "//"
+                    tmpstr = tmpstr[:600]
+                    tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
+                    tmpstr += "\n" + os.path.join(root, afile)
+                    fileList.append(tmpstr)
+
+        return fileList
 
 
     def writeXSPHeader(self, fle, pltype, plname):
@@ -676,7 +740,9 @@ class ChannelList:
 
 
     def writeXSPFooter(self, fle, limit, order):
-        fle.write('    <limit>' + str(limit) + '</limit>\n')
+        if limit > 0:
+            fle.write('    <limit>' + str(limit) + '</limit>\n')
+
         fle.write('    <order direction="ascending">' + order + '</order>\n')
         fle.write('</smartplaylist>\n')
 
@@ -853,7 +919,6 @@ class ChannelList:
 
         self.log("makeMixedList return " + str(newlist))
         return newlist
-
 
 
     def buildFileList(self, dir_name, media_type="video", recursive="TRUE"):

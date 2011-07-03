@@ -23,7 +23,10 @@ import Settings
 
 
 def log(msg, level = xbmc.LOGDEBUG):
-    xbmc.log(ADDON_ID + '-' + msg, level)
+    try:
+        xbmc.log(ADDON_ID + '-' + msg, level)
+    except:
+        pass
 
 
 def migrate():

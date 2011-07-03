@@ -410,9 +410,22 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         # change controls to display the proper junks
         if self.focusIndex == 0:
             self.setChannelButtons(self.shownTime - 1800, self.centerChannel)
+            self.focusIndex = len(self.channelButtons[self.focusRow]) - 1
+        else:
+            self.focusIndex -= 1
 
-        self.focusTime -= 60
-        self.setProperButton(self.focusRow, True)
+        basex, basey = self.getControl(111 + self.focusRow).getPosition()
+        basew = self.getControl(111 + self.focusRow).getWidth()
+        left, top = self.channelButtons[self.focusRow][self.focusIndex].getPosition()
+        width = self.channelButtons[self.focusRow][self.focusIndex].getWidth()
+        left = left - basex
+        starttime = self.shownTime + (left / (basew / 5400.0))
+        endtime = starttime + (width / (basew / 5400.0))
+
+        self.setFocus(self.channelButtons[self.focusRow][self.focusIndex])
+        self.setShowInfo()
+        self.focusEndTime = endtime
+        self.focusTime = starttime + 30
         self.log('goLeft return')
 
 
@@ -422,9 +435,22 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         # change controls to display the proper junks
         if self.focusIndex == len(self.channelButtons[self.focusRow]) - 1:
             self.setChannelButtons(self.shownTime + 1800, self.centerChannel)
+            self.focusIndex = 0
+        else:
+            self.focusIndex += 1
 
-        self.focusTime = self.focusEndTime + 30
-        self.setProperButton(self.focusRow, True)
+        basex, basey = self.getControl(111 + self.focusRow).getPosition()
+        basew = self.getControl(111 + self.focusRow).getWidth()
+        left, top = self.channelButtons[self.focusRow][self.focusIndex].getPosition()
+        width = self.channelButtons[self.focusRow][self.focusIndex].getWidth()
+        left = left - basex
+        starttime = self.shownTime + (left / (basew / 5400.0))
+        endtime = starttime + (width / (basew / 5400.0))
+
+        self.setFocus(self.channelButtons[self.focusRow][self.focusIndex])
+        self.setShowInfo()
+        self.focusEndTime = endtime
+        self.focusTime = starttime + 30
         self.log('goRight return')
 
 

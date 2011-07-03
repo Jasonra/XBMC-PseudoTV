@@ -1,0 +1,55 @@
+<window>
+    <allowoverlay>no</allowoverlay>
+    <zorder>22</zorder>
+
+    <coordinates>
+        <system>1</system>
+        <posx>0</posx>
+        <posy>0</posy>
+    </coordinates>
+
+    <controls>
+        <control type="image">
+            <posx>340</posx>
+            <posy>100</posy>
+            <width>600</width>
+            <height>520</height>
+            <description>Background</description>
+            <texture border="15,15,15,15">pstvBorder.png</texture>
+            <colordiffuse>FFFFFFFF</colordiffuse>
+        </control>
+
+        <control type="image">
+            <posx>465</posx>
+            <posy>125</posy>
+            <width>350</width>
+            <height>85</height>
+            <texture border="2,2,2,2">pstvBorder2.png</texture>
+            <colordiffuse>FFFFFFFF</colordiffuse>
+        </control>
+
+        <control type="label">
+            <posx>340</posx>
+            <posy>130</posy>
+            <width>600</width>
+            <height>40</height>
+            <label>PseudoTV</label>
+			<font>font24_title</font>
+            <textcolor>FF000000</textcolor>
+            <aligny>center</aligny>
+            <align>center</align>
+        </control>
+
+        <control type="label">
+            <posx>340</posx>
+            <posy>170</posy>
+            <width>600</width>
+            <height>30</height>
+            <label>Channel Rules</label>
+			<font>font13_title</font>
+            <textcolor>FF000000</textcolor>
+            <aligny>center</aligny>
+            <align>center</align>
+        </control>
+    </controls>
+</window>

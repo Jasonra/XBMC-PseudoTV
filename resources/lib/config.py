@@ -26,10 +26,11 @@ import random
 from xml.dom.minidom import parse, parseString
 from Globals import *
 from ChannelList import ChannelList
+from AdvancedConfig import AdvancedConfig
 
 
 
-NUMBER_CHANNEL_TYPES = 7
+NUMBER_CHANNEL_TYPES = 8
 
 
 
@@ -53,6 +54,8 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
 
     def onInit(self):
         self.log("onInit")
+        self.advancedConfig = AdvancedConfig("script.pseudotv.AdvancedConfig.xml", ADDON_INFO, "default")
+        self.advancedConfig.MyConfig = self
 
         for i in range(NUMBER_CHANNEL_TYPES):
             self.getControl(120 + i).setVisible(False)
@@ -106,6 +109,8 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             ADDON_SETTINGS.setSetting(setting1, self.getControl(182).getLabel())
         elif chantype == 6:
             ADDON_SETTINGS.setSetting(setting1, self.getControl(192).getLabel())
+        elif chantype == 7:
+            ADDON_SETTINGS.setSetting(setting1, self.getControl(200).getLabel())
 
             if self.getControl(194).isSelected():
                 ADDON_SETTINGS.setSetting(setting2, str(MODE_SERIAL))
@@ -198,6 +203,12 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             self.changeListData(self.showList, 192, -1)
         elif controlId == 191:
             self.changeListData(self.showList, 192, 1)
+        elif controlId == 200:
+            dlg = xbmcgui.Dialog()
+            retval = dlg.browse(0, "Channel " + str(self.channel) + " Directory", "files")
+
+            if len(retval) > 0:
+                self.getControl(200).setLabel(retval)
 
         self.log("onClick return")
 
@@ -207,7 +218,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         curval = self.getControl(controlid).getLabel()
         found = False
         index = 0
-        
+
         if len(thelist) == 0:
             self.getControl(controlid).setLabel('')
             self.log("changeListData return Empty list")
@@ -347,6 +358,8 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         elif chantype == 6:
             self.getControl(192).setLabel(self.findItemInList(self.showList, chansetting1))
             self.getControl(194).setSelected(chansetting2 == str(MODE_SERIAL))
+        elif chantype == 7:
+            self.getControl(200).setLabel(chansetting1)
 
         self.log("fillInDetails return")
 
@@ -357,10 +370,10 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         for i in thelist:
             if loitem == i.lower():
                 return item
-                
+
         if len(thelist) > 0:
             return thelist[0]
-            
+
         return ''
 
 
@@ -379,6 +392,8 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             return "Mixed Genre"
         elif chantype == 6:
             return "TV Show"
+        elif chantype == 7:
+            return "Directory"
         elif chantype == 9999:
             return "None"
 
@@ -455,11 +470,15 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
                 newlabel = chansetting1 + " TV"
             elif chantype == 4:
                 newlabel = chansetting1 + " Movies"
+            elif chantype == 7:
+                if chansetting1[-1] == '/' or chansetting1[-1] == '\\':
+                    newlabel = os.path.split(chansetting1[:-1])[1]
+                else:
+                    newlabel = os.path.split(chansetting1)[1]
 
             theitem.setLabel2(newlabel)
 
         self.log("updateListing return")
-
 
 
 

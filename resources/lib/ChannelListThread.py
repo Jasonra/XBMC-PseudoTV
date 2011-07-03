@@ -36,7 +36,6 @@ class ChannelListThread(threading.Thread):
         self.shouldExit = False
         sys.setcheckinterval(25)
         self.chanlist = ChannelList()
-        self.chanlist.sleepTime = 0.1
         self.paused = False
 
 
@@ -49,6 +48,7 @@ class ChannelListThread(threading.Thread):
         self.shouldExit = False
         self.chanlist.exitThread = False
         self.chanlist.readConfig()
+        self.chanlist.sleepTime = 0.1
 
         if self.myOverlay == None:
             self.log("Overlay not defined. Exiting.")
@@ -81,6 +81,7 @@ class ChannelListThread(threading.Thread):
                     xbmc.executebuiltin("Notification(PseudoTV, Channel " + str(i + 1) + " Added, 4000)")
 
         REAL_SETTINGS.setSetting('ForceChannelReset', 'false')
+        self.chanlist.sleepTime = 0.3
 
         while True:
             for i in range(self.myOverlay.maxChannels):
@@ -120,7 +121,7 @@ class ChannelListThread(threading.Thread):
                         
                 timeslept = 0
                 
-                while timeslept < 10:
+                while timeslept < 1800:
                     if self.shouldExit == True:
                         return
                         

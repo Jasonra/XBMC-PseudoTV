@@ -646,24 +646,25 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log("notificationAction")
         docheck = False
 
-        if self.notificationLastChannel != self.currentChannel:
-            docheck = True
-        else:
-            if self.notificationLastShow != xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition():
+        if self.Player.isPlaying():
+            if self.notificationLastChannel != self.currentChannel:
                 docheck = True
             else:
-                if self.notificationShowedNotif == False:
+                if self.notificationLastShow != xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition():
                     docheck = True
+                else:
+                    if self.notificationShowedNotif == False:
+                        docheck = True
 
-        if docheck == True:
-            self.notificationLastChannel = self.currentChannel
-            self.notificationLastShow = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition()
-            self.notificationShowedNotif = False
-            timedif = self.channels[self.currentChannel - 1].getCurrentDuration() - self.Player.getTime()
+            if docheck == True:
+                self.notificationLastChannel = self.currentChannel
+                self.notificationLastShow = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition()
+                self.notificationShowedNotif = False
+                timedif = self.channels[self.currentChannel - 1].getCurrentDuration() - self.Player.getTime()
 
-            if timedif < NOTIFICATION_TIME_BEFORE_END and timedif > NOTIFICATION_DISPLAY_TIME:
-                xbmc.executebuiltin("Notification(Coming Up Next, " + self.channels[self.currentChannel - 1].getItemTitle(xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition() + 1) + ", " + str(NOTIFICATION_DISPLAY_TIME * 1000) + ")")
-                self.notificationShowedNotif = True
+                if timedif < NOTIFICATION_TIME_BEFORE_END and timedif > NOTIFICATION_DISPLAY_TIME:
+                    xbmc.executebuiltin("Notification(Coming Up Next, " + self.channels[self.currentChannel - 1].getItemTitle(xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition() + 1) + ", " + str(NOTIFICATION_DISPLAY_TIME * 1000) + ")")
+                    self.notificationShowedNotif = True
 
         self.startNotificationTimer()
 
@@ -682,6 +683,12 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         try:
             if self.channelLabelTimer.isAlive():
                 self.channelLabelTimer.cancel()
+        except:
+            pass
+            
+        try:
+            if self.notificationTimer.isAlive():
+                self.notificationTimer.cancel()
         except:
             pass
 

@@ -133,7 +133,9 @@ class ChannelListThread(threading.Thread):
 
     def pause(self):
         self.paused = True
+        self.chanlist.threadPaused = True
 
 
     def unpause(self):
         self.paused = False
+        self.chanlist.threadPaused = False

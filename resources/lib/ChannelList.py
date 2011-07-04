@@ -51,6 +51,7 @@ class ChannelList:
         self.sleepTime = 0
         self.exitThread = False
         self.discoveredWebServer = False
+        self.threadPaused = False
 
 
     def readConfig(self):
@@ -711,28 +712,40 @@ class ChannelList:
     def createDirectoryPlaylist(self, setting1):
         self.log("createDirectoryPlaylist " + setting1)
         fileList = []
-
-        if setting1[-1] == '/' or setting1[-1] == '\\':
+        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "files"}, "id": 1}' % ( self.escapeDirJSON(setting1),)
+        json_folder_detail = self.sendJSON(json_query)
+        self.log(json_folder_detail)
+        file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
+        thedir = ''
+        
+        if setting1[-1:1] == '/' or setting1[-1:1] == '\\':
             thedir = os.path.split(setting1[:-1])[1]
         else:
             thedir = os.path.split(setting1)[1]
 
-        for root, dirs, files in os.walk(setting1):
-            for afile in files:
-                if self.threadPause() == False:
-                    return []
+        for f in file_detail:
+            if self.threadPause() == False:
+                del fileList[:]
+                break
 
-                dur = self.videoParser.getVideoLength(os.path.join(root, afile))
+            match = re.search('"file" *: *"(.*?)",', f)
 
-                if dur > 0:
-                    tmpstr = str(dur) + ','
-                    tmpstr += afile + "//" + thedir + "//"
-                    tmpstr = tmpstr[:600]
-                    tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
-                    tmpstr += "\n" + os.path.join(root, afile)
-                    fileList.append(tmpstr)
+            if match:
+                if(match.group(1).endswith("/") or match.group(1).endswith("\\")):
+                    if(recursive == "TRUE"):
+                        fileList.extend(self.createDirectoryPlaylist(match.group(1)))
+                else:
+                    duration = self.videoParser.getVideoLength(match.group(1).replace("\\\\", "\\"))
 
-        self.log("returning")
+                    if duration > 0:
+                        afile = os.path.split(match.group(1).replace("\\\\", "\\"))[1]
+                        tmpstr = str(duration) + ','
+                        tmpstr += afile + "//" + thedir + "//"
+                        tmpstr = tmpstr[:600]
+                        tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
+                        tmpstr += "\n" + match.group(1).replace("\\\\", "\\")
+                        fileList.append(tmpstr)
+
         return fileList
 
 
@@ -1035,10 +1048,14 @@ class ChannelList:
 
     def threadPause(self):
         if threading.activeCount() > 1:
-            if self.exitThread == True:
-                return False
+            while True:
+                if self.exitThread == True:
+                    return False
 
-            time.sleep(self.sleepTime)
+                time.sleep(self.sleepTime)
+                
+                if self.threadPaused == False:
+                    break
 
         return True
 

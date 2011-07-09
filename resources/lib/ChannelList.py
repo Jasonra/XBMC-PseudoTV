@@ -464,13 +464,15 @@ class ChannelList:
         israndom = False
         fileList = []
 
-        if chtype == 0:
-            fle = setting1
-        elif chtype == 7:
+        if chtype == 7:
             fileList = self.createDirectoryPlaylist(setting1)
             israndom = True
         else:
-            fle = self.makeTypePlaylist(chtype, setting1, setting2)
+            if chtype == 0:
+                fle = setting1
+            else:
+                fle = self.makeTypePlaylist(chtype, setting1, setting2)
+
             fle = xbmc.translatePath(fle)
 
             if len(fle) == 0:

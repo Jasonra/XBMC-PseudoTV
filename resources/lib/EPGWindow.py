@@ -280,8 +280,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
                 if width + xpos > basex + basew:
                     width = basex + basew - xpos
+                    
+                if width < 30:
+                    width = 30
+                    tmpdur = int(30.0 / (basew / 5400.0))
 
-                if shouldskip == False and width > 30:
+                if shouldskip == False and width >= 30:
                     self.channelButtons[row].append(xbmcgui.ControlButton(xpos, basey, width, baseh, self.MyOverlayWindow.channels[curchannel - 1].getItemTitle(playlistpos), focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor=self.textcolor, focusedColor=self.focusedcolor))
                     self.addControl(self.channelButtons[row][-1])
 
@@ -410,7 +414,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         # change controls to display the proper junks
         if self.focusIndex == 0:
             self.setChannelButtons(self.shownTime - 1800, self.centerChannel)
-            self.focusIndex = len(self.channelButtons[self.focusRow]) - 1
+            self.focusIndex = 0
         else:
             self.focusIndex -= 1
 
@@ -435,7 +439,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         # change controls to display the proper junks
         if self.focusIndex == len(self.channelButtons[self.focusRow]) - 1:
             self.setChannelButtons(self.shownTime + 1800, self.centerChannel)
-            self.focusIndex = 0
+            self.focusIndex = len(self.channelButtons[self.focusRow]) - 1
         else:
             self.focusIndex += 1
 

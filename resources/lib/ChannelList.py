@@ -319,8 +319,7 @@ class ChannelList:
 
         if background == False:
             self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Loading channel " + str(channel), "clearing history")
-
-        self.clearPlaylistHistory(channel)
+            self.clearPlaylistHistory(channel)
 
         if chtype == 6:
             if chsetting2 == str(MODE_SERIAL):

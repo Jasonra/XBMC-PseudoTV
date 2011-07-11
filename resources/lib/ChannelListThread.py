@@ -118,15 +118,15 @@ class ChannelListThread(threading.Thread):
 
                     if self.myOverlay.channels[i].getTotalDuration() > curtotal:
                         modified = True
-                        
+
                 timeslept = 0
-                
-                while timeslept < 1800:
-                    if self.shouldExit == True:
-                        return
-                        
-                    time.sleep(2)
-                    timeslept += 2
+
+            while timeslept < 1800:
+                if self.shouldExit == True:
+                    return
+
+                time.sleep(2)
+                timeslept += 2
 
         self.log("All channels up to date.  Exiting thread.")
 

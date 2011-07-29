@@ -10,5 +10,6 @@
     	<setting id="ShowChannelBug" type="bool" label="30006" default="false"/>
     	<setting id="ChannelLogoFolder" type="folder" source="auto" label="30010" default="special://home/addons/script.pseudotv/resources/images/"/>
     	<setting id="StartMode" type="enum" label="30011" values="Resume|Real Time|Random" default="1" />
+    	<setting id="ThreadMode" type="enum" label="30012" values="On|Minimum Use|Off" default="0" />
     </category>
 </settings>

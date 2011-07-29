@@ -37,6 +37,7 @@ class ChannelListThread(threading.Thread):
         sys.setcheckinterval(25)
         self.chanlist = ChannelList()
         self.paused = False
+        self.fullUpdating = True
 
 
     def log(self, msg, level = xbmc.LOGDEBUG):
@@ -54,31 +55,37 @@ class ChannelListThread(threading.Thread):
             self.log("Overlay not defined. Exiting.")
             return
 
-        for i in range(self.myOverlay.maxChannels):
-            self.chanlist.channels.append(Channel())
+        self.fullUpdating = (self.myOverlay.backgroundUpdating == 0)
 
-            if self.myOverlay.channels[i].isValid == False:
-                while True:
-                    if self.shouldExit == True:
-                        self.log("Closing thread")
-                        return
+        # Don't load invalid channels if minimum threading mode is on
+        if self.fullUpdating:
+            for i in range(self.myOverlay.maxChannels):
+                self.chanlist.channels.append(Channel())
 
-                    time.sleep(1)
-
-                    if self.paused == False:
-                        break
-
-                self.chanlist.channels[i].setAccessTime(self.myOverlay.channels[i].lastAccessTime)
-
-                if self.chanlist.setupChannel(i + 1, True, True) == True:
-                    while self.paused == True:
+                if self.myOverlay.channels[i].isValid == False:
+                    while True:
                         if self.shouldExit == True:
+                            self.log("Closing thread")
                             return
-                            
+
                         time.sleep(1)
 
-                    self.myOverlay.channels[i] = self.chanlist.channels[i]
-                    xbmc.executebuiltin("Notification(PseudoTV, Channel " + str(i + 1) + " Added, 4000)")
+                        if self.paused == False:
+                            break
+
+                    self.chanlist.channels[i].setAccessTime(self.myOverlay.channels[i].lastAccessTime)
+
+                    if self.chanlist.setupChannel(i + 1, True, True) == True:
+                        while self.paused == True:
+                            if self.shouldExit == True:
+                                return
+
+                            time.sleep(1)
+
+                        self.myOverlay.channels[i] = self.chanlist.channels[i]
+
+                        if self.myOverlay.channels[i].isValid == True:
+                            xbmc.executebuiltin("Notification(PseudoTV, Channel " + str(i + 1) + " Added, 4000)")
 
         REAL_SETTINGS.setSetting('ForceChannelReset', 'false')
         self.chanlist.sleepTime = 0.3
@@ -88,6 +95,10 @@ class ChannelListThread(threading.Thread):
                 modified = True
 
                 while modified == True and self.myOverlay.channels[i].getTotalDuration() < PREP_CHANNEL_TIME:
+                    # If minimum updating is on, don't attempt to load invalid channels
+                    if self.fullUpdating == False and self.myOverlay.channels[i].isValid == False:
+                        break
+
                     modified = False
 
                     if self.shouldExit == True:
@@ -120,6 +131,9 @@ class ChannelListThread(threading.Thread):
                         modified = True
 
                 timeslept = 0
+
+            if self.fullUpdating == False:
+                return
 
             while timeslept < 1800:
                 if self.shouldExit == True:

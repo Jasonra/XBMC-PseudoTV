@@ -278,12 +278,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
                 width = int((basew / 5400.0) * tmpdur)
 
-                if width + xpos > basex + basew:
-                    width = basex + basew - xpos
-                    
                 if width < 30:
                     width = 30
                     tmpdur = int(30.0 / (basew / 5400.0))
+
+                if width + xpos > basex + basew:
+                    width = basex + basew - xpos
 
                 if shouldskip == False and width >= 30:
                     self.channelButtons[row].append(xbmcgui.ControlButton(xpos, basey, width, baseh, self.MyOverlayWindow.channels[curchannel - 1].getItemTitle(playlistpos), focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor=self.textcolor, focusedColor=self.focusedcolor))

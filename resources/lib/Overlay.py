@@ -143,7 +143,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 break
 
         if found == False:
-            self.Error("No valid channel data found")
+            self.Error("Unable to populate channels. Please verify that you", "have scraped media in your library and that you have", "properly configured channels.")
             return
 
         if self.sleepTimeValue > 0:
@@ -166,7 +166,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.startSleepTimer()
         self.startNotificationTimer()
 
-        if self.channelResetSetting == "0":
+        if self.backgroundUpdating < 2:
             self.channelThread.start()
 
         self.actionSemaphore.release()
@@ -188,6 +188,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.channelResetSetting = REAL_SETTINGS.getSetting('ChannelResetSetting')
         self.log("Channel reset setting - " + str(self.channelResetSetting))
         self.channelLogos = xbmc.translatePath(REAL_SETTINGS.getSetting('ChannelLogoFolder'))
+        self.backgroundUpdating = int(REAL_SETTINGS.getSetting("ThreadMode"))
+        self.log("Background updating - " + str(self.backgroundUpdating))
 
         if os.path.exists(self.channelLogos) == False:
             self.channelLogos = IMAGES_LOC
@@ -209,10 +211,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
 
     # handle fatal errors: log it, show the dialog, and exit
-    def Error(self, message):
-        self.log('FATAL ERROR: ' + message, xbmc.LOGFATAL)
+    def Error(self, line1, line2 = '', line3 = ''):
+        self.log('FATAL ERROR: ' + line1 + line2 + line3, xbmc.LOGFATAL)
         dlg = xbmcgui.Dialog()
-        dlg.ok('Error', message)
+        dlg.ok('Error', line1, line2, line3)
         del dlg
         self.end()
 
@@ -685,7 +687,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 self.channelLabelTimer.cancel()
         except:
             pass
-            
+
         try:
             if self.notificationTimer.isAlive():
                 self.notificationTimer.cancel()

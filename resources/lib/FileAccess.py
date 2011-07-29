@@ -1,10 +1,27 @@
 import subprocess, os
 import time, threading
 
+
 from Globals import *
 
 
 FILE_LOCK_TIMEOUT = 15.0
+
+# 
+# class FileAccess:
+#     def open(filename):
+#         fle = 0
+#         if os.path.exists(filename) == False:
+#             if filename[0:6].lower() == 'smb://':
+#                 fle = self.handleSMB(filename):
+# 
+#                 if fle == 0
+#                     raise Exception()
+#                     return
+#             else:
+#                 raise Exception()
+#                 return 0
+
 
 
 class FileLock:

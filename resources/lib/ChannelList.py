@@ -32,7 +32,7 @@ from Playlist import Playlist
 from Globals import *
 from Channel import Channel
 from VideoParser import VideoParser
-from FileLock import FileLock
+from FileAccess import FileLock
 
 
 
@@ -52,6 +52,7 @@ class ChannelList:
         self.exitThread = False
         self.discoveredWebServer = False
         self.threadPaused = False
+        self.runningAction = 0
 
 
     def readConfig(self):
@@ -63,7 +64,8 @@ class ChannelList:
         self.updateDialog = xbmcgui.DialogProgress()
         self.startMode = int(REAL_SETTINGS.getSetting("StartMode"))
         self.log('Start Mode is ' + str(self.startMode))
-        
+        self.backgroundUpdating = int(REAL_SETTINGS.getSetting("ThreadMode"))
+
         try:
             self.lastResetTime = int(ADDON_SETTINGS.getSetting("LastResetTime"))
         except:
@@ -80,6 +82,10 @@ class ChannelList:
         self.updateDialog.create("PseudoTV", "Updating channel list")
         self.updateDialog.update(0, "Updating channel list")
         foundvalid = False
+        makenewlists = False
+
+        if self.backgroundUpdating > 0:
+            makenewlists = True
 
         # Go through all channels, create their arrays, and setup the new playlist
         for i in range(self.maxChannels):
@@ -95,17 +101,20 @@ class ChannelList:
             # Block until the file is unlocked
             # This also has the affect of removing any stray locks (given, after 15 seconds).
             self.fileLock.isFileLocked(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u', True)
-            self.setupChannel(i + 1, False, False)
-            
+            self.setupChannel(i + 1, False, makenewlists)
+
             if self.channels[i].isValid:
                 foundvalid = True
-                
-        if foundvalid == False:
+
+        if makenewlists == True:
+            REAL_SETTINGS.setSetting('ForceChannelReset', 'false')
+
+        if foundvalid == False and makenewlists == False:
             for i in range(self.maxChannels):
                 self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel " + str(i + 1), "waiting for file lock")
                 self.fileLock.isFileLocked(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u', True)
                 self.setupChannel(i + 1, False, True)
-            
+
                 if self.channels[i].isValid:
                     foundvalid = True
                     break
@@ -255,6 +264,9 @@ class ChannelList:
             self.channels[channel - 1].isValid = False
             return False
 
+        self.channels[channel - 1].loadRules(channel)
+        self.runActions(RULES_ACTION_START, channel, self.channels[channel - 1])
+
         # If possible, use an existing playlist
         if os.path.exists(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u'):
             try:
@@ -325,6 +337,8 @@ class ChannelList:
             if chsetting2 == str(MODE_SERIAL):
                 self.channels[channel - 1].mode = MODE_SERIAL
 
+        self.runActions(RULES_ACTION_BEFORE_TIME, channel, self.channels[channel - 1])
+
         # if there is no start mode in the channel mode flags, set it to the default
         if self.channels[channel - 1].mode & MODE_STARTMODES == 0:
             if self.startMode == 0:
@@ -360,6 +374,7 @@ class ChannelList:
             self.channels[channel - 1].addShowPosition(1)
 
         self.channels[channel - 1].name = self.getChannelName(chtype, chsetting1)
+        self.runActions(RULES_ACTION_FINAL, channel, self.channels[channel - 1])
         return returnval
 
 
@@ -494,9 +509,9 @@ class ChannelList:
             xml.close()
 
             if self.getSmartPlaylistType(dom) == 'mixed':
-                fileList = self.buildMixedFileList(dom)
+                fileList = self.buildMixedFileList(dom, channel)
             else:
-                fileList = self.buildFileList(fle)
+                fileList = self.buildFileList(fle, channel)
 
             try:
                 order = dom.getElementsByTagName('order')
@@ -527,7 +542,7 @@ class ChannelList:
         if israndom:
             random.shuffle(fileList)
 
-#        fileList = fileList[:250]
+        fileList = self.runActions(RULES_ACTION_LIST, channel, fileList)
 
         # Write each entry into the new playlist
         for string in fileList:
@@ -718,7 +733,7 @@ class ChannelList:
         self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
         thedir = ''
-        
+
         if setting1[-1:1] == '/' or setting1[-1:1] == '\\':
             thedir = os.path.split(setting1[:-1])[1]
         else:
@@ -940,10 +955,10 @@ class ChannelList:
         return newlist
 
 
-    def buildFileList(self, dir_name, media_type="video", recursive="TRUE"):
+    def buildFileList(self, dir_name, channel):
         self.log("buildFileList")
         fileList = []
-        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "%s", "fields":["duration","runtime","tagline","showtitle","album","artist","plot"]}, "id": 1}' % ( self.escapeDirJSON( dir_name ), media_type )
+        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "video", "fields":["duration","runtime","streamdetails","tagline","showtitle","album","artist","plot"]}, "id": 1}' % (self.escapeDirJSON(dir_name))
         json_folder_detail = self.sendJSON(json_query)
         self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
@@ -957,9 +972,9 @@ class ChannelList:
 
             if match:
                 if(match.group(1).endswith("/") or match.group(1).endswith("\\")):
-                    if(recursive == "TRUE"):
-                        fileList.extend(self.buildFileList(match.group(1), media_type, recursive))
+                    fileList.extend(self.buildFileList(match.group(1), channel))
                 else:
+                    f = self.runActions(RULES_ACTION_JSON, channel, f)
                     duration = re.search('"duration" *: *([0-9]*?),', f)
 
                     try:
@@ -1023,7 +1038,7 @@ class ChannelList:
         return fileList
 
 
-    def buildMixedFileList(self, dom1):
+    def buildMixedFileList(self, dom1, channel):
         fileList = []
         self.log('buildMixedFileList')
 
@@ -1039,12 +1054,28 @@ class ChannelList:
             rulename = rule.childNodes[0].nodeValue
 
             if os.path.exists(xbmc.translatePath('special://profile/playlists/video/') + rulename):
-                fileList.extend(self.buildFileList(xbmc.translatePath('special://profile/playlists/video/') + rulename))
+                fileList.extend(self.buildFileList(xbmc.translatePath('special://profile/playlists/video/') + rulename, channel))
             else:
-                fileList.extend(self.buildFileList(GEN_CHAN_LOC + rulename))
+                fileList.extend(self.buildFileList(GEN_CHAN_LOC + rulename, channel))
 
         self.log("buildMixedFileList returning")
         return fileList
+
+
+    def runActions(self, action, channel, parameter):
+        if channel < 1:
+            return
+
+        if self.runningAction > 0:
+            return parameter
+
+        self.runningAction = channel
+        for rule in self.channels[channel - 1].ruleList:
+            if rule.actions & action > 0:
+                parameter = rule.runAction(action, self, parameter)
+
+        self.runningAction = 0
+        return parameter
 
 
     def threadPause(self):
@@ -1054,7 +1085,7 @@ class ChannelList:
                     return False
 
                 time.sleep(self.sleepTime)
-                
+
                 if self.threadPaused == False:
                     break
 

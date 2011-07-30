@@ -289,17 +289,18 @@ class NoShowRule(BaseRule):
     def runAction(self, actionid, channelList, filelist):
         if actionid == RULES_ACTION_LIST:
             self.validate()
-            opt = optionValues[0].lower()
+            opt = self.optionValues[0].lower()
             realindex = 0
 
             for index in range(len(filelist)):
+                item = filelist[realindex]
                 loc = item.find(',')
 
                 if loc > -1:
-                    loc2 = item.find('\\')
+                    loc2 = item.find("//")
 
                     if loc2 > -1:
-                        showname = item[loc:loc2]
+                        showname = item[loc + 1:loc2]
                         showname = showname.lower()
 
                         if showname.find(opt) > -1:

@@ -1070,6 +1070,7 @@ class ChannelList:
             return parameter
 
         self.runningAction = channel
+
         for rule in self.channels[channel - 1].ruleList:
             if rule.actions & action > 0:
                 parameter = rule.runAction(action, self, parameter)

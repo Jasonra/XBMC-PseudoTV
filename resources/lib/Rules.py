@@ -130,6 +130,10 @@ class BaseRule:
         if button >= 0xf041 and button <= 0xf05b:
             self.optionValues[optionindex] += chr(button - 0xEFE0)
 
+        # Numbers
+        if button >= 0xf030 and button <= 0xf039:
+            self.optionValues[optionindex] += chr(button - 0xF000)
+
         # Backspace
         if button == 0xF008:
             if len(self.optionValues[optionindex]) >= 1:
@@ -138,6 +142,43 @@ class BaseRule:
         # Delete
         if button == 0xF02E:
             self.optionValues[optionindex] = ''
+
+        # Space
+        if button == 0xF020:
+            self.optionValues[optionindex] += ' '
+
+
+    def onActionTimeBox(self, act, optionindex):
+        self.log("onActionTimeBox")
+        button = act.getButtonCode()
+
+        # Numbers
+        if button >= 0xF030 and button <= 0xF039:
+            value = button - 0xF030
+            length = len(self.optionValues[optionindex])
+
+            if length == 0:
+                if value <= 2:
+                    self.optionValues[optionindex] = chr(button - 0xF000)
+            elif length == 1:
+                if int(self.optionValues[optionindex][0]) == 2:
+                    if value < 4:
+                        self.optionValues[optionindex] += chr(button - 0xF000)
+                else:
+                    self.optionValues[optionindex] += chr(button - 0xF000)
+            elif length == 2:
+                if value < 6:
+                    self.optionValues[optionindex] += ":" + chr(button - 0xF000)
+            elif length < 5:
+                self.optionValues[optionindex] += chr(button - 0xF000)
+
+        # Backspace
+        if button == 0xF008:
+            if len(self.optionValues[optionindex]) >= 1:
+                if len(self.optionValues[optionindex]) == 4:
+                    self.optionValues[optionindex] = self.optionValues[optionindex][:-1]
+
+                self.optionValues[optionindex] = self.optionValues[optionindex][:-1]
 
 
     def onActionDaysofWeekBox(self, act, optionindex):
@@ -217,6 +258,7 @@ class BaseRule:
 
         button = act.getButtonCode()
 
+        # Numbers
         if button >= 0xf030 and button <= 0xf039:
             self.optionValues[optionindex] += chr(button - 0xF000)
 
@@ -332,6 +374,9 @@ class ScheduleShowRule(BaseRule):
 
         if optionindex == 1:
             self.onActionDaysofWeekBox(act, optionindex)
+
+        if optionindex == 2:
+            self.onActionTimeBox(act, optionindex)
 
         if optionindex == 3 or optionindex == 4:
             self.onActionDigitBox(act, optionindex)

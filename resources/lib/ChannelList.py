@@ -53,6 +53,7 @@ class ChannelList:
         self.discoveredWebServer = False
         self.threadPaused = False
         self.runningAction = 0
+        random.seed()
 
 
     def readConfig(self):
@@ -259,6 +260,9 @@ class ChannelList:
             needsreset = ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_changed') == 'True'
         except:
             pass
+            
+        while len(self.channels) < channel:
+            self.channels.append(Channel())
 
         if chtype == 9999:
             self.channels[channel - 1].isValid = False

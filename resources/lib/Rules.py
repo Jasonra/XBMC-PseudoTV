@@ -29,7 +29,7 @@ from Globals import *
 
 class RulesList:
     def __init__(self):
-        self.ruleList = [BaseRule(), RenameRule(), NoShowRule(), ScheduleShowRule(), ScheduleMovieRule(), SchedulePlaylistRule(), OnlyWatchedRule(), DontAddChannel(), InterleaveChannel(), ForceRealTime()]
+        self.ruleList = [BaseRule(), RenameRule(), NoShowRule(), ScheduleChannelRule(), OnlyWatchedRule(), DontAddChannel(), InterleaveChannel(), ForceRealTime()]
 
 
     def getRuleCount(self):
@@ -148,8 +148,30 @@ class BaseRule:
             self.optionValues[optionindex] += ' '
 
 
+    def onActionDateBox(self, act, optionindex):
+        self.log("onActionDateBox")
+
+        if act.getId() == ACTION_SELECT_ITEM:
+            dlg = xbmcgui.Dialog()
+            info = dlg.numeric(1, self.optionLabels[optionindex], self.optionValues[optionindex])
+            self.optionValues[optionindex] = info
+
+
     def onActionTimeBox(self, act, optionindex):
         self.log("onActionTimeBox")
+
+        if act.getId() == ACTION_SELECT_ITEM:
+            dlg = xbmcgui.Dialog()
+            info = dlg.numeric(2, self.optionLabels[optionindex], self.optionValues[optionindex])
+
+            if info[0] == ' ':
+                info = info[1:]
+
+            if len(info) == 4:
+                info = "0" + info
+
+            self.optionValues[optionindex] = info
+
         button = act.getButtonCode()
 
         # Numbers
@@ -179,6 +201,38 @@ class BaseRule:
                     self.optionValues[optionindex] = self.optionValues[optionindex][:-1]
 
                 self.optionValues[optionindex] = self.optionValues[optionindex][:-1]
+
+
+    def validateTimeBox(self, optionindex):
+        if len(self.optionValues[optionindex]) != 5 or self.optionValues[optionindex][2] != ':':
+            self.optionValues[optionindex] = "00:00"
+            return
+
+        values = []
+        broken = False
+
+        try:
+            values.append(int(self.optionValues[optionindex][0]))
+            values.append(int(self.optionValues[optionindex][1]))
+            values.append(int(self.optionValues[optionindex][3]))
+            values.append(int(self.optionValues[optionindex][4]))
+        except:
+            self.optionValues[optionindex] = "00:00"
+            return
+
+        if values[0] > 2:
+            broken = True
+
+        if values[0] == 2:
+            if values[1] > 3:
+                broken = True
+
+        if values[2] > 5:
+            broken = True
+
+        if broken:
+            self.optionValues[optionindex] = "00:00"
+            return
 
 
     def onActionDaysofWeekBox(self, act, optionindex):
@@ -355,22 +409,22 @@ class NoShowRule(BaseRule):
 
 
 
-class ScheduleShowRule(BaseRule):
+class ScheduleChannelRule(BaseRule):
     def __init__(self):
-        self.name = "Schedule a TV Show"
-        self.optionLabels = ['Show Name', 'Days of the Week (UMTWHFS)', 'Time (HH:MM)', 'Episode Count', 'Starting Episode']
-        self.optionValues = ['', '', '00:00', '1', '1']
+        self.name = "Schedule a Show"
+        self.optionLabels = ['Channel Number', 'Days of the Week (UMTWHFS)', 'Time (HH:MM)', 'Episode Count', 'Starting Episode']
+        self.optionValues = ['0', '', '00:00', '1', '1/1/2011']
         self.myId = 3
-        self.actions = RULES_ACTION_JSON | RULES_ACTION_FINAL
+        self.actions = RULES_ACTION_FINAL
 
 
     def copy(self):
-        return ScheduleShowRule()
+        return ScheduleChannelRule()
 
 
     def onAction(self, act, optionindex):
         if optionindex == 0:
-            self.onActionTextBox(act, optionindex)
+            self.onActionDigitBox(act, optionindex)
 
         if optionindex == 1:
             self.onActionDaysofWeekBox(act, optionindex)
@@ -378,7 +432,10 @@ class ScheduleShowRule(BaseRule):
         if optionindex == 2:
             self.onActionTimeBox(act, optionindex)
 
-        if optionindex == 3 or optionindex == 4:
+        if optionindex == 3:
+            self.onActionDigitBox(act, optionindex)
+
+        if optionindex == 4:
             self.onActionDigitBox(act, optionindex)
 
         self.validate()
@@ -386,50 +443,35 @@ class ScheduleShowRule(BaseRule):
 
 
     def validate(self):
-        self.validateTextBox(0, 10)
+        self.validateDigitBox(0, 1, 1000, '')
         self.validateDaysofWeekBox(1)
+        self.validateTimeBox(2)
         self.validateDigitBox(3, 1, 1000, 1)
         self.validateDigitBox(4, 1, 1000, 1)
 
 
+    def runAction(self, actionid, channelList, channeldata):
+        self.log("runAction")
 
-class ScheduleMovieRule(BaseRule):
-    def __init__(self):
-        self.name = "Schedule a Movie"
-        self.optionLabels = ['Movie Name', 'Days of the Week (MTWHFSU)', 'Time (HH:MM)', 'Repeat (Y/N)']
-        self.optionValues = ['', '', '00:00', 'N']
-        self.myId = 4
-        self.actions = RULES_ACTION_JSON | RULES_ACTION_FINAL
+        if actionid == RULES_ACTION_FINAL:
+            chan = 0
+            epcount = 0
+            startingep = 0
 
+            try:
+                chan = int(self.optionValues[0])
+                epcount = int(self.optionValues[3])
+                startingep = int(self.optionValues[4])
+            except:
+                pass
 
-    def copy(self):
-        return ScheduleMovieRule()
+            if chan > channelList.maxChannels or chan < 1 or epcount < 1 or startingep < 1:
+                return filelist
 
+            channelList.setupChannel(chan, True, True)
 
-    def onAction(self, act, optionindex):
-        if optionindex == 0:
-            self.onActionTextBox(act, optionindex)
-
-        self.validate()
-        return self.optionValues[optionindex]
-
-
-    def validate(self):
-        self.validateTextBox(0, 10)
-
-
-
-class SchedulePlaylistRule(BaseRule):
-    def __init__(self):
-        self.name = "Schedule a Playlist"
-        self.optionLabels = ['Playlist File (with path)', 'Days of the Week (MTWHFSU)', 'Time (HH:MM)', 'Entry Count']
-        self.optionValues = ['', '', '00:00', '0']
-        self.myId = 5
-        self.actions = RULES_ACTION_JSON | RULES_ACTION_FINAL
-
-
-    def copy(self):
-        return SchedulePlaylistRule()
+            if channelList.channels[chan - 1].Playlist.size() < 1:
+                return filelist
 
 
 
@@ -438,7 +480,7 @@ class OnlyWatchedRule(BaseRule):
         self.name = "Only Played Watched Items"
         self.optionLabels = []
         self.optionValues = []
-        self.myId = 6
+        self.myId = 4
         self.actions = RULES_ACTION_JSON
 
 
@@ -452,7 +494,7 @@ class DontAddChannel(BaseRule):
         self.name = "Don't Play This Channel"
         self.optionLabels = []
         self.optionValues = []
-        self.myId = 7
+        self.myId = 5
         self.actions = RULES_ACTION_FINAL
 
 
@@ -471,10 +513,10 @@ class DontAddChannel(BaseRule):
 class InterleaveChannel(BaseRule):
     def __init__(self):
         self.name = "Interleave Another Channel"
-        self.optionLabels = ['Other Channel Number', 'Interleave Count']
-        self.optionValues = ['0', '1']
-        self.myId = 8
-        self.actions = RULES_ACTION_FINAL
+        self.optionLabels = ['Channel Number', 'Interleave Count', 'Starting Episode']
+        self.optionValues = ['0', '1', '1']
+        self.myId = 6
+        self.actions = RULES_ACTION_LIST
 
 
     def copy(self):
@@ -488,8 +530,48 @@ class InterleaveChannel(BaseRule):
 
 
     def validate(self):
-        self.validateDigitBox(0, 1, 999, 0)
-        self.validateDigitBox(1, 1, 100, 0)
+        self.validateDigitBox(0, 1, 1000, 0)
+        self.validateDigitBox(1, 1, 100, 1)
+        self.validateDigitBox(2, 1, 1000, 1)
+
+
+    def runAction(self, actionid, channelList, filelist):
+        self.log("runAction")
+
+        if actionid == RULES_ACTION_LIST:
+            chan = 0
+            interleave = 0
+            startingep = 0
+
+            try:
+                chan = int(self.optionValues[0])
+                interleave = int(self.optionValues[1])
+                startingep = int(self.optionValues[2])
+            except:
+                pass
+
+            if chan > channelList.maxChannels or chan < 1 or interleave < 1 or startingep < 1:
+                return filelist
+
+            channelList.setupChannel(chan, True, True)
+
+            if channelList.channels[chan - 1].Playlist.size() < 1:
+                return filelist
+
+            realindex = 0
+
+            while realindex < len(filelist):
+                newstr = str(channelList.channels[chan - 1].getItemDuration(startingep - 1)) + ',' + channelList.channels[chan - 1].getItemTitle(startingep - 1)
+                newstr += "//" + channelList.channels[chan - 1].getItemEpisodeTitle(startingep - 1)
+                newstr += "//" + channelList.channels[chan - 1].getItemDescription(startingep - 1) + '\n' + channelList.channels[chan - 1].getItemFilename(startingep - 1)
+                filelist.insert(realindex, newstr)
+                realindex += interleave + 1
+                startingep += 1
+
+            # Write starting episode
+
+        return filelist
+
 
 
 
@@ -498,7 +580,7 @@ class ForceRealTime(BaseRule):
         self.name = "Force Real-Time Mode"
         self.optionLabels = []
         self.optionValues = []
-        self.myId = 9
+        self.myId = 7
         self.actions = RULES_ACTION_BEFORE_TIME
 
 

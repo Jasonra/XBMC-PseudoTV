@@ -330,10 +330,10 @@ class BaseRule:
 class RenameRule(BaseRule):
     def __init__(self):
         self.name = "Set Channel Name"
-        self.optionLabels = ['Channel Name']
+        self.optionLabels = ['New Channel Name']
         self.optionValues = ['']
         self.myId = 1
-        self.actions = RULES_ACTION_FINAL
+        self.actions = RULES_ACTION_FINAL_MADE | RULES_ACTION_FINAL_LOADED
 
 
     def copy(self):
@@ -351,7 +351,7 @@ class RenameRule(BaseRule):
 
 
     def runAction(self, actionid, channelList, channeldata):
-        if actionid == RULES_ACTION_FINAL:
+        if actionid == RULES_ACTION_FINAL_MADE or actionid == RULES_ACTION_FINAL_LOADED:
             self.validate()
             channeldata.name = self.optionValues[0]
 
@@ -415,7 +415,7 @@ class ScheduleChannelRule(BaseRule):
         self.optionLabels = ['Channel Number', 'Days of the Week (UMTWHFS)', 'Time (HH:MM)', 'Episode Count', 'Starting Episode']
         self.optionValues = ['0', '', '00:00', '1', '1/1/2011']
         self.myId = 3
-        self.actions = RULES_ACTION_FINAL
+        self.actions = RULES_ACTION_FINAL_MADE
 
 
     def copy(self):
@@ -453,10 +453,12 @@ class ScheduleChannelRule(BaseRule):
     def runAction(self, actionid, channelList, channeldata):
         self.log("runAction")
 
-        if actionid == RULES_ACTION_FINAL:
+        if actionid == RULES_ACTION_FINAL_MADE:
             chan = 0
             epcount = 0
             startingep = 0
+            curchan = channelList.runningActionChannel
+            curruleid = channelList.runningActionId
 
             try:
                 chan = int(self.optionValues[0])
@@ -495,7 +497,7 @@ class DontAddChannel(BaseRule):
         self.optionLabels = []
         self.optionValues = []
         self.myId = 5
-        self.actions = RULES_ACTION_FINAL
+        self.actions = RULES_ACTION_FINAL_MADE | RULES_ACTION_FINAL_LOADED
 
 
     def copy(self):
@@ -503,7 +505,7 @@ class DontAddChannel(BaseRule):
 
 
     def runAction(self, actionid, channelList, channeldata):
-        if actionid == RULES_ACTION_FINAL:
+        if actionid == RULES_ACTION_FINAL_MADE or actionid == RULES_ACTION_FINAL_LOADED:
             channeldata.isValid = False
 
         return channeldata
@@ -516,7 +518,7 @@ class InterleaveChannel(BaseRule):
         self.optionLabels = ['Channel Number', 'Interleave Count', 'Starting Episode']
         self.optionValues = ['0', '1', '1']
         self.myId = 6
-        self.actions = RULES_ACTION_LIST
+        self.actions = RULES_ACTION_FINAL_MADE
 
 
     def copy(self):
@@ -538,10 +540,12 @@ class InterleaveChannel(BaseRule):
     def runAction(self, actionid, channelList, filelist):
         self.log("runAction")
 
-        if actionid == RULES_ACTION_LIST:
+        if actionid == RULES_ACTION_FINAL_MADE:
             chan = 0
             interleave = 0
             startingep = 0
+            curchan = channelList.runningActionChannel
+            curruleid = channelList.runningActionId
 
             try:
                 chan = int(self.optionValues[0])
@@ -568,7 +572,10 @@ class InterleaveChannel(BaseRule):
                 realindex += interleave + 1
                 startingep += 1
 
+            startingep = channelList.channels[chan - 1].fixPlaylistIndex(startingep)
             # Write starting episode
+            self.optionValues[2] = str(startingep)
+            ADDON_SETTINGS.setSetting('Channel_' + str(curchan) + '_rule_' + str(curruleid) + '_opt_' + str(3), self.optionValues[2])
 
         return filelist
 

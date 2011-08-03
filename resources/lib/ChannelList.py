@@ -52,7 +52,8 @@ class ChannelList:
         self.exitThread = False
         self.discoveredWebServer = False
         self.threadPaused = False
-        self.runningAction = 0
+        self.runningActionChannel = 0
+        self.runningActionId = 0
         random.seed()
 
 
@@ -378,7 +379,12 @@ class ChannelList:
             self.channels[channel - 1].addShowPosition(1)
 
         self.channels[channel - 1].name = self.getChannelName(chtype, chsetting1)
-        self.runActions(RULES_ACTION_FINAL, channel, self.channels[channel - 1])
+
+        if (createlist or needsreset) and makenewlist and returnval:
+            self.runActions(RULES_ACTION_FINAL_MADE, channel, self.channels[channel - 1])
+        else:
+            self.runActions(RULES_ACTION_FINAL_LOADED, channel, self.channels[channel - 1])
+
         return returnval
 
 
@@ -1070,16 +1076,21 @@ class ChannelList:
         if channel < 1:
             return
 
-        if self.runningAction > 0:
-            return parameter
+#        if self.runningAction > 0:
+#            return parameter
 
-        self.runningAction = channel
+        self.runningActionChannel = channel
+        index = 0
 
         for rule in self.channels[channel - 1].ruleList:
             if rule.actions & action > 0:
+                self.runningActionId = index
                 parameter = rule.runAction(action, self, parameter)
 
-        self.runningAction = 0
+            index += 1
+
+        self.runningActionChannel = 0
+        self.runningActionId = 0
         return parameter
 
 

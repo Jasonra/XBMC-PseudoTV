@@ -144,7 +144,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
 
     # setup all channel buttons for a given time
-    def setChannelButtons(self, starttime, curchannel):
+    def setChannelButtons(self, starttime, curchannel, singlerow = -1):
         self.log('setChannelButtons ' + str(starttime) + ', ' + str(curchannel))
         xbmcgui.lock()
         self.removeControl(self.currentTimeBar)
@@ -165,7 +165,9 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         timeh = self.getControl(120).getHeight()
 
         for i in range(self.rowCount):
-            self.setButtons(starttime, curchannel, i)
+            if singlerow == -1 or singlerow == i:
+                self.setButtons(starttime, curchannel, i)
+
             self.getControl(301 + i).setLabel(self.MyOverlayWindow.channels[curchannel - 1].name)
 
             try:
@@ -388,7 +390,9 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         # change controls to display the proper junks
         if self.focusRow == self.rowCount - 1:
-            self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel + 1))
+#            self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel + 1))
+            self.moveButtonsUp()
+            self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel + 1), self.rowCount - 1)
             self.focusRow = self.rowCount - 2
 
         self.setProperButton(self.focusRow + 1)
@@ -401,7 +405,9 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         # same as godown
         # change controls to display the proper junks
         if self.focusRow == 0:
-            self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel - 1, False))
+#            self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel - 1, False))
+            self.moveButtonsDown()
+            self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel - 1, False), 0)
             self.focusRow = 1
 
         self.setProperButton(self.focusRow - 1)
@@ -456,6 +462,50 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.focusEndTime = endtime
         self.focusTime = starttime + 30
         self.log('goRight return')
+
+
+    def moveButtonsUp(self):
+        self.log('moveButtonsUp')
+        xbmcgui.lock()
+
+        for button in self.channelButtons[0]:
+            self.removeControl(button)
+
+        del self.channelButtons[0][:]
+
+        for i in range(self.rowCount - 1):
+            basex, basey = self.getControl(111 + i).getPosition()
+
+            for button in self.channelButtons[i + 1]:
+                x, y = button.getPosition()
+                button.setPosition(x, basey)
+
+            self.channelButtons[i] = self.channelButtons[i + 1][:]
+            del self.channelButtons[i + 1][:]
+
+        xbmcgui.unlock()
+
+
+    def moveButtonsDown(self):
+        self.log('moveButtonsDown')
+        xbmcgui.lock()
+
+        for button in self.channelButtons[self.rowCount - 1]:
+            self.removeControl(button)
+
+        del self.channelButtons[self.rowCount - 1][:]
+
+        for i in range(self.rowCount - 1):
+            basex, basey = self.getControl(111 + (self.rowCount - 1 - i)).getPosition()
+
+            for button in self.channelButtons[self.rowCount - i - 2]:
+                x, y = button.getPosition()
+                button.setPosition(x, basey)
+
+            self.channelButtons[self.rowCount - 1 - i] = self.channelButtons[self.rowCount - 2 - i][:]
+            del self.channelButtons[self.rowCount - 2 - i][:]
+
+        xbmcgui.unlock()
 
 
     # based on the current focus row and index, find the appropriate button in

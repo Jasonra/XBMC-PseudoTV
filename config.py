@@ -24,9 +24,10 @@ import sys, re
 import random
 
 from xml.dom.minidom import parse, parseString
-from Globals import *
-from ChannelList import ChannelList
-from AdvancedConfig import AdvancedConfig
+from resources.lib.Globals import *
+from resources.lib.ChannelList import ChannelList
+from resources.lib.AdvancedConfig import AdvancedConfig
+from resources.lib.FileAccess import FileAccess
 
 
 NUMBER_CHANNEL_TYPES = 8
@@ -265,7 +266,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         fle = xbmc.translatePath(fle)
 
         try:
-            xml = open(fle, "r")
+            xml = FileAccess.open(fle, "r")
         except:
             self.log('Unable to open smart playlist')
             return ''

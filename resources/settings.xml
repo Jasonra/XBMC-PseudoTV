@@ -1,7 +1,7 @@
 <settings>
     <category label="30000">
     	<setting label="30007" type="lsep"/>
-    	<setting type="action" label="30008" action="RunScript($CWD/resources/lib/config.py)"/>
+    	<setting type="action" label="30008" action="RunScript($CWD/config.py)"/>
     	<setting label="30009" type="lsep"/>
         <setting id="AutoOff" type="enum" label="30001" values="Disable|30|60|90|120|150|180|210|240" default="6"/>
         <setting id="InfoOnChange" type="bool" label="30003" default="true"/>
@@ -11,5 +11,6 @@
     	<setting id="ChannelLogoFolder" type="folder" source="auto" label="30010" default="special://home/addons/script.pseudotv/resources/images/"/>
     	<setting id="StartMode" type="enum" label="30011" values="Resume|Real Time|Random" default="1" />
     	<setting id="ThreadMode" type="enum" label="30012" values="On|Minimum Use|Off" default="0" />
+    	<setting id="SettingsFolder" type="folder" source="auto" label="30013" default="" />
     </category>
 </settings>

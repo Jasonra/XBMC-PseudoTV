@@ -331,7 +331,7 @@ class ChannelList:
                         ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_changed', 'False')
 
         # Don't clear history when appending channels
-        if background == False and append == False:
+        if background == False and append == False and self.myOverlay.isMaster:
             self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Loading channel " + str(channel), "clearing history")
             self.clearPlaylistHistory(channel)
 

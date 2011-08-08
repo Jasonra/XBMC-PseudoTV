@@ -31,6 +31,7 @@ from Channel import Channel
 from EPGWindow import EPGWindow
 from ChannelList import ChannelList
 from ChannelListThread import ChannelListThread
+from FileAccess import FileLock, FileAccess
 
 
 
@@ -51,6 +52,7 @@ class MyPlayer(xbmc.Player):
             if self.overlay.sleepTimeValue == 0:
                 self.overlay.sleepTimer = threading.Timer(1, self.overlay.sleepAction)
 
+            self.overlay.background.setVisible(True)
             self.overlay.sleepTimeValue = 1
             self.overlay.startSleepTimer()
             self.stopped = True
@@ -106,19 +108,24 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     # override the doModal function so we can setup everything first
     def onInit(self):
         self.log('onInit')
-        migrate()
-        self.channelLabelTimer = threading.Timer(5.0, self.hideChannelLabel)
-        self.infoTimer = threading.Timer(5.0, self.hideInfo)
-        self.background = self.getControl(101)
-        self.getControl(102).setVisible(False)
 
-        if not os.path.exists(GEN_CHAN_LOC):
+        if FileAccess.exists(GEN_CHAN_LOC) == False:
             try:
-                os.makedirs(GEN_CHAN_LOC)
+                FileAccess.makedirs(GEN_CHAN_LOC)
             except:
                 self.Error('Unable to create the cache directory')
                 return
 
+        self.isMaster = GlobalFileLock.lockFile("MasterLock", False)
+
+        if self.isMaster:
+            migrate()
+
+        self.channelLabelTimer = threading.Timer(5.0, self.hideChannelLabel)
+        self.infoTimer = threading.Timer(5.0, self.hideInfo)
+        self.masterTimer = threading.Timer(5.0, self.becomeMaster)
+        self.background = self.getControl(101)
+        self.getControl(102).setVisible(False)
         self.myEPG = EPGWindow("script.pseudotv.EPG.xml", ADDON_INFO, "default")
         self.myEPG.MyOverlayWindow = self
         # Don't allow any actions during initialization
@@ -165,11 +172,27 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.startSleepTimer()
         self.startNotificationTimer()
 
-        if self.backgroundUpdating < 2:
+        if self.backgroundUpdating < 2 or self.isMaster == False:
             self.channelThread.start()
+
+        if self.isMaster == False:
+            self.masterTimer.start()
 
         self.actionSemaphore.release()
         self.log('onInit return')
+
+
+    def becomeMaster(self):
+        self.isMaster = GlobalFileLock.lockFile("MasterLock", False)
+
+        if self.isMaster == False:
+            self.masterTimer = threading.Timer(5.0, self.becomeMaster)
+            self.masterTimer.start()
+
+            # Perform this after start so that there isn't an issue with evaluation before it is
+            # set.
+            if IsExiting:
+                self.masterTimer.cancel()
 
 
     # setup all basic configuration parameters, including creating the playlists that
@@ -190,12 +213,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.backgroundUpdating = int(REAL_SETTINGS.getSetting("ThreadMode"))
         self.log("Background updating - " + str(self.backgroundUpdating))
 
-        if os.path.exists(self.channelLogos) == False:
+        if FileAccess.exists(self.channelLogos) == False:
             self.channelLogos = IMAGES_LOC
 
         self.log('Channel logo folder - ' + self.channelLogos)
         self.startupTime = time.time()
         chn = ChannelList()
+        chn.myOverlay = self
         self.background.setVisible(True)
         self.channels = chn.setupList()
 
@@ -624,6 +648,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
     def startNotificationTimer(self, timertime = NOTIFICATION_CHECK_TIME):
         self.log("startNotificationTimer")
+
         if self.notificationTimer.isAlive():
             self.log("closing thread")
             self.notificationTimer.cancel()
@@ -675,6 +700,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log('end')
         self.background.setVisible(True)
         xbmc.executebuiltin("PlayerControl(repeatoff)")
+        GlobalFileLock.close()
+        IsExiting = True
 
         if self.Player.isPlaying():
             # Prevent the player from setting the sleep timer
@@ -706,12 +733,16 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
+        try:
+            if self.masterTimer.isAlive():
+                self.masterTimer.cancel()
+        except:
+            pass
+
         if self.channelThread.isAlive():
-            self.channelThread.shouldExit = True
-            self.channelThread.chanlist.exitThread = True
             self.channelThread.join()
 
-        if self.timeStarted > 0:
+        if self.timeStarted > 0 and self.isMaster:
             for i in range(self.maxChannels):
                 if self.channels[i].isValid:
                     if self.channels[i].mode & MODE_RESUME == 0:
@@ -729,11 +760,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
                         ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(tottime)))
 
-        try:
-            ADDON_SETTINGS.setSetting('CurrentChannel', str(self.currentChannel))
-        except:
-            pass
+        if self.isMaster:
+            try:
+                ADDON_SETTINGS.setSetting('CurrentChannel', str(self.currentChannel))
+            except:
+                pass
 
-        ADDON_SETTINGS.setSetting('LastExitTime', str(int(time.time())))
+            ADDON_SETTINGS.setSetting('LastExitTime', str(int(time.time())))
+
         self.background.setVisible(False)
         self.close()

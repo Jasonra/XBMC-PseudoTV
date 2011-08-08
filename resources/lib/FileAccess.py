@@ -17,7 +17,7 @@
 # along with PseudoTV.  If not, see <http://www.gnu.org/licenses/>.
 
 import xbmc
-import subprocess, os
+import subprocess, os, shutil
 import time, threading
 import random, os
 import Globals
@@ -31,7 +31,7 @@ except:
     pass
 
 
-FILE_LOCK_MAX_FILE_TIMEOUT = 8
+FILE_LOCK_MAX_FILE_TIMEOUT = 10
 FILE_LOCK_NAME = "FileLock.dat"
 
 
@@ -99,6 +99,39 @@ class FileAccess:
 
 
     @staticmethod
+    def rename(path, newpath):
+        if VFS_AVAILABLE == True:
+            try:
+                xbmcvfs.rename(path, newpath)
+                return True
+            except:
+                return False
+
+        if path[0:6].lower() == 'smb://' or newpath[0:6].lower() == 'smb://':
+            if os.name.lower() == 'nt':
+                if path[0:6].lower() == 'smb://':
+                    path = '\\\\' + path[6:]
+
+                if newpath[0:6].lower() == 'smb://':
+                    newpath = '\\\\' + newpath[6:]
+
+#         try:
+#             os.rename(path, newpath)
+#             return True
+#         except:
+#             pass
+
+        try:
+            shutil.move(path, newpath)
+            return True
+        except:
+            pass
+
+
+        raise OSError()
+
+
+    @staticmethod
     def makedirs(directory):
         try:
             os.makedirs(directory)
@@ -136,13 +169,8 @@ class FileLock:
         self.lockName = Globals.CHANNELS_LOC + str(random.randint(1, 60000)) + ".lock"
         self.lockFileName = Globals.CHANNELS_LOC + FILE_LOCK_NAME
         self.lockedList = []
-        self.refreshLocksTimer = threading.Timer(3.0, self.refreshLocks)
+        self.refreshLocksTimer = threading.Timer(4.0, self.refreshLocks)
         self.refreshLocksTimer.start()
-
-        try:
-            os.remove(self.lockName)
-        except:
-            pass
 
 
     def close(self):
@@ -161,9 +189,15 @@ class FileLock:
 
     def refreshLocks(self):
         for item in self.lockedList:
+            if IsExiting:
+                return False
+
             self.lockFile(item, True)
 
-        self.refreshLocksTimer = threading.Timer(3.0, self.refreshLocks)
+        if IsExiting:
+            return False
+
+        self.refreshLocksTimer = threading.Timer(4.0, self.refreshLocks)
         self.refreshLocksTimer.start()
 
 
@@ -213,7 +247,7 @@ class FileLock:
                     if curval == val:
                         attempts += 1
                     else:
-                        if block == True:
+                        if block == False:
                             self.releaseLockFile()
                             self.log("File is locked")
                             return False
@@ -243,7 +277,7 @@ class FileLock:
         # Wait a maximum of 10 seconds to grab file-lock file
         for i in range(20):
             try:
-                os.rename(self.lockFileName, self.lockName)
+                FileAccess.rename(self.lockFileName, self.lockName)
                 fle = FileAccess.open(self.lockName, 'r')
                 fle.close()
                 return True
@@ -266,7 +300,7 @@ class FileLock:
 
         # Move the file back to the original lock file name
         try:
-            os.rename(self.lockName, self.lockFileName)
+            FileAccess.rename(self.lockName, self.lockFileName)
         except:
             self.log("Unable to rename the file back to the original name")
             return False
@@ -316,6 +350,7 @@ class FileLock:
 
             # The lock already exists
             if flenme == filename:
+                self.log("entry exists, val is " + str(setval))
                 return setval
 
         return -1

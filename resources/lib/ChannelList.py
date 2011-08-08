@@ -32,7 +32,7 @@ from Playlist import Playlist
 from Globals import *
 from Channel import Channel
 from VideoParser import VideoParser
-from FileAccess import FileLock
+from FileAccess import FileLock, FileAccess
 
 
 
@@ -46,10 +46,8 @@ class ChannelList:
         self.showList = []
         self.channels = []
         self.videoParser = VideoParser()
-        self.fileLock = FileLock()
         self.httpJSON = True
         self.sleepTime = 0
-        self.exitThread = False
         self.discoveredWebServer = False
         self.threadPaused = False
         self.runningActionChannel = 0
@@ -86,7 +84,7 @@ class ChannelList:
         foundvalid = False
         makenewlists = False
 
-        if self.backgroundUpdating > 0:
+        if self.backgroundUpdating > 0 and self.myOverlay.isMaster == True:
             makenewlists = True
 
         # Go through all channels, create their arrays, and setup the new playlist
@@ -100,9 +98,6 @@ class ChannelList:
                 self.updateDialog.close()
                 return None
 
-            # Block until the file is unlocked
-            # This also has the affect of removing any stray locks (given, after 15 seconds).
-            self.fileLock.isFileLocked(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u', True)
             self.setupChannel(i + 1, False, makenewlists)
 
             if self.channels[i].isValid:
@@ -114,7 +109,6 @@ class ChannelList:
         if foundvalid == False and makenewlists == False:
             for i in range(self.maxChannels):
                 self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel " + str(i + 1), "waiting for file lock")
-                self.fileLock.isFileLocked(CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u', True)
                 self.setupChannel(i + 1, False, True)
 
                 if self.channels[i].isValid:
@@ -150,7 +144,7 @@ class ChannelList:
                 pass
 
             if chtype == 0:
-                if os.path.exists(xbmc.translatePath(chsetting1)):
+                if FileAccess.exists(xbmc.translatePath(chsetting1)):
                     self.maxChannels = i + 1
             elif chtype < 8:
                 if len(chsetting1) > 0:
@@ -170,7 +164,7 @@ class ChannelList:
         fle = xbmc.translatePath("special://profile/guisettings.xml")
 
         try:
-            xml = open(fle, "r")
+            xml = FileAccess.open(fle, "r")
         except:
             self.log("determineWebServer Unable to open the settings file", xbmc.LOGERROR)
             self.httpJSON = False
@@ -241,7 +235,7 @@ class ChannelList:
         return data
 
 
-    def setupChannel(self, channel, background = False, makenewlist = False):
+    def setupChannel(self, channel, background = False, makenewlist = False, append = False):
         self.log('setupChannel ' + str(channel))
         returnval = False
         createlist = True
@@ -261,7 +255,7 @@ class ChannelList:
             needsreset = ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_changed') == 'True'
         except:
             pass
-            
+
         while len(self.channels) < channel:
             self.channels.append(Channel())
 
@@ -271,11 +265,13 @@ class ChannelList:
 
         self.channels[channel - 1].loadRules(channel)
         self.runActions(RULES_ACTION_START, channel, self.channels[channel - 1])
+        GlobalFileLock.lockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', True)
 
         # If possible, use an existing playlist
-        if os.path.exists(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u'):
+        # Don't do this if we're appending an existing channel
+        if FileAccess.exists(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u') and append == False:
             try:
-                self.channels[channel - 1].totalTimePlayed = int(ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_time'))
+                self.channels[channel - 1].totalTimePlayed = int(ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_time', True))
 
                 if self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u') == True:
                     self.channels[channel - 1].isValid = True
@@ -310,77 +306,74 @@ class ChannelList:
                 pass
 
         if createlist or needsreset:
-            try:
-                os.remove(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
-            except:
-                pass
+            if append == False:
+                try:
+                    os.remove(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
+                except:
+                    pass
 
             self.channels[channel - 1].isValid = False
 
-        if (createlist or needsreset) and makenewlist:
-            self.fileLock.lockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', True)
-
+        if ((createlist or needsreset) and makenewlist) or append:
             if background == False:
                 self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Updating channel " + str(channel), "adding videos")
 
-            if self.makeChannelList(channel, chtype, chsetting1, chsetting2) == True:
+            if self.makeChannelList(channel, chtype, chsetting1, chsetting2, append) == True:
+                # Don't reset variables on an appending channel
                 if self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u') == True:
-                    self.channels[channel - 1].totalTimePlayed = 0
-                    self.channels[channel - 1].isValid = True
-                    self.channels[channel - 1].fileName = CHANNELS_LOC + 'channel_' + str(channel) + '.m3u'
                     returnval = True
-                    ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_time', '0')
-                    ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_changed', 'False')
+                    self.channels[channel - 1].fileName = CHANNELS_LOC + 'channel_' + str(channel) + '.m3u'
+                    self.channels[channel - 1].isValid = True
 
-            self.fileLock.unlockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
+                    if append == False:
+                        self.channels[channel - 1].totalTimePlayed = 0
+                        ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_time', '0')
+                        ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_changed', 'False')
 
-        if background == False:
+        # Don't clear history when appending channels
+        if background == False and append == False:
             self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Loading channel " + str(channel), "clearing history")
             self.clearPlaylistHistory(channel)
 
-        if chtype == 6:
-            if chsetting2 == str(MODE_SERIAL):
-                self.channels[channel - 1].mode = MODE_SERIAL
+        GlobalFileLock.unlockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
 
-        self.runActions(RULES_ACTION_BEFORE_TIME, channel, self.channels[channel - 1])
+        if append == False:
+            if chtype == 6:
+                if chsetting2 == str(MODE_SERIAL):
+                    self.channels[channel - 1].mode = MODE_SERIAL
 
-        # if there is no start mode in the channel mode flags, set it to the default
-        if self.channels[channel - 1].mode & MODE_STARTMODES == 0:
-            if self.startMode == 0:
-                self.channels[channel - 1].mode = MODE_RESUME
-            elif self.startMode == 1:
-                self.channels[channel - 1].mode = MODE_REALTIME
-            elif self.startMode == 2:
-                self.channels[channel - 1].mode = MODE_RANDOM
+            self.runActions(RULES_ACTION_BEFORE_TIME, channel, self.channels[channel - 1])
 
-        if self.channels[channel - 1].mode & MODE_ALWAYSPAUSE > 0:
-            self.channels[channel - 1].isPaused = True
+            # if there is no start mode in the channel mode flags, set it to the default
+            if self.channels[channel - 1].mode & MODE_STARTMODES == 0:
+                if self.startMode == 0:
+                    self.channels[channel - 1].mode = MODE_RESUME
+                elif self.startMode == 1:
+                    self.channels[channel - 1].mode = MODE_REALTIME
+                elif self.startMode == 2:
+                    self.channels[channel - 1].mode = MODE_RANDOM
 
-        if self.channels[channel - 1].mode & MODE_RANDOM > 0:
-            self.channels[channel - 1].showTimeOffset = random.randint(0, self.channels[channel - 1].getTotalDuration())
+            if self.channels[channel - 1].mode & MODE_ALWAYSPAUSE > 0:
+                self.channels[channel - 1].isPaused = True
 
-        if self.channels[channel - 1].mode & MODE_REALTIME > 0:
-            chantime = 0
+            if self.channels[channel - 1].mode & MODE_RANDOM > 0:
+                self.channels[channel - 1].showTimeOffset = random.randint(0, self.channels[channel - 1].getTotalDuration())
 
-            try:
-                chantime = int(ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_time'))
-            except:
-                pass
+            if self.channels[channel - 1].mode & MODE_REALTIME > 0:
+                timedif = int(time.time()) - self.lastExitTime
+                self.channels[channel - 1].totalTimePlayed += timedif
 
-            timedif = int(time.time()) - self.lastExitTime
-            self.channels[channel - 1].totalTimePlayed += timedif
+            if self.channels[channel - 1].mode & MODE_RESUME > 0:
+                self.channels[channel - 1].showTimeOffset = self.channels[channel - 1].totalTimePlayed
+                self.channels[channel - 1].totalTimePlayed = 0
 
-        if self.channels[channel - 1].mode & MODE_RESUME > 0:
-            self.channels[channel - 1].showTimeOffset = self.channels[channel - 1].totalTimePlayed
-            self.channels[channel - 1].totalTimePlayed = 0
-
-        while self.channels[channel - 1].showTimeOffset > self.channels[channel - 1].getCurrentDuration():
-            self.channels[channel - 1].showTimeOffset -= self.channels[channel - 1].getCurrentDuration()
-            self.channels[channel - 1].addShowPosition(1)
+            while self.channels[channel - 1].showTimeOffset > self.channels[channel - 1].getCurrentDuration():
+                self.channels[channel - 1].showTimeOffset -= self.channels[channel - 1].getCurrentDuration()
+                self.channels[channel - 1].addShowPosition(1)
 
         self.channels[channel - 1].name = self.getChannelName(chtype, chsetting1)
 
-        if (createlist or needsreset) and makenewlist and returnval:
+        if (createlist or needsreset) and makenewlist and returnval and append == False:
             self.runActions(RULES_ACTION_FINAL_MADE, channel, self.channels[channel - 1])
         else:
             self.runActions(RULES_ACTION_FINAL_LOADED, channel, self.channels[channel - 1])
@@ -396,15 +389,14 @@ class ChannelList:
             return
 
         # if we actually need to clear anything
-        if (self.channels[channel - 1].totalTimePlayed > 60 * 60 * 24) and self.fileLock.lockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u'):
+        if self.channels[channel - 1].totalTimePlayed > (60 * 60 * 24):
             try:
-                fle = open(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', 'w')
+                fle = FileAccess.open(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', 'w')
             except:
                 self.log("clearPlaylistHistory Unable to open the smart playlist", xbmc.LOGERROR)
-                self.fileLock.unlockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
                 return
 
-            fle.write("#EXTM3U\n")
+            flewrite = "#EXTM3U\n"
             tottime = 0
             timeremoved = 0
 
@@ -417,17 +409,20 @@ class ChannelList:
                     tmpstr = tmpstr[:600]
                     tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
                     tmpstr = tmpstr + '\n' + self.channels[channel - 1].getItemFilename(i)
-                    fle.write("#EXTINF:" + tmpstr + "\n")
+                    flewrite += "#EXTINF:" + tmpstr + "\n"
                 else:
                     timeremoved = tottime
 
+            fle.write(flewrite)
             fle.close()
 
             if timeremoved > 0:
-                self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
-
-            self.channels[channel - 1].totalTimePlayed -= timeremoved
-            self.fileLock.unlockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
+                if self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u') == False:
+                    self.channels[channel - 1].isValid = False
+                else:
+                    self.channels[channel - 1].totalTimePlayed -= timeremoved
+                    # Write this now so anything sharing the playlists will get the proper info
+                    ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_time', str(self.channels[channel - 1].totalTimePlayed))
 
 
     def getChannelName(self, chtype, setting1):
@@ -459,7 +454,7 @@ class ChannelList:
         fle = xbmc.translatePath(fle)
 
         try:
-            xml = open(fle, "r")
+            xml = FileAccess.open(fle, "r")
         except:
             self.log("getSmartPlaylisyName Unable to open the smart playlist " + fle, xbmc.LOGERROR)
             return ''
@@ -504,7 +499,7 @@ class ChannelList:
                 return False
 
             try:
-                xml = open(fle, "r")
+                xml = FileAccess.open(fle, "r")
             except:
                 self.log("makeChannelList Unable to open the smart playlist " + fle, xbmc.LOGERROR)
                 return False
@@ -533,10 +528,10 @@ class ChannelList:
 
         try:
             if append == True:
-                channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "r+")
+                channelplaylist = FileAccess.open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "r+")
                 channelplaylist.seek(0, 2)
             else:
-                channelplaylist = open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")
+                channelplaylist = FileAccess.open(CHANNELS_LOC + "channel_" + str(channel) + ".m3u", "w")
         except:
             self.log('Unable to open the cache file ' + CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', xbmc.LOGERROR)
             return False
@@ -561,23 +556,6 @@ class ChannelList:
         channelplaylist.close()
         self.log('makeChannelList return')
         return True
-
-
-    def appendChannel(self, channel):
-        self.log("appendChannel")
-        chtype = 9999
-        chsetting1 = ''
-        chsetting2 = ''
-
-        try:
-            chtype = int(ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_type'))
-            chsetting1 = ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_1')
-            chsetting2 = ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_2')
-        except:
-            self.log("appendChannel unable to get channel settings")
-            return False
-
-        return self.makeChannelList(channel, chtype, chsetting1, chsetting2, True)
 
 
     def makeTypePlaylist(self, chtype, setting1, setting2):
@@ -627,7 +605,7 @@ class ChannelList:
         flename = xbmc.makeLegalFilename(GEN_CHAN_LOC + 'Network_' + network + '.xsp')
 
         try:
-            fle = open(flename, "w")
+            fle = FileAccess.open(flename, "w")
         except:
             self.Error('Unable to open the cache file ' + flename, xbmc.LOGERROR)
             return ''
@@ -669,7 +647,7 @@ class ChannelList:
         flename = xbmc.makeLegalFilename(GEN_CHAN_LOC + 'Show_' + show + '_' + order + '.xsp')
 
         try:
-            fle = open(flename, "w")
+            fle = FileAccess.open(flename, "w")
         except:
             self.Error('Unable to open the cache file ' + flename, xbmc.LOGERROR)
             return ''
@@ -686,7 +664,7 @@ class ChannelList:
         flename = xbmc.makeLegalFilename(GEN_CHAN_LOC + 'Mixed_' + genre + '.xsp')
 
         try:
-            fle = open(flename, "w")
+            fle = FileAccess.open(flename, "w")
         except:
             self.Error('Unable to open the cache file ' + flename, xbmc.LOGERROR)
             return ''
@@ -705,7 +683,7 @@ class ChannelList:
         flename = xbmc.makeLegalFilename(GEN_CHAN_LOC + pltype + '_' + genre + '.xsp')
 
         try:
-            fle = open(flename, "w")
+            fle = FileAccess.open(flename, "w")
         except:
             self.Error('Unable to open the cache file ' + flename, xbmc.LOGERROR)
             return ''
@@ -722,7 +700,7 @@ class ChannelList:
         flename = xbmc.makeLegalFilename(GEN_CHAN_LOC + 'Studio_' + studio + '.xsp')
 
         try:
-            fle = open(flename, "w")
+            fle = FileAccess.open(flename, "w")
         except:
             self.Error('Unable to open the cache file ' + flename, xbmc.LOGERROR)
             return ''
@@ -875,7 +853,7 @@ class ChannelList:
         studioList = []
         json_query = '{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovies", "params": {"fields":["studio", "genre"]}, "id": 1}'
         json_folder_detail = self.sendJSON(json_query)
-#        self.log(json_folder_detail)
+        #self.log(json_folder_detail)
         detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in detail:
@@ -992,6 +970,11 @@ class ChannelList:
                     except:
                         dur = 0
 
+                    # If duration doesn't exist, try to figure it out
+                    if dur == 0:
+                        dur = self.videoParser.getVideoLength(match.group(1).replace("\\\\", "\\"))
+
+                    # As a last resort (since it's not as accurate), use runtime
                     if dur == 0:
                         duration = re.search('"runtime" *: *"([0-9]*?)",', f)
 
@@ -1000,9 +983,6 @@ class ChannelList:
                             dur = int(duration.group(1)) * 60
                         except:
                             dur = 0
-
-                        if dur == 0:
-                            dur = self.videoParser.getVideoLength(match.group(1).replace("\\\\", "\\"))
 
                     try:
                         if dur > 0:
@@ -1044,7 +1024,7 @@ class ChannelList:
             else:
                 continue
 
-        self.videoParser.finish()
+        self.log("buildFileList return")
         return fileList
 
 
@@ -1063,7 +1043,7 @@ class ChannelList:
         for rule in rules:
             rulename = rule.childNodes[0].nodeValue
 
-            if os.path.exists(xbmc.translatePath('special://profile/playlists/video/') + rulename):
+            if FileAccess.exists(xbmc.translatePath('special://profile/playlists/video/') + rulename):
                 fileList.extend(self.buildFileList(xbmc.translatePath('special://profile/playlists/video/') + rulename, channel))
             else:
                 fileList.extend(self.buildFileList(GEN_CHAN_LOC + rulename, channel))
@@ -1072,6 +1052,7 @@ class ChannelList:
         return fileList
 
 
+    # Run rules for a channel
     def runActions(self, action, channel, parameter):
         if channel < 1:
             return
@@ -1096,14 +1077,11 @@ class ChannelList:
 
     def threadPause(self):
         if threading.activeCount() > 1:
-            while True:
-                if self.exitThread == True:
-                    return False
-
+            while self.threadPaused == True and IsExiting == False:
                 time.sleep(self.sleepTime)
 
-                if self.threadPaused == False:
-                    break
+            if IsExiting == True:
+                return False
 
         return True
 

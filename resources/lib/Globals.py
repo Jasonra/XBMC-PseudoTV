@@ -20,6 +20,8 @@ import os
 import xbmcaddon, xbmc
 import Settings
 
+from FileAccess import FileLock
+
 
 
 def log(msg, level = xbmc.LOGDEBUG):
@@ -107,9 +109,9 @@ def compareVersions(version1, version2):
     return retval
 
 
+IsExiting = False
 
 ADDON_ID = 'script.pseudotv'
-ADDON_SETTINGS = Settings.Settings()
 REAL_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
 ADDON_INFO = REAL_SETTINGS.getAddonInfo('path')
 
@@ -131,10 +133,18 @@ MODE_REALTIME = 16
 MODE_SERIAL = MODE_RESUME | MODE_ALWAYSPAUSE | MODE_ORDERAIRDATE
 MODE_STARTMODES = MODE_RANDOM | MODE_REALTIME | MODE_RESUME
 
+SETTINGS_LOC = REAL_SETTINGS.getSetting('SettingsFolder')
 IMAGES_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'images')) + '/'
 PRESETS_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'presets')) + '/'
-CHANNELS_LOC = xbmc.translatePath('special://profile/addon_data/' + ADDON_ID + '/cache/')
+
+if len(SETTINGS_LOC) == 0:
+    SETTINGS_LOC = 'special://profile/addon_data/' + ADDON_ID
+
+CHANNELS_LOC = xbmc.translatePath(os.path.join(SETTINGS_LOC, 'cache')) + '/'
 GEN_CHAN_LOC = os.path.join(CHANNELS_LOC, 'generated') + '/'
+
+GlobalFileLock = FileLock()
+ADDON_SETTINGS = Settings.Settings()
 
 TIME_BAR = 'pstvTimeBar.png'
 BUTTON_FOCUS = 'pstvButtonFocus.png'

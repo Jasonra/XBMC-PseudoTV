@@ -33,7 +33,6 @@ class ChannelListThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.myOverlay = None
-        self.shouldExit = False
         sys.setcheckinterval(25)
         self.chanlist = ChannelList()
         self.paused = False
@@ -46,7 +45,6 @@ class ChannelListThread(threading.Thread):
 
     def run(self):
         self.log("Starting")
-        self.shouldExit = False
         self.chanlist.exitThread = False
         self.chanlist.readConfig()
         self.chanlist.sleepTime = 0.1
@@ -54,17 +52,19 @@ class ChannelListThread(threading.Thread):
         if self.myOverlay == None:
             self.log("Overlay not defined. Exiting.")
             return
-
+            
+        self.chanlist.myOverlay = self.myOverlay
         self.fullUpdating = (self.myOverlay.backgroundUpdating == 0)
+        
+        for i in range(self.myOverlay.maxChannels):
+            self.chanlist.channels.append(Channel())
 
         # Don't load invalid channels if minimum threading mode is on
-        if self.fullUpdating:
+        if self.fullUpdating and self.myOverlay.isMaster:
             for i in range(self.myOverlay.maxChannels):
-                self.chanlist.channels.append(Channel())
-
                 if self.myOverlay.channels[i].isValid == False:
                     while True:
-                        if self.shouldExit == True:
+                        if IsExiting == True:
                             self.log("Closing thread")
                             return
 
@@ -77,7 +77,7 @@ class ChannelListThread(threading.Thread):
 
                     if self.chanlist.setupChannel(i + 1, True, True) == True:
                         while self.paused == True:
-                            if self.shouldExit == True:
+                            if IsExiting == True:
                                 return
 
                             time.sleep(1)
@@ -96,22 +96,54 @@ class ChannelListThread(threading.Thread):
 
                 while modified == True and self.myOverlay.channels[i].getTotalDuration() < PREP_CHANNEL_TIME:
                     # If minimum updating is on, don't attempt to load invalid channels
-                    if self.fullUpdating == False and self.myOverlay.channels[i].isValid == False:
+                    if self.fullUpdating == False and self.myOverlay.channels[i].isValid == False and self.myOverlay.isMaster:
                         break
 
                     modified = False
 
-                    if self.shouldExit == True:
+                    if IsExiting == True:
                         self.log("Closing thread")
                         return
 
                     time.sleep(2)
                     curtotal = self.myOverlay.channels[i].getTotalDuration()
-                    self.chanlist.appendChannel(i + 1)
+
+                    if self.myOverlay.isMaster:
+                        if curtotal > 0:
+                            # When appending, many of the channel variables aren't set, so copy them over.
+                            # This needs to be done before setup since a rule may use one of the values.
+                            # It also needs to be done after since one of them may have changed while being setup.
+                            self.chanlist.channels[i].playlistPosition = self.myOverlay.channels[i].playlistPosition
+                            self.chanlist.channels[i].showTimeOffset = self.myOverlay.channels[i].showTimeOffset
+                            self.chanlist.channels[i].lastAccessTime = self.myOverlay.channels[i].lastAccessTime
+                            self.chanlist.channels[i].totalTimePlayed = self.myOverlay.channels[i].totalTimePlayed
+                            self.chanlist.channels[i].isPaused = self.myOverlay.channels[i].isPaused
+                            self.chanlist.channels[i].mode = self.myOverlay.channels[i].mode
+                            self.chanlist.setupChannel(i + 1, True, True, True)
+                            self.chanlist.channels[i].playlistPosition = self.myOverlay.channels[i].playlistPosition
+                            self.chanlist.channels[i].showTimeOffset = self.myOverlay.channels[i].showTimeOffset
+                            self.chanlist.channels[i].lastAccessTime = self.myOverlay.channels[i].lastAccessTime
+                            self.chanlist.channels[i].totalTimePlayed = self.myOverlay.channels[i].totalTimePlayed
+                            self.chanlist.channels[i].isPaused = self.myOverlay.channels[i].isPaused
+                            self.chanlist.channels[i].mode = self.myOverlay.channels[i].mode
+                        else:
+                            self.chanlist.setupChannel(i + 1, True, True, False)
+                    else:
+                        # We're not master, so no modifications...just try and load the channel
+                        self.chanlist.setupChannel(i + 1, True, False, False)
+
+                    self.myOverlay.channels[i] = self.chanlist.channels[i]
+
+                    if self.myOverlay.isMaster:
+                        ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(self.myOverlay.channels[i].totalTimePlayed))
+                        ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_changed', 'False')
+
+                    if self.myOverlay.channels[i].getTotalDuration() > curtotal and self.myOverlay.isMaster:
+                        modified = True
 
                     # A do-while loop for the paused state
                     while True:
-                        if self.shouldExit == True:
+                        if IsExiting == True:
                             self.log("Closing thread")
                             return
 
@@ -120,23 +152,14 @@ class ChannelListThread(threading.Thread):
                         if self.paused == False:
                             break
 
-                    if self.myOverlay.channels[i].setPlaylist(CHANNELS_LOC + "channel_" + str(i + 1) + ".m3u") and self.myOverlay.channels[i].isValid == False:
-                        self.myOverlay.channels[i].totalTimePlayed = 0
-                        self.myOverlay.channels[i].isValid = True
-                        self.myOverlay.channels[i].fileName = CHANNELS_LOC + 'channel_' + str(i + 1) + '.m3u'
-                        ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', '0')
-                        ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_changed', 'False')
-
-                    if self.myOverlay.channels[i].getTotalDuration() > curtotal:
-                        modified = True
-
                 timeslept = 0
 
-            if self.fullUpdating == False:
+            if self.fullUpdating == False and self.myOverlay.isMaster:
                 return
 
-            while timeslept < 1800:
-                if self.shouldExit == True:
+            # If we're master, wait 30 minutes in between checks.  If not, wait 5 minutes.
+            while (timeslept < 1800 and self.myOverlay.isMaster == True) or (timeslept < 300 and self.myOverlay.isMaster == False):
+                if IsExiting == True:
                     return
 
                 time.sleep(2)

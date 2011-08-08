@@ -171,10 +171,12 @@ class FileLock:
         self.lockedList = []
         self.refreshLocksTimer = threading.Timer(4.0, self.refreshLocks)
         self.refreshLocksTimer.start()
+        self.isExiting = False
 
 
     def close(self):
         self.log("close")
+        self.isExiting = True
 
         if self.refreshLocksTimer.isAlive():
             self.refreshLocksTimer.cancel()
@@ -188,13 +190,17 @@ class FileLock:
 
 
     def refreshLocks(self):
+        self.log("refreshLocks")
+
         for item in self.lockedList:
-            if IsExiting:
+            if self.isExiting:
+                self.log("IsExiting")
                 return False
 
             self.lockFile(item, True)
 
-        if IsExiting:
+        if self.isExiting:
+            self.log("IsExiting")
             return False
 
         self.refreshLocksTimer = threading.Timer(4.0, self.refreshLocks)

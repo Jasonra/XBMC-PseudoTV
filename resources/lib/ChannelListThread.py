@@ -64,7 +64,7 @@ class ChannelListThread(threading.Thread):
             for i in range(self.myOverlay.maxChannels):
                 if self.myOverlay.channels[i].isValid == False:
                     while True:
-                        if IsExiting == True:
+                        if self.myOverlay.isExiting:
                             self.log("Closing thread")
                             return
 
@@ -76,8 +76,9 @@ class ChannelListThread(threading.Thread):
                     self.chanlist.channels[i].setAccessTime(self.myOverlay.channels[i].lastAccessTime)
 
                     if self.chanlist.setupChannel(i + 1, True, True) == True:
-                        while self.paused == True:
-                            if IsExiting == True:
+                        while self.paused:
+                            if self.myOverlay.isExiting:
+                                self.log("IsExiting")
                                 return
 
                             time.sleep(1)
@@ -101,7 +102,7 @@ class ChannelListThread(threading.Thread):
 
                     modified = False
 
-                    if IsExiting == True:
+                    if self.myOverlay.isExiting:
                         self.log("Closing thread")
                         return
 
@@ -143,7 +144,7 @@ class ChannelListThread(threading.Thread):
 
                     # A do-while loop for the paused state
                     while True:
-                        if IsExiting == True:
+                        if self.myOverlay.isExiting:
                             self.log("Closing thread")
                             return
 
@@ -159,7 +160,8 @@ class ChannelListThread(threading.Thread):
 
             # If we're master, wait 30 minutes in between checks.  If not, wait 5 minutes.
             while (timeslept < 1800 and self.myOverlay.isMaster == True) or (timeslept < 300 and self.myOverlay.isMaster == False):
-                if IsExiting == True:
+                if self.myOverlay.isExiting:
+                    self.log("IsExiting")
                     return
 
                 time.sleep(2)

@@ -84,6 +84,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.notificationLastChannel = 0
         self.notificationLastShow = 0
         self.notificationShowedNotif = False
+        self.isExiting = False
 
         for i in range(3):
             self.channelLabel.append(xbmcgui.ControlImage(50 + (50 * i), 50, 50, 50, IMAGES_LOC + 'solid.png', colorDiffuse='0xAA00ff00'))
@@ -184,14 +185,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
     def becomeMaster(self):
         self.isMaster = GlobalFileLock.lockFile("MasterLock", False)
+        self.masterTimer = threading.Timer(5.0, self.becomeMaster)
 
-        if self.isMaster == False:
-            self.masterTimer = threading.Timer(5.0, self.becomeMaster)
+        if self.isMaster == False and self.isExiting == False:
             self.masterTimer.start()
 
             # Perform this after start so that there isn't an issue with evaluation before it is
             # set.
-            if IsExiting:
+            if self.isExiting:
                 self.masterTimer.cancel()
 
 
@@ -700,8 +701,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log('end')
         self.background.setVisible(True)
         xbmc.executebuiltin("PlayerControl(repeatoff)")
+        self.isExiting = True
         GlobalFileLock.close()
-        IsExiting = True
 
         if self.Player.isPlaying():
             # Prevent the player from setting the sleep timer
@@ -769,4 +770,5 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             ADDON_SETTINGS.setSetting('LastExitTime', str(int(time.time())))
 
         self.background.setVisible(False)
+        self.log("Thread count is " + str(threading.activeCount()))
         self.close()

@@ -109,8 +109,6 @@ def compareVersions(version1, version2):
     return retval
 
 
-IsExiting = False
-
 ADDON_ID = 'script.pseudotv'
 REAL_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
 ADDON_INFO = REAL_SETTINGS.getAddonInfo('path')

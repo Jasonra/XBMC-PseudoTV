@@ -1077,10 +1077,11 @@ class ChannelList:
 
     def threadPause(self):
         if threading.activeCount() > 1:
-            while self.threadPaused == True and IsExiting == False:
+            while self.threadPaused == True and self.myOverlay.isExiting == False:
                 time.sleep(self.sleepTime)
 
-            if IsExiting == True:
+            if self.myOverlay.isExiting == True:
+                self.log("IsExiting")
                 return False
 
         return True

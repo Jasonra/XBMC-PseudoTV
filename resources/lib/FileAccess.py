@@ -31,12 +31,17 @@ except:
     pass
 
 
-FILE_LOCK_MAX_FILE_TIMEOUT = 10
+FILE_LOCK_MAX_FILE_TIMEOUT = 12
 FILE_LOCK_NAME = "FileLock.dat"
 
 
 
 class FileAccess:
+    @staticmethod
+    def log(msg, level = xbmc.LOGDEBUG):
+        Globals.log('FileAccess: ' + msg, level)
+
+
     @staticmethod
     def open(filename, mode):
         fle = 0
@@ -91,43 +96,48 @@ class FileAccess:
     def existsSMB(filename):
         if os.name.lower() == 'nt':
             filename = '\\\\' + filename[6:]
-
-            if os.path.exists(filename):
-                return True
+            return FileAccess.exists(filename)
 
         return False
 
 
     @staticmethod
     def rename(path, newpath):
+        FileAccess.log("rename " + path + " to " + newpath)
+
         if VFS_AVAILABLE == True:
+            FileAccess.log("Using VFS")
+
             try:
                 xbmcvfs.rename(path, newpath)
                 return True
             except:
-                return False
+                pass
 
         if path[0:6].lower() == 'smb://' or newpath[0:6].lower() == 'smb://':
             if os.name.lower() == 'nt':
+                FileAccess.log("Modifying name")
                 if path[0:6].lower() == 'smb://':
                     path = '\\\\' + path[6:]
 
                 if newpath[0:6].lower() == 'smb://':
                     newpath = '\\\\' + newpath[6:]
 
-#         try:
-#             os.rename(path, newpath)
-#             return True
-#         except:
-#             pass
-
         try:
-            shutil.move(path, newpath)
+            os.rename(path, newpath)
+            FileAccess.log("os.rename")
             return True
         except:
             pass
 
+        try:
+            shutil.move(path, newpath)
+            FileAccess.log("shutil.move")
+            return True
+        except:
+            pass
 
+        FileAccess.log("OSError")
         raise OSError()
 
 
@@ -166,12 +176,13 @@ class FileAccess:
 class FileLock:
     def __init__(self):
         random.seed()
-        self.lockName = Globals.CHANNELS_LOC + str(random.randint(1, 60000)) + ".lock"
         self.lockFileName = Globals.CHANNELS_LOC + FILE_LOCK_NAME
         self.lockedList = []
         self.refreshLocksTimer = threading.Timer(4.0, self.refreshLocks)
         self.refreshLocksTimer.start()
         self.isExiting = False
+        self.grabSemaphore = threading.BoundedSemaphore()
+
 
 
     def close(self):
@@ -199,6 +210,7 @@ class FileLock:
 
             self.lockFile(item, True)
 
+
         if self.isExiting:
             self.log("IsExiting")
             return False
@@ -220,9 +232,13 @@ class FileLock:
 
             if curval > -1:
                 self.releaseLockFile()
-                time.sleep(1)
+                self.grabSemaphore.release()
+                time.sleep(0.5)
+
+            self.grabSemaphore.acquire()
 
             if self.grabLockFile() == False:
+                self.grabSemaphore.release()
                 return False
 
             try:
@@ -230,6 +246,7 @@ class FileLock:
             except:
                 self.log("Unable to open the lock file")
                 self.releaseLockFile()
+                self.grabSemaphore.release()
                 return False
 
             lines = fle.readlines()
@@ -255,6 +272,7 @@ class FileLock:
                     else:
                         if block == False:
                             self.releaseLockFile()
+                            self.grabSemaphore.release()
                             self.log("File is locked")
                             return False
 
@@ -264,6 +282,7 @@ class FileLock:
         self.log("File is unlocked")
         self.writeLockEntry(lines, filename)
         self.releaseLockFile()
+        self.grabSemaphore.release()
         existing = False
 
         for i in range(len(self.lockedList)):
@@ -280,15 +299,21 @@ class FileLock:
     def grabLockFile(self):
         self.log("grabLockFile")
 
-        # Wait a maximum of 10 seconds to grab file-lock file
-        for i in range(20):
+        # Wait a maximum of 20 seconds to grab file-lock file.  This long
+        # timeout should help prevent issues with an old cache.
+        for i in range(40):
+            # Cycle file names in case one of them is sitting around in the directory
+            self.lockName = Globals.CHANNELS_LOC + str(random.randint(1, 60000)) + ".lock"
+
             try:
                 FileAccess.rename(self.lockFileName, self.lockName)
                 fle = FileAccess.open(self.lockName, 'r')
                 fle.close()
                 return True
             except:
-                time.sleep(.5)
+                time.sleep(0.5)
+
+        self.log("Creating lock file")
 
         # If we couldn't grab it, it is gone.  Create it.
         try:
@@ -329,9 +354,12 @@ class FileLock:
             self.log("Unable to open the lock file for writing")
             return False
 
-        for line in lines:
-            fle.write(line)
+        flewrite = ''
 
+        for line in lines:
+            flewrite += line
+
+        fle.write(flewrite)
         fle.close()
 
 
@@ -395,8 +423,11 @@ class FileLock:
         if found == False:
             self.log("Lock not found")
             return False
+            
+        self.grabSemaphore.acquire()
 
         if self.grabLockFile() == False:
+            self.grabSemaphore.release()
             return False
 
         try:
@@ -404,20 +435,24 @@ class FileLock:
         except:
             self.log("Unable to open the lock file")
             self.releaseLockFile()
+            self.grabSemaphore.release()
             return False
 
         lines = fle.readlines()
         fle.close()
         self.writeLockEntry(lines, filename, False)
         self.releaseLockFile()
+        self.grabSemaphore.release()
         return True
 
 
     def isFileLocked(self, filename, block = False):
         self.log("isFileLocked " + filename)
         filename = filename.lower()
+        self.grabSemaphore.acquire()
 
         if self.grabLockFile() == False:
+            self.grabSemaphore.release()
             return True
 
         try:
@@ -425,6 +460,7 @@ class FileLock:
         except:
             self.log("Unable to open the lock file")
             self.releaseLockFile()
+            self.grabSemaphore.release()
             return True
 
         lines = fle.readlines()
@@ -435,4 +471,5 @@ class FileLock:
             retval = True
 
         self.releaseLockFile()
+        self.grabSemaphore.release()
         return retval

@@ -116,7 +116,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             except:
                 self.Error('Unable to create the cache directory')
                 return
-
+        self.background = self.getControl(101)
+        self.getControl(102).setVisible(False)
+        self.background.setVisible(True)
         self.isMaster = GlobalFileLock.lockFile("MasterLock", False)
 
         if self.isMaster:
@@ -125,8 +127,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.channelLabelTimer = threading.Timer(5.0, self.hideChannelLabel)
         self.infoTimer = threading.Timer(5.0, self.hideInfo)
         self.masterTimer = threading.Timer(5.0, self.becomeMaster)
-        self.background = self.getControl(101)
-        self.getControl(102).setVisible(False)
         self.myEPG = EPGWindow("script.pseudotv.EPG.xml", ADDON_INFO, "default")
         self.myEPG.MyOverlayWindow = self
         # Don't allow any actions during initialization
@@ -194,6 +194,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             # set.
             if self.isExiting:
                 self.masterTimer.cancel()
+        elif self.isMaster:
+            self.log("Became master")
 
 
     # setup all basic configuration parameters, including creating the playlists that

@@ -29,7 +29,6 @@ class Settings:
     def __init__(self):
         self.logfile = xbmc.translatePath(os.path.join(Globals.SETTINGS_LOC, 'settings2.xml'))
         self.currentSettings = []
-        self.loadSettings()
 
 
     def loadSettings(self):

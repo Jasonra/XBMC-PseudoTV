@@ -116,10 +116,17 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             except:
                 self.Error('Unable to create the cache directory')
                 return
+
         self.background = self.getControl(101)
         self.getControl(102).setVisible(False)
         self.background.setVisible(True)
+        updateDialog = xbmcgui.DialogProgress()
+        updateDialog.create("PseudoTV", "Initializing")
+        updateDialog.update(5, "Initializing", "Grabbing Lock File")
+        ADDON_SETTINGS.loadSettings()
+        updateDialog.update(70, "Initializing", "Checking Other Instances")
         self.isMaster = GlobalFileLock.lockFile("MasterLock", False)
+        updateDialog.update(95, "Initializing", "Migrating")
 
         if self.isMaster:
             migrate()
@@ -131,6 +138,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.myEPG.MyOverlayWindow = self
         # Don't allow any actions during initialization
         self.actionSemaphore.acquire()
+        updateDialog.close()
 
         if self.readConfig() == False:
             return
@@ -160,7 +168,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         try:
             if self.forceReset == False:
-                self.currentChannel = self.fixChannel(int(ADDON_SETTINGS.getSetting("CurrentChannel")))
+                self.currentChannel = self.fixChannel(int(REAL_SETTINGS.getSetting("CurrentChannel")))
             else:
                 self.currentChannel = self.fixChannel(1)
         except:
@@ -223,7 +231,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.startupTime = time.time()
         chn = ChannelList()
         chn.myOverlay = self
-        self.background.setVisible(True)
         self.channels = chn.setupList()
 
         if self.channels is None:
@@ -704,6 +711,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.background.setVisible(True)
         xbmc.executebuiltin("PlayerControl(repeatoff)")
         self.isExiting = True
+        updateDialog = xbmcgui.DialogProgress()
+        updateDialog.create("PseudoTV", "Exiting")
+        updateDialog.update(0, "Exiting", "Removing File Locks")
         GlobalFileLock.close()
 
         if self.Player.isPlaying():
@@ -711,11 +721,15 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.Player.stopped = True
             self.Player.stop()
 
+        updateDialog.update(50, "Exiting", "Stopping Threads")
+
         try:
             if self.channelLabelTimer.isAlive():
                 self.channelLabelTimer.cancel()
         except:
             pass
+            
+        updateDialog.update(53, "Exiting", "Stopping Threads")
 
         try:
             if self.notificationTimer.isAlive():
@@ -723,11 +737,15 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
+        updateDialog.update(56, "Exiting", "Stopping Threads")
+
         try:
             if self.infoTimer.isAlive():
                 self.infoTimer.cancel()
         except:
             pass
+
+        updateDialog.update(59, "Exiting", "Stopping Threads")
 
         try:
             if self.sleepTimeValue > 0:
@@ -736,17 +754,23 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
+        updateDialog.update(62, "Exiting", "Stopping Threads")
+
         try:
             if self.masterTimer.isAlive():
                 self.masterTimer.cancel()
         except:
             pass
 
+        updateDialog.update(65, "Exiting", "Stopping Threads")
+
         if self.channelThread.isAlive():
             self.channelThread.join()
 
         if self.timeStarted > 0 and self.isMaster:
             for i in range(self.maxChannels):
+                updateDialog.update(70 + int((30 / self.maxChannels) * i), "Exiting", "Saving Settings")
+
                 if self.channels[i].isValid:
                     if self.channels[i].mode & MODE_RESUME == 0:
                         ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(time.time() - self.timeStarted + self.channels[i].totalTimePlayed)))
@@ -765,12 +789,12 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         if self.isMaster:
             try:
-                ADDON_SETTINGS.setSetting('CurrentChannel', str(self.currentChannel))
+                REAL_SETTINGS.setSetting('CurrentChannel', str(self.currentChannel))
             except:
                 pass
 
             ADDON_SETTINGS.setSetting('LastExitTime', str(int(time.time())))
 
+        updateDialog.close()
         self.background.setVisible(False)
-        self.log("Thread count is " + str(threading.activeCount()))
         self.close()

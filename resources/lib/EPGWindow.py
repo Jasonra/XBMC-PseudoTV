@@ -42,6 +42,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.channelLogos = ''
         self.textcolor = "FFFFFFFF"
         self.focusedcolor = "FF7d7d7d"
+        self.clockMode = 0
 
         # Decide whether to use the current skin or the default skin.  If the current skin has the proper
         # image, then it should work.
@@ -70,6 +71,8 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         for i in range(self.rowCount):
             self.channelButtons[i] = []
 
+        self.clockMode = ADDON_SETTINGS.getSetting("ClockMode")
+
 
     def onFocus(self, controlid):
         pass
@@ -83,7 +86,11 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         delta = datetime.timedelta(minutes=30)
 
         for i in range(3):
-            self.getControl(101 + i).setLabel(now.strftime("%I:%M"))
+            if self.clockMode == 0:
+                self.getControl(101 + i).setLabel(now.strftime("%I:%M"))
+            else:
+                self.getControl(101 + i).setLabel(now.strftime("%H:%M"))
+
             now = now + delta
 
         self.log('setTimeLabels return')

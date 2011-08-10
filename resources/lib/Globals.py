@@ -131,7 +131,11 @@ MODE_REALTIME = 16
 MODE_SERIAL = MODE_RESUME | MODE_ALWAYSPAUSE | MODE_ORDERAIRDATE
 MODE_STARTMODES = MODE_RANDOM | MODE_REALTIME | MODE_RESUME
 
-SETTINGS_LOC = REAL_SETTINGS.getSetting('SettingsFolder')
+SETTINGS_LOC = ''
+
+if REAL_SETTINGS.getSetting('ChannelSharing') == "true":
+    SETTINGS_LOC = REAL_SETTINGS.getSetting('SettingsFolder')
+
 IMAGES_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'images')) + '/'
 PRESETS_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'presets')) + '/'
 

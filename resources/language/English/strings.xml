@@ -12,4 +12,7 @@
     <string id="30011">Default channel times at startup</string>
     <string id="30012">Background Updating</string>
     <string id="30013">Shared Channels Folder</string>
+    <string id="30014">Clock Display</string>
+    <string id="30015">Enable Channel Sharing</string>
+    <string id="30020">Visuals</string>
 </strings>

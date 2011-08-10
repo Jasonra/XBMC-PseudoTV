@@ -31,7 +31,7 @@ except:
     pass
 
 
-FILE_LOCK_MAX_FILE_TIMEOUT = 12
+FILE_LOCK_MAX_FILE_TIMEOUT = 13
 FILE_LOCK_NAME = "FileLock.dat"
 
 
@@ -182,7 +182,7 @@ class FileLock:
         self.refreshLocksTimer.start()
         self.isExiting = False
         self.grabSemaphore = threading.BoundedSemaphore()
-
+        self.listSemaphore = threading.BoundedSemaphore()
 
 
     def close(self):
@@ -192,8 +192,8 @@ class FileLock:
         if self.refreshLocksTimer.isAlive():
             self.refreshLocksTimer.cancel()
 
-        for i in range(len(self.lockedList)):
-            self.unlockFile(self.lockedList[0])
+        for item in self.lockedList:
+            self.unlockFile(item)
 
 
     def log(self, msg, level = xbmc.LOGDEBUG):
@@ -209,7 +209,6 @@ class FileLock:
                 return False
 
             self.lockFile(item, True)
-
 
         if self.isExiting:
             self.log("IsExiting")
@@ -233,7 +232,7 @@ class FileLock:
             if curval > -1:
                 self.releaseLockFile()
                 self.grabSemaphore.release()
-                time.sleep(0.5)
+                time.sleep(1)
 
             self.grabSemaphore.acquire()
 
@@ -282,17 +281,17 @@ class FileLock:
         self.log("File is unlocked")
         self.writeLockEntry(lines, filename)
         self.releaseLockFile()
-        self.grabSemaphore.release()
         existing = False
 
-        for i in range(len(self.lockedList)):
-            if self.lockedList[i] == filename:
+        for item in self.lockedList:
+            if item == filename:
                 existing = True
                 break
 
         if existing == False:
             self.lockedList.append(filename)
 
+        self.grabSemaphore.release()
         return True
 
 
@@ -412,6 +411,8 @@ class FileLock:
 
         # First make sure we actually own the lock
         # Remove it from the list if we do
+        self.listSemaphore.acquire()
+
         for i in range(len(self.lockedList)):
             if self.lockedList[realindex] == filename:
                 del self.lockedList[realindex]
@@ -419,11 +420,13 @@ class FileLock:
                 realindex -= 1
 
             realindex += 1
+            
+        self.listSemaphore.release()
 
         if found == False:
             self.log("Lock not found")
             return False
-            
+
         self.grabSemaphore.acquire()
 
         if self.grabLockFile() == False:

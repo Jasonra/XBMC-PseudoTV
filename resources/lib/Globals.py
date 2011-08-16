@@ -66,6 +66,9 @@ def migrate():
                 if chantype == 9999:
                     addPreset(i + 1, currentpreset)
                     currentpreset += 1
+                    
+        if compareVersions(curver, "2.0.0") < 0:
+            pass
 
     ADDON_SETTINGS.setSetting("Version", VERSION)
 
@@ -92,12 +95,21 @@ def compareVersions(version1, version2):
     ver2 = version2.split('.')
 
     for i in range(min(len(ver1), len(ver2))):
-        if ver1[i] < ver2[i]:
-            retval = -1
-            break
+        try:
+            if int(ver1[i]) < int(ver2[i]):
+                retval = -1
+                break
 
-        if ver1[i] > ver2[i]:
-            retval = 1
+            if int(ver1[i]) > int(ver2[i]):
+                retval = 1
+                break
+        except:
+            try:
+                v = int(ver1[i])
+                retval = 1
+            except:
+                retval = -1
+
             break
 
     if retval == 0:
@@ -113,7 +125,7 @@ ADDON_ID = 'script.pseudotv'
 REAL_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
 ADDON_INFO = REAL_SETTINGS.getAddonInfo('path')
 
-VERSION = "1.2.1"
+VERSION = "2.0.0"
 
 TIMEOUT = 15 * 1000
 TOTAL_FILL_CHANNELS = 20
@@ -144,6 +156,7 @@ if len(SETTINGS_LOC) == 0:
 
 CHANNELS_LOC = xbmc.translatePath(os.path.join(SETTINGS_LOC, 'cache')) + '/'
 GEN_CHAN_LOC = os.path.join(CHANNELS_LOC, 'generated') + '/'
+MADE_CHAN_LOC = os.path.join(CHANNELS_LOC, 'stored') + '/'
 
 GlobalFileLock = FileLock()
 ADDON_SETTINGS = Settings.Settings()
@@ -155,9 +168,10 @@ BUTTON_NO_FOCUS = 'pstvButtonNoFocus.png'
 RULES_ACTION_START = 1
 RULES_ACTION_JSON = 2
 RULES_ACTION_LIST = 4
-RULES_ACTION_BEFORE_TIME = 8
-RULES_ACTION_FINAL_MADE = 16
-RULES_ACTION_FINAL_LOADED = 32
+RULES_ACTION_BEFORE_CLEAR = 8
+RULES_ACTION_BEFORE_TIME = 16
+RULES_ACTION_FINAL_MADE = 32
+RULES_ACTION_FINAL_LOADED = 64
 
 # Maximum is 10 for this
 RULES_PER_PAGE = 7

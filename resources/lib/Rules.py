@@ -412,10 +412,12 @@ class NoShowRule(BaseRule):
 class ScheduleChannelRule(BaseRule):
     def __init__(self):
         self.name = "Schedule a Show"
-        self.optionLabels = ['Channel Number', 'Days of the Week (UMTWHFS)', 'Time (HH:MM)', 'Episode Count', 'Starting Episode']
-        self.optionValues = ['0', '', '00:00', '1', '1/1/2011']
+        self.optionLabels = ['Channel Number', 'Days of the Week (UMTWHFS)', 'Time (HH:MM)', 'Episode Count', 'Starting Episode', 'Starting Date']
+        self.optionValues = ['0', '', '00:00', '1', '1', '']
         self.myId = 3
-        self.actions = RULES_ACTION_FINAL_MADE
+        self.actions = RULES_ACTION_START | RULES_ACTION_BEFORE_CLEAR | RULES_ACTION_FINAL_MADE
+        self.addedduration = 0
+        self.appended = False
 
 
     def copy(self):
@@ -453,12 +455,24 @@ class ScheduleChannelRule(BaseRule):
     def runAction(self, actionid, channelList, channeldata):
         self.log("runAction")
 
+        if action == RULES_ACTION_START:
+            self.addedduration = channeldata.getTotalDuration()
+
+        if action == RULES_ACTION_BEFORE:
+            self.addedduration = self.channeldata.getTotalDuration() - self.addedduration
+
+            if channeldata.totalTimePlayed > 0:
+                self.appended = True
+            else:
+                self.appended = False
+
         if actionid == RULES_ACTION_FINAL_MADE:
             chan = 0
             epcount = 0
             startingep = 0
             curchan = channelList.runningActionChannel
             curruleid = channelList.runningActionId
+            startindex = 0
 
             try:
                 chan = int(self.optionValues[0])
@@ -474,6 +488,26 @@ class ScheduleChannelRule(BaseRule):
 
             if channelList.channels[chan - 1].Playlist.size() < 1:
                 return filelist
+
+            if self.appended == True:
+                totdur = 0
+
+                for item in channeldata.Playlist.itemlist:
+                    totdur += item.duration
+                    startindex += 1
+
+                    if self.channeldata.getTotalDuration() - totdur >= self.addedduration:
+                        break
+
+            if startindex < channeldata.playlistPosition:
+                startindex = channeldata.playlistPosition + 1
+
+            # add a show at the proper position
+            # first, determine the next show time and date
+
+            # rearrange episodes to get an optimal time
+            if channeldata.isRandom:
+                pass
 
 
 

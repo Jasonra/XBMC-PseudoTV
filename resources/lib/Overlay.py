@@ -117,6 +117,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 self.Error('Unable to create the cache directory')
                 return
 
+        if FileAccess.exists(MADE_CHAN_LOC) == False:
+            try:
+                FileAccess.makedirs(MADE_CHAN_LOC)
+            except:
+                self.Error('Unable to create the storage directory')
+                return
+
         self.background = self.getControl(101)
         self.getControl(102).setVisible(False)
         self.background.setVisible(True)
@@ -568,7 +575,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                     self.channelThread.pause()
 
                 if self.notificationTimer.isAlive():
-                    self.log("closing notif thread")
                     self.notificationTimer.cancel()
                     self.notificationTimer = threading.Timer(NOTIFICATION_CHECK_TIME, self.notificationAction)
 
@@ -696,10 +702,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 self.notificationLastChannel = self.currentChannel
                 self.notificationLastShow = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition()
                 self.notificationShowedNotif = False
-                timedif = self.channels[self.currentChannel - 1].getCurrentDuration() - self.Player.getTime()
+                timedif = self.channels[self.currentChannel - 1].getItemDuration(self.notificationLastShow) - self.Player.getTime()
 
                 if timedif < NOTIFICATION_TIME_BEFORE_END and timedif > NOTIFICATION_DISPLAY_TIME:
-                    xbmc.executebuiltin("Notification(Coming Up Next, " + self.channels[self.currentChannel - 1].getItemTitle(xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition() + 1) + ", " + str(NOTIFICATION_DISPLAY_TIME * 1000) + ")")
+                    xbmc.executebuiltin("Notification(Coming Up Next, " + self.channels[self.currentChannel - 1].getItemTitle(self.notificationLastShow + 1).replace(',', '') + ", " + str(NOTIFICATION_DISPLAY_TIME * 1000) + ")")
                     self.notificationShowedNotif = True
 
         self.startNotificationTimer()
@@ -728,7 +734,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 self.channelLabelTimer.cancel()
         except:
             pass
-            
+
         updateDialog.update(53, "Exiting", "Stopping Threads")
 
         try:

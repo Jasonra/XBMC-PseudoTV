@@ -33,6 +33,7 @@ class Channel:
         self.fileName = ''
         self.isPaused = False
         self.isValid = False
+        self.isRandom = False
         self.mode = 0
         self.ruleList = []
 

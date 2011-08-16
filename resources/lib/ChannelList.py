@@ -488,7 +488,12 @@ class ChannelList:
             israndom = True
         else:
             if chtype == 0:
-                fle = setting1
+                if FileAccess.copy(setting1, MADE_CHAN_LOC + os.path.split(setting1)[1]) == False:
+                    if FileAccess.exists(MADE_CHAN_LOC + os.path.split(setting1)[1]) == False:
+                        self.log("Unable to copy or find playlist " + setting1)
+                        return False
+
+                fle = MADE_CHAN_LOC + os.path.split(setting1)[1]
             else:
                 fle = self.makeTypePlaylist(chtype, setting1, setting2)
 
@@ -548,6 +553,7 @@ class ChannelList:
             random.shuffle(fileList)
 
         fileList = self.runActions(RULES_ACTION_LIST, channel, fileList)
+        self.channels[channel - 1].isRandom = israndom
 
         # Write each entry into the new playlist
         for string in fileList:
@@ -1044,7 +1050,8 @@ class ChannelList:
             rulename = rule.childNodes[0].nodeValue
 
             if FileAccess.exists(xbmc.translatePath('special://profile/playlists/video/') + rulename):
-                fileList.extend(self.buildFileList(xbmc.translatePath('special://profile/playlists/video/') + rulename, channel))
+                FileAccess.copy(xbmc.translatePath('special://profile/playlists/video/') + rulename, MADE_CHAN_LOC + rulename)
+                fileList.extend(self.buildFileList(MADE_CHAN_LOC + rulename, channel))
             else:
                 fileList.extend(self.buildFileList(GEN_CHAN_LOC + rulename, channel))
 
@@ -1080,9 +1087,13 @@ class ChannelList:
             while self.threadPaused == True and self.myOverlay.isExiting == False:
                 time.sleep(self.sleepTime)
 
-            if self.myOverlay.isExiting == True:
-                self.log("IsExiting")
-                return False
+            # This will fail when using config.py
+            try:
+                if self.myOverlay.isExiting == True:
+                    self.log("IsExiting")
+                    return False
+            except:
+                pass
 
         return True
 

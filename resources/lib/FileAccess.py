@@ -67,6 +67,22 @@ class FileAccess:
 
 
     @staticmethod
+    def copy(orgfilename, newfilename):
+        orgfilename = xbmc.makeLegalFilename(orgfilename)
+        newfilename = xbmc.makeLegalFilename(newfilename)
+
+        if VFS_AVAILABLE == True:
+            xbmcvfs.copy(orgfilename, newfilename)
+        else:
+            try:
+                shutil.copy(orgfilename, newfilename)
+            except:
+                return False
+
+        return True
+
+
+    @staticmethod
     def exists(filename):
         if os.path.exists(filename):
             return True

@@ -45,6 +45,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         self.setting1 = ''
         self.setting2 = ''
         self.savedRules = False
+        ADDON_SETTINGS.loadSettings()
         self.doModal()
         self.log("__init__ return")
 

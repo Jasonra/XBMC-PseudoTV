@@ -75,7 +75,7 @@ class ChannelListThread(threading.Thread):
 
                     self.chanlist.channels[i].setAccessTime(self.myOverlay.channels[i].lastAccessTime)
 
-                    if self.chanlist.setupChannel(i + 1, True, True) == True:
+                    if self.chanlist.setupChannel(i + 1, True, True, False) == True:
                         while self.paused:
                             if self.myOverlay.isExiting:
                                 self.log("IsExiting")
@@ -120,7 +120,8 @@ class ChannelListThread(threading.Thread):
                             self.chanlist.channels[i].totalTimePlayed = self.myOverlay.channels[i].totalTimePlayed
                             self.chanlist.channels[i].isPaused = self.myOverlay.channels[i].isPaused
                             self.chanlist.channels[i].mode = self.myOverlay.channels[i].mode
-                            self.chanlist.setupChannel(i + 1, True, True, True)
+                            # Only allow appending valid channels, don't allow erasing them
+                            self.chanlist.setupChannel(i + 1, True, False, True)
                             self.chanlist.channels[i].playlistPosition = self.myOverlay.channels[i].playlistPosition
                             self.chanlist.channels[i].showTimeOffset = self.myOverlay.channels[i].showTimeOffset
                             self.chanlist.channels[i].lastAccessTime = self.myOverlay.channels[i].lastAccessTime
@@ -137,7 +138,6 @@ class ChannelListThread(threading.Thread):
 
                     if self.myOverlay.isMaster:
                         ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(self.myOverlay.channels[i].totalTimePlayed))
-                        ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_changed', 'False')
 
                     if self.myOverlay.channels[i].getTotalDuration() > curtotal and self.myOverlay.isMaster:
                         modified = True

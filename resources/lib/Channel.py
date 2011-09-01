@@ -36,6 +36,7 @@ class Channel:
         self.isRandom = False
         self.mode = 0
         self.ruleList = []
+        self.channelNumber = 0
 
 
     def log(self, msg):
@@ -47,7 +48,9 @@ class Channel:
 
 
     def loadRules(self, channel):
+        del self.ruleList[:]
         listrules = RulesList()
+        self.channelNumber = channel
 
         try:
             rulecount = int(ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_rulecount'))
@@ -57,12 +60,12 @@ class Channel:
 
                 for rule in listrules.ruleList:
                     if rule.getId() == ruleid:
+                        self.log("adding rule")
                         self.ruleList.append(rule.copy())
 
                         for x in range(rule.getOptionCount()):
                             self.ruleList[-1].optionValues[x] = ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_rule_' + str(i + 1) + '_opt_' + str(x + 1))
 
-                        foundrule = True
                         break
         except:
             self.ruleList = []

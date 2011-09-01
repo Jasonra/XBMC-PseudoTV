@@ -66,18 +66,18 @@ def migrate():
                 if chantype == 9999:
                     addPreset(i + 1, currentpreset)
                     currentpreset += 1
-                    
+
         if compareVersions(curver, "2.0.0") < 0:
             pass
 
     ADDON_SETTINGS.setSetting("Version", VERSION)
 
-    
+
 def addPreset(channel, presetnum):
     networks = ['ABC', 'AMC', 'Bravo', 'CBS', 'Comedy Central', 'Food Network', 'FOX', 'FX', 'HBO', 'NBC', 'SciFi', 'The WB']
     genres = ['Animation', 'Comedy', 'Documentary', 'Drama', 'Fantasy']
     studio = ['Brandywine Productions Ltd.', 'Fox 2000 Pictures', 'GK Films', 'Legendary Pictures', 'Universal Pictures']
-    
+
     if presetnum < len(networks):
         ADDON_SETTINGS.setSetting("Channel_" + str(channel) + "_type", "1")
         ADDON_SETTINGS.setSetting("Channel_" + str(channel) + "_1", networks[presetnum])

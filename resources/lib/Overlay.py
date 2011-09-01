@@ -330,6 +330,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.currentChannel = channel
         # now load the proper channel playlist
         xbmc.PlayList(xbmc.PLAYLIST_MUSIC).clear()
+
         if xbmc.PlayList(xbmc.PLAYLIST_MUSIC).load(self.channels[channel - 1].fileName) == False:
             self.log("Error loading playlist")
             self.InvalidateChannel(channel)
@@ -341,8 +342,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             xbmc.PlayList(xbmc.PLAYLIST_MUSIC).unshuffle()
 
         xbmc.executebuiltin("PlayerControl(repeatall)")
-
-        timedif += (time.time() - self.channels[self.currentChannel - 1].lastAccessTime)
+        curtime = time.time()
+        timedif = (curtime - self.channels[self.currentChannel - 1].lastAccessTime)
 
         # adjust the show and time offsets to properly position inside the playlist
         while self.channels[self.currentChannel - 1].showTimeOffset + timedif > self.channels[self.currentChannel - 1].getCurrentDuration():
@@ -353,7 +354,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         # set the show offset
         self.Player.playselected(self.channels[self.currentChannel - 1].playlistPosition)
         # set the time offset
-        self.channels[self.currentChannel - 1].setAccessTime(time.time())
+        self.channels[self.currentChannel - 1].setAccessTime(curtime)
 
         if self.channels[self.currentChannel - 1].isPaused:
             self.channels[self.currentChannel - 1].setPaused(False)
@@ -369,12 +370,18 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             except:
                 self.log('Exception during seek on paused channel', xbmc.LOGERROR)
         else:
-            seektime = self.channels[self.currentChannel - 1].showTimeOffset + timedif
+            seektime = self.channels[self.currentChannel - 1].showTimeOffset + timedif + int((time.time() - curtime))
 
             try:
                 self.Player.seekTime(seektime)
             except:
-                self.log('Exception during seek', xbmc.LOGERROR)
+                self.log("Unable to set proper seek time, trying different value")
+
+                try:
+                    seektime = self.channels[self.currentChannel - 1].showTimeOffset + timedif
+                    self.Player.seekTime(seektime)
+                except:
+                    self.log('Exception during seek', xbmc.LOGERROR)
 
         self.showChannelLabel(self.currentChannel)
         self.lastActionTime = time.time()
@@ -715,6 +722,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     def end(self):
         self.log('end')
         self.background.setVisible(True)
+        curtime = time.time()
         xbmc.executebuiltin("PlayerControl(repeatoff)")
         self.isExiting = True
         updateDialog = xbmcgui.DialogProgress()
@@ -779,7 +787,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
                 if self.channels[i].isValid:
                     if self.channels[i].mode & MODE_RESUME == 0:
-                        ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(time.time() - self.timeStarted + self.channels[i].totalTimePlayed)))
+                        ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(curtime - self.timeStarted + self.channels[i].totalTimePlayed)))
                     else:
                         tottime = 0
 
@@ -789,7 +797,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                         tottime += self.channels[i].showTimeOffset
 
                         if i == self.currentChannel - 1:
-                            tottime += (time.time() - self.channels[i].lastAccessTime)
+                            tottime += (curtime - self.channels[i].lastAccessTime)
 
                         ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(tottime)))
 

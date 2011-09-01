@@ -98,7 +98,7 @@ class ChannelList:
                 self.updateDialog.close()
                 return None
 
-            self.setupChannel(i + 1, False, makenewlists)
+            self.setupChannel(i + 1, False, makenewlists, False)
 
             if self.channels[i].isValid:
                 foundvalid = True
@@ -109,7 +109,7 @@ class ChannelList:
         if foundvalid == False and makenewlists == False:
             for i in range(self.maxChannels):
                 self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel " + str(i + 1), "waiting for file lock")
-                self.setupChannel(i + 1, False, True)
+                self.setupChannel(i + 1, False, True, False)
 
                 if self.channels[i].isValid:
                     foundvalid = True
@@ -238,7 +238,7 @@ class ChannelList:
     def setupChannel(self, channel, background = False, makenewlist = False, append = False):
         self.log('setupChannel ' + str(channel))
         returnval = False
-        createlist = True
+        createlist = False
         chtype = 9999
         chsetting1 = ''
         chsetting2 = ''
@@ -269,9 +269,11 @@ class ChannelList:
 
         # If possible, use an existing playlist
         # Don't do this if we're appending an existing channel
-        if FileAccess.exists(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u') and append == False:
+        # Don't load if we need to reset anyway
+        if FileAccess.exists(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u') and append == False and needsreset == False:
             try:
                 self.channels[channel - 1].totalTimePlayed = int(ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_time', True))
+                createlist = True
 
                 if self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u') == True:
                     self.channels[channel - 1].isValid = True
@@ -297,38 +299,44 @@ class ChannelList:
                         if timedif < 0:
                             createlist = self.forceReset
 
-                        if createlist:
-                            ADDON_SETTINGS.setSetting('LastResetTime', str(int(time.time())))
-
                     if self.channelResetSetting == 4:
                         createlist = self.forceReset
             except:
                 pass
 
         if createlist or needsreset:
-            if append == False:
+            self.channels[channel - 1].isValid = False
+
+            if makenewlist:
                 try:
                     os.remove(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
                 except:
                     pass
 
-            self.channels[channel - 1].isValid = False
+                append = False
+
+                if createlist:
+                    ADDON_SETTINGS.setSetting('LastResetTime', str(int(time.time())))
 
         if ((createlist or needsreset) and makenewlist) or append:
             if background == False:
                 self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Updating channel " + str(channel), "adding videos")
 
             if self.makeChannelList(channel, chtype, chsetting1, chsetting2, append) == True:
-                # Don't reset variables on an appending channel
                 if self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u') == True:
                     returnval = True
                     self.channels[channel - 1].fileName = CHANNELS_LOC + 'channel_' + str(channel) + '.m3u'
                     self.channels[channel - 1].isValid = True
 
+                    # Don't reset variables on an appending channel
                     if append == False:
                         self.channels[channel - 1].totalTimePlayed = 0
                         ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_time', '0')
-                        ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_changed', 'False')
+
+                        if needsreset:
+                            ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_changed', 'False')
+
+        self.runActions(RULES_ACTION_BEFORE_CLEAR, channel, self.channels[channel - 1])
 
         # Don't clear history when appending channels
         if background == False and append == False and self.myOverlay.isMaster:
@@ -373,7 +381,7 @@ class ChannelList:
 
         self.channels[channel - 1].name = self.getChannelName(chtype, chsetting1)
 
-        if (createlist or needsreset) and makenewlist and returnval and append == False:
+        if ((createlist or needsreset) and makenewlist) and returnval:
             self.runActions(RULES_ACTION_FINAL_MADE, channel, self.channels[channel - 1])
         else:
             self.runActions(RULES_ACTION_FINAL_LOADED, channel, self.channels[channel - 1])
@@ -1061,11 +1069,9 @@ class ChannelList:
 
     # Run rules for a channel
     def runActions(self, action, channel, parameter):
+        self.log("runActions " + str(action) + " on channel " + str(channel))
         if channel < 1:
             return
-
-#        if self.runningAction > 0:
-#            return parameter
 
         self.runningActionChannel = channel
         index = 0
@@ -1073,6 +1079,7 @@ class ChannelList:
         for rule in self.channels[channel - 1].ruleList:
             if rule.actions & action > 0:
                 self.runningActionId = index
+                self.log("running")
                 parameter = rule.runAction(action, self, parameter)
 
             index += 1

@@ -175,7 +175,7 @@ class Playlist:
                 tmpitem.filename = lines[realindex][:-1]
                 self.itemlist.append(tmpitem)
                 self.totalDuration += tmpitem.duration
-                
+
             realindex += 1
 
         self.processingSemaphore.release()
@@ -184,3 +184,26 @@ class Playlist:
             return False
 
         return True
+
+
+    def save(self, filename):
+        self.log("save " + filename)
+        try:
+            fle = FileAccess.open(filename, 'w')
+        except:
+            self.log("save Unable to open the smart playlist", xbmc.LOGERROR)
+            return
+
+        flewrite = "#EXTM3U\n"
+
+        for i in range(self.size()):
+            tmpstr = str(self.getduration(i)) + ','
+            tmpstr += self.getTitle(i) + "//" + self.getepisodetitle(i) + "//" + self.getdescription(i)
+            tmpstr = tmpstr[:600]
+            tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
+            tmpstr = tmpstr + '\n' + self.getfilename(i)
+            flewrite += "#EXTINF:" + tmpstr + "\n"
+
+        fle.write(flewrite)
+        fle.close()
+

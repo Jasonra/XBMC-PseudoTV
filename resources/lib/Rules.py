@@ -426,7 +426,7 @@ class NoShowRule(BaseRule):
 
 class ScheduleChannelRule(BaseRule):
     def __init__(self):
-        self.name = "Schedule a Show"
+        self.name = "Best-Effort Channel Scheduling"
         self.optionLabels = ['Channel Number', 'Days of the Week (UMTWHFS)', 'Time (HH:MM)', 'Episode Count', 'Starting Episode', 'Starting Date']
         self.optionValues = ['0', '', '00:00', '1', '1', '']
         self.myId = 3

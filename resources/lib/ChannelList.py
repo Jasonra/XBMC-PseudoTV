@@ -208,7 +208,11 @@ class ChannelList:
 
         # If there have been problems using the server, just skip the attempt and use executejsonrpc
         if self.httpJSON == True:
-            payload = command.encode('utf-8')
+            try:
+                payload = command.encode('utf-8')
+            except:
+                return data
+
             headers = {'Content-Type': 'application/json-rpc; charset=utf-8'}
 
             if self.webUsername != '':
@@ -750,8 +754,7 @@ class ChannelList:
 
             if match:
                 if(match.group(1).endswith("/") or match.group(1).endswith("\\")):
-                    if(recursive == "TRUE"):
-                        fileList.extend(self.createDirectoryPlaylist(match.group(1)))
+                    fileList.extend(self.createDirectoryPlaylist(match.group(1).replace("\\\\", "\\")))
                 else:
                     duration = self.videoParser.getVideoLength(match.group(1).replace("\\\\", "\\"))
 

@@ -239,6 +239,10 @@ class FileLock:
         curval = -1
         attempts = 0
         fle = 0
+        
+        if Globals.CHANNEL_SHARING == False:
+            return True
+
         filename = filename.lower()
         locked = True
 
@@ -424,6 +428,9 @@ class FileLock:
         filename = filename.lower()
         found = False
         realindex = 0
+        
+        if Globals.CHANNEL_SHARING == False:
+            return True
 
         # First make sure we actually own the lock
         # Remove it from the list if we do
@@ -468,6 +475,10 @@ class FileLock:
     def isFileLocked(self, filename, block = False):
         self.log("isFileLocked " + filename)
         filename = filename.lower()
+        
+        if Globals.CHANNEL_SHARING == False:
+            return False
+
         self.grabSemaphore.acquire()
 
         if self.grabLockFile() == False:

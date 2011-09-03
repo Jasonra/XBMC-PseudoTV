@@ -52,6 +52,7 @@ class ChannelList:
         self.threadPaused = False
         self.runningActionChannel = 0
         self.runningActionId = 0
+        self.background = True
         random.seed()
 
 
@@ -81,15 +82,18 @@ class ChannelList:
         self.readConfig()
         self.updateDialog.create("PseudoTV", "Updating channel list")
         self.updateDialog.update(0, "Updating channel list")
+        self.updateDialogProgress = 0
         foundvalid = False
         makenewlists = False
+        self.background = False
 
         if self.backgroundUpdating > 0 and self.myOverlay.isMaster == True:
             makenewlists = True
 
         # Go through all channels, create their arrays, and setup the new playlist
         for i in range(self.maxChannels):
-            self.updateDialog.update(i * 100 // self.maxChannels, "Loading channel " + str(i + 1), "waiting for file lock")
+            self.updateDialogProgress = i * 100 // self.maxChannels
+            self.updateDialog.update(self.updateDialogProgress, "Loading channel " + str(i + 1), "waiting for file lock")
             self.channels.append(Channel())
 
             # If the user pressed cancel, stop everything and exit
@@ -108,7 +112,8 @@ class ChannelList:
 
         if foundvalid == False and makenewlists == False:
             for i in range(self.maxChannels):
-                self.updateDialog.update(i * 100 // self.maxChannels, "Updating channel " + str(i + 1), "waiting for file lock")
+                self.updateDialogProgress = i * 100 // self.maxChannels
+                self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(i + 1), "waiting for file lock", '')
                 self.setupChannel(i + 1, False, True, False)
 
                 if self.channels[i].isValid:
@@ -247,6 +252,8 @@ class ChannelList:
         chsetting1 = ''
         chsetting2 = ''
         needsreset = False
+        self.background = background
+        self.settingChannel = channel
 
         try:
             chtype = int(ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_type'))
@@ -323,8 +330,9 @@ class ChannelList:
                     ADDON_SETTINGS.setSetting('LastResetTime', str(int(time.time())))
 
         if ((createlist or needsreset) and makenewlist) or append:
-            if background == False:
-                self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Updating channel " + str(channel), "adding videos")
+            if self.background == False:
+                self.updateDialogProgress = (channel - 1) * 100 // self.maxChannels
+                self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(channel), "adding videos", '')
 
             if self.makeChannelList(channel, chtype, chsetting1, chsetting2, append) == True:
                 if self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u') == True:
@@ -343,8 +351,9 @@ class ChannelList:
         self.runActions(RULES_ACTION_BEFORE_CLEAR, channel, self.channels[channel - 1])
 
         # Don't clear history when appending channels
-        if background == False and append == False and self.myOverlay.isMaster:
-            self.updateDialog.update((channel - 1) * 100 // self.maxChannels, "Loading channel " + str(channel), "clearing history")
+        if self.background == False and append == False and self.myOverlay.isMaster:
+            self.updateDialogProgress = (channel - 1) * 100 // self.maxChannels
+            self.updateDialog.update(self.updateDialogProgress, "Loading channel " + str(channel), "clearing history", '')
             self.clearPlaylistHistory(channel)
 
         GlobalFileLock.unlockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
@@ -734,7 +743,12 @@ class ChannelList:
     def createDirectoryPlaylist(self, setting1):
         self.log("createDirectoryPlaylist " + setting1)
         fileList = []
+        filecount = 0
         json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "files"}, "id": 1}' % ( self.escapeDirJSON(setting1),)
+
+        if self.background == False:
+            self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "getting file list")
+
         json_folder_detail = self.sendJSON(json_query)
         self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
@@ -759,6 +773,14 @@ class ChannelList:
                     duration = self.videoParser.getVideoLength(match.group(1).replace("\\\\", "\\"))
 
                     if duration > 0:
+                        filecount += 1
+
+                        if self.background == False:
+                            if filecount == 1:
+                                self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "added " + str(filecount) + " entry")
+                            else:
+                                self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "added " + str(filecount) + " entries")
+
                         afile = os.path.split(match.group(1).replace("\\\\", "\\"))[1]
                         tmpstr = str(duration) + ','
                         tmpstr += afile + "//" + thedir + "//"
@@ -797,6 +819,10 @@ class ChannelList:
     def fillTVInfo(self):
         self.log("fillTVInfo")
         json_query = '{"jsonrpc": "2.0", "method": "VideoLibrary.GetTVShows", "params": {"fields":["studio", "genre"]}, "id": 1}'
+
+        if self.background == False:
+            self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "reading TV data")
+
         json_folder_detail = self.sendJSON(json_query)
 #        self.log(json_folder_detail)
         detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
@@ -869,6 +895,10 @@ class ChannelList:
         self.log("fillMovieInfo")
         studioList = []
         json_query = '{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovies", "params": {"fields":["studio", "genre"]}, "id": 1}'
+
+        if self.background == False:
+            self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "reading movie data")
+
         json_folder_detail = self.sendJSON(json_query)
         #self.log(json_folder_detail)
         detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
@@ -963,7 +993,12 @@ class ChannelList:
     def buildFileList(self, dir_name, channel):
         self.log("buildFileList")
         fileList = []
+        filecount = 0
         json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "video", "fields":["duration","runtime","tagline","showtitle","album","artist","plot"]}, "id": 1}' % (self.escapeDirJSON(dir_name))
+
+        if self.background == False:
+            self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "querying database")
+
         json_folder_detail = self.sendJSON(json_query)
         self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
@@ -1003,6 +1038,14 @@ class ChannelList:
 
                     try:
                         if dur > 0:
+                            filecount += 1
+
+                            if self.background == False:
+                                if filecount == 1:
+                                    self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "added " + str(filecount) + " entry")
+                                else:
+                                    self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "added " + str(filecount) + " entries")
+
                             title = re.search('"label" *: *"(.*?)"', f)
                             tmpstr = str(dur) + ','
                             showtitle = re.search('"showtitle" *: *"(.*?)"', f)
@@ -1082,7 +1125,10 @@ class ChannelList:
         for rule in self.channels[channel - 1].ruleList:
             if rule.actions & action > 0:
                 self.runningActionId = index
-                self.log("running")
+
+                if self.background == False:
+                    self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "processing rule " + str(index + 1), '')
+
                 parameter = rule.runAction(action, self, parameter)
 
             index += 1

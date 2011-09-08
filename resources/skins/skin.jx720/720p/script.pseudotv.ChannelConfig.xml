@@ -677,7 +677,7 @@
 				<texturenofocus border="10">list-nofocus.png</texturenofocus>
 				<onup>190</onup>
 				<ondown>112</ondown>
-				<label>Serial Mode:</label>
+				<label>Show in Order:</label>
 			</control>          
         </control>
     </controls>

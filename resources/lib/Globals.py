@@ -67,8 +67,18 @@ def migrate():
                     addPreset(i + 1, currentpreset)
                     currentpreset += 1
 
+        # Migrate serial mode to rules
         if compareVersions(curver, "2.0.0") < 0:
-            pass
+            for i in range(999):
+                try:
+                    if ADDON_SETTINGS.getSetting("Channel_" + str(i + 1) + "_type") == '6':
+                        if ADDON_SETTINGS.getSetting("Channel_" + str(i + 1) + "_2") == "6":
+                            ADDON_SETTINGS.setSetting("Channel_" + str(i + 1) + "_rulecount", "2")
+                            ADDON_SETTINGS.setSetting("Channel_" + str(i + 1) + "_rule_1_id", "8")
+                            ADDON_SETTINGS.setSetting("Channel_" + str(i + 1) + "_rule_2_id", "9")
+                            ADDON_SETTINGS.setSetting("Channel_" + str(i + 1) + "_2", "4")
+                except:
+                    pass
 
     ADDON_SETTINGS.setSetting("Version", VERSION)
 

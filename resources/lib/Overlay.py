@@ -181,9 +181,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             self.currentChannel = self.fixChannel(1)
 
+        self.timeStarted = time.time()
         self.resetChannelTimes()
         self.setChannel(self.currentChannel)
-        self.timeStarted = time.time()
         self.background.setVisible(False)
         self.startSleepTimer()
         self.startNotificationTimer()

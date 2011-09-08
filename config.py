@@ -113,11 +113,11 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             ADDON_SETTINGS.setSetting(setting1, self.getControl(182).getLabel())
         elif chantype == 6:
             ADDON_SETTINGS.setSetting(setting1, self.getControl(192).getLabel())
-        elif chantype == 7:
-            ADDON_SETTINGS.setSetting(setting1, self.getControl(200).getLabel())
 
             if self.getControl(194).isSelected():
-                ADDON_SETTINGS.setSetting(setting2, str(MODE_SERIAL))
+                ADDON_SETTINGS.setSetting(setting2, str(MODE_ORDERAIRDATE))
+        elif chantype == 7:
+            ADDON_SETTINGS.setSetting(setting1, self.getControl(200).getLabel())
         elif chantype == 9999:
             ADDON_SETTINGS.setSetting(setting1, '')
             ADDON_SETTINGS.setSetting(setting2, '')
@@ -378,7 +378,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             self.getControl(182).setLabel(self.findItemInList(self.mixedGenreList, chansetting1))
         elif chantype == 6:
             self.getControl(192).setLabel(self.findItemInList(self.showList, chansetting1))
-            self.getControl(194).setSelected(chansetting2 == str(MODE_SERIAL))
+            self.getControl(194).setSelected(chansetting2 == str(MODE_ORDERAIRDATE))
         elif chantype == 7:
             self.getControl(200).setLabel(chansetting1)
 

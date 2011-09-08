@@ -328,6 +328,20 @@ class ChannelList:
 
                 if createlist:
                     ADDON_SETTINGS.setSetting('LastResetTime', str(int(time.time())))
+                    
+
+        if append == False:
+            if chtype == 6:
+                self.channels[channel - 1].mode = MODE_ORDERAIRDATE
+
+            # if there is no start mode in the channel mode flags, set it to the default
+            if self.channels[channel - 1].mode & MODE_STARTMODES == 0:
+                if self.startMode == 0:
+                    self.channels[channel - 1].mode = MODE_RESUME
+                elif self.startMode == 1:
+                    self.channels[channel - 1].mode = MODE_REALTIME
+                elif self.startMode == 2:
+                    self.channels[channel - 1].mode = MODE_RANDOM
 
         if ((createlist or needsreset) and makenewlist) or append:
             if self.background == False:
@@ -359,20 +373,7 @@ class ChannelList:
         GlobalFileLock.unlockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
 
         if append == False:
-            if chtype == 6:
-                if chsetting2 == str(MODE_SERIAL):
-                    self.channels[channel - 1].mode = MODE_SERIAL
-
             self.runActions(RULES_ACTION_BEFORE_TIME, channel, self.channels[channel - 1])
-
-            # if there is no start mode in the channel mode flags, set it to the default
-            if self.channels[channel - 1].mode & MODE_STARTMODES == 0:
-                if self.startMode == 0:
-                    self.channels[channel - 1].mode = MODE_RESUME
-                elif self.startMode == 1:
-                    self.channels[channel - 1].mode = MODE_REALTIME
-                elif self.startMode == 2:
-                    self.channels[channel - 1].mode = MODE_RANDOM
 
             if self.channels[channel - 1].mode & MODE_ALWAYSPAUSE > 0:
                 self.channels[channel - 1].isPaused = True
@@ -662,15 +663,6 @@ class ChannelList:
 
     def createShowPlaylist(self, show, setting2):
         order = 'random'
-
-        try:
-            setting = int(setting2)
-
-            if setting & MODE_ORDERAIRDATE > 0:
-                order = 'airdate'
-        except:
-            pass
-
         flename = xbmc.makeLegalFilename(GEN_CHAN_LOC + 'Show_' + show + '_' + order + '.xsp')
 
         try:
@@ -993,8 +985,9 @@ class ChannelList:
     def buildFileList(self, dir_name, channel):
         self.log("buildFileList")
         fileList = []
+        seasoneplist = []
         filecount = 0
-        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "video", "fields":["duration","runtime","tagline","showtitle","album","artist","plot"]}, "id": 1}' % (self.escapeDirJSON(dir_name))
+        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "video", "fields":["season","episode","lastplayed","streamdetails","duration","runtime","tagline","showtitle","album","artist","plot"]}, "id": 1}' % (self.escapeDirJSON(dir_name))
 
         if self.background == False:
             self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "querying database")
@@ -1009,6 +1002,7 @@ class ChannelList:
                 break
 
             match = re.search('"file" *: *"(.*?)",', f)
+            istvshow = False
 
             if match:
                 if(match.group(1).endswith("/") or match.group(1).endswith("\\")):
@@ -1059,6 +1053,7 @@ class ChannelList:
                             # This is a TV show
                             if showtitle != None and len(showtitle.group(1)) > 0:
                                 tmpstr += showtitle.group(1) + "//" + title.group(1) + "//" + theplot
+                                istvshow = True
                             else:
                                 tmpstr += title.group(1) + "//"
                                 album = re.search('"album" *: *"(.*?)"', f)
@@ -1078,12 +1073,34 @@ class ChannelList:
                             tmpstr = tmpstr[:600]
                             tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
                             tmpstr = tmpstr + '\n' + match.group(1).replace("\\\\", "\\")
-                            fileList.append(tmpstr)
+
+                            if self.channels[channel - 1].mode & MODE_ORDERAIRDATE > 0:
+                                if istvshow:
+                                    season = re.search('"season" *: *(.*?),', f)
+                                    episode = re.search('"episode" *: *(.*?),', f)
+
+                                    try:
+                                        seasonval = int(season.group(1))
+                                        epval = int(episode.group(1))
+                                        seasoneplist.append([season, episode, tmpstr])
+                                    except:
+                                        seasoneplist.append([-1, -1, tmpstr])
+                                else:
+                                    seasonplist.append([-1, -1, tmpstr])
+                            else:
+                                fileList.append(tmpstr)
                     except:
                         pass
             else:
                 continue
 
+        if self.channels[channel - 1].mode & MODE_ORDERAIRDATE > 0:
+            seasoneplist.sort(key=lambda seep: seep[1])
+            seasoneplist.sort(key=lambda seep: seep[0])
+
+            for seepitem in seasoneplist:
+                fileList.append(seepitem[2])
+                
         self.log("buildFileList return")
         return fileList
 

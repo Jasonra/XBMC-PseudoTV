@@ -22,7 +22,7 @@
             <description>Info Background</description>
             <aspectratio>scale</aspectratio>
             <include>screentype</include>
-            <texture background="true">special://skin/backgrounds/background.png</texture>
+            <texture background="true">backgrounds/background.png</texture>
             <include>transition_BG</include>
         </control>
         
@@ -36,7 +36,7 @@
         <control type="label" id="200">
             <posx>25r</posx>
             <label>[B]$INFO[System.Time][/B]</label>
-            <include>notificationTop</include>
+            <include>toast_Top</include>
             <animation type="WindowOpen">
                 <effect type="rotatex" time="600" center="0,0" start="380" end="0" tween="cubic" easing="out" />
                 <effect type="fade" time="400" center="640,360" start="0" end="100" />
@@ -49,7 +49,7 @@
         <control type="label" id="200">
             <posx>25r</posx>
             <label>$INFO[System.Date]</label>
-            <include>notificationBottom</include>
+            <include>toast_Bottom</include>
             <animation type="WindowOpen">
                 <effect type="rotatex" time="600" center="0,0" start="380" end="0" tween="cubic" easing="out" />
                 <effect type="fade" time="400" center="640,360" start="0" end="100" />
@@ -74,15 +74,15 @@
                 <description>Show Name Label</description>
                 <width>860</width>
                 <label>Show Name</label>
-                <textcolor>title</textcolor>
-                <include>Heading1</include>
+                <font>osd1</font>
+                <textcolor>Color1</textcolor>
             </control>
             <control type="label" id="501">
                 <description>Show Title Label</description>
                 <width>860</width>
                 <label>Show Title</label>
                 <align>left</align>
-            <include>Heading3</include>
+				<include>info_Sub</include>
             </control>
             <control type="label" id="502">
                 <width>860</width>

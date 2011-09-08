@@ -30,7 +30,7 @@ from Playlist import PlaylistItem
 
 class RulesList:
     def __init__(self):
-        self.ruleList = [BaseRule(), RenameRule(), NoShowRule(), ScheduleChannelRule(), OnlyWatchedRule(), DontAddChannel(), InterleaveChannel(), ForceRealTime()]
+        self.ruleList = [BaseRule(), RenameRule(), NoShowRule(), ScheduleChannelRule(), OnlyWatchedRule(), DontAddChannel(), InterleaveChannel(), ForceRealTime(), AlwaysPause(), ForceResume()]
 
 
     def getRuleCount(self):
@@ -258,7 +258,7 @@ class BaseRule:
             keyb.doModal()
 
             if keyb.isConfirmed():
-                self.optionValues[optionindex] = keyb.getText().toUpper()
+                self.optionValues[optionindex] = keyb.getText().upper()
 
         button = act.getButtonCode()
 
@@ -555,7 +555,7 @@ class ScheduleChannelRule(BaseRule):
 
     # Fill in nextScheduledTime
     def determineNextTime(self):
-        self.optionValues[5] = self.optionValues[5].replace(' ', '')
+        self.optionValues[5] = self.optionValues[5].replace(' ', '0')
         self.log("determineNextTime " + self.optionValues[5] + " " + self.optionValues[2])
         starttime = 0
         daysofweek = 0
@@ -911,6 +911,50 @@ class ForceRealTime(BaseRule):
     def runAction(self, actionid, channelList, channeldata):
         if actionid == RULES_ACTION_BEFORE_TIME:
             channeldata.mode &= ~MODE_STARTMODES
+            channeldata.mode |= MODE_REALTIME
+
+        return channeldata
+
+
+
+class AlwaysPause(BaseRule):
+    def __init__(self):
+        self.name = "Pause When Not Watching"
+        self.optionLabels = []
+        self.optionValues = []
+        self.myId = 8
+        self.actions = RULES_ACTION_BEFORE_TIME
+
+
+    def copy(self):
+        return AlwaysPause()
+
+
+    def runAction(self, actionid, channelList, channeldata):
+        if actionid == RULES_ACTION_BEFORE_TIME:
+            channeldata.mode |= MODE_ALWAYSPAUSE
+
+        return channeldata
+
+
+class ForceResume(BaseRule):
+    def __init__(self):
+        self.name = "Force Resume Mode"
+        self.optionLabels = []
+        self.optionValues = []
+        self.myId = 9
+        self.actions = RULES_ACTION_BEFORE_TIME
+
+
+    def copy(self):
+        return ForceResume()
+
+
+    def runAction(self, actionid, channelList, channeldata):
+        if actionid == RULES_ACTION_BEFORE_TIME:
+            channeldata.mode &= ~MODE_STARTMODES
             channeldata.mode |= MODE_RESUME
 
         return channeldata
+
+

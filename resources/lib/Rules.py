@@ -101,7 +101,7 @@ class BaseRule:
 
 
     def runAction(self, actionid, channelList, param):
-        pass
+        return param
 
 
     def copy(self):

@@ -345,11 +345,12 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         curtime = time.time()
         timedif = (curtime - self.channels[self.currentChannel - 1].lastAccessTime)
 
-        # adjust the show and time offsets to properly position inside the playlist
-        while self.channels[self.currentChannel - 1].showTimeOffset + timedif > self.channels[self.currentChannel - 1].getCurrentDuration():
-            timedif -= self.channels[self.currentChannel - 1].getCurrentDuration() - self.channels[self.currentChannel - 1].showTimeOffset
-            self.channels[self.currentChannel - 1].addShowPosition(1)
-            self.channels[self.currentChannel - 1].setShowTime(0)
+        if self.channels[self.currentChannel - 1].isPaused == False:
+            # adjust the show and time offsets to properly position inside the playlist
+            while self.channels[self.currentChannel - 1].showTimeOffset + timedif > self.channels[self.currentChannel - 1].getCurrentDuration():
+                timedif -= self.channels[self.currentChannel - 1].getCurrentDuration() - self.channels[self.currentChannel - 1].showTimeOffset
+                self.channels[self.currentChannel - 1].addShowPosition(1)
+                self.channels[self.currentChannel - 1].setShowTime(0)
 
         # set the show offset
         self.Player.playselected(self.channels[self.currentChannel - 1].playlistPosition)

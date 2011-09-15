@@ -783,6 +783,7 @@ class ChannelList:
                                 self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "added " + str(filecount) + " entries")
 
                         afile = os.path.split(match.group(1).replace("\\\\", "\\"))[1]
+                        afile, ext = os.path.splitext(afile)
                         tmpstr = str(duration) + ','
                         tmpstr += afile + "//" + thedir + "//"
                         tmpstr = tmpstr[:600]

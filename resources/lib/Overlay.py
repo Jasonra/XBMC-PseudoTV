@@ -230,6 +230,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.channelLogos = xbmc.translatePath(REAL_SETTINGS.getSetting('ChannelLogoFolder'))
         self.backgroundUpdating = int(REAL_SETTINGS.getSetting("ThreadMode"))
         self.log("Background updating - " + str(self.backgroundUpdating))
+        self.showNextItem = REAL_SETTINGS.getSetting("EnableComingUp") == "true"
+        self.log("Show Next Item - " + str(self.showNextItem))
+        self.hideShortItems = REAL_SETTINGS.getSetting("HideClips") == "true"
+        self.log("Hide Short Items - " + str(self.hideShortItems))
 
         if FileAccess.exists(self.channelLogos) == False:
             self.channelLogos = IMAGES_LOC
@@ -446,7 +450,22 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         elif self.infoOffset == 0:
             self.getControl(502).setLabel('NOW WATCHING:')
 
-        position = xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition() + self.infoOffset
+        if self.hideShortItems and self.infoOffset != 0:
+            position = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition()
+            curoffset = 0
+            modifier = 1
+
+            if self.infoOffset < 0:
+                modifier = -1
+
+            while curoffset != abs(self.infoOffset):
+                position = self.channels[self.currentChannel - 1].fixPlaylistIndex(position + modifier)
+
+                if self.channels[self.currentChannel - 1].getItemDuration(position) >= 60:
+                    curoffset += 1
+        else:
+            position = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition() + self.infoOffset
+
         self.getControl(503).setLabel(self.channels[self.currentChannel - 1].getItemTitle(position))
         self.getControl(504).setLabel(self.channels[self.currentChannel - 1].getItemEpisodeTitle(position))
         self.getControl(505).setLabel(self.channels[self.currentChannel - 1].getItemDescription(position))
@@ -522,6 +541,12 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
 
     def showInfo(self, timer):
+        if self.hideShortItems:
+            position = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition() + self.infoOffset
+
+            if self.channels[self.currentChannel - 1].getItemDuration(xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition()) < 60:
+                return
+
         self.getControl(102).setVisible(True)
         self.showingInfo = True
         self.setShowInfo()
@@ -667,7 +692,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.sleepTimer.cancel()
             self.sleepTimer = threading.Timer(self.sleepTimeValue, self.sleepAction)
 
-        self.sleepTimer.start()
+        if self.Player.stopped == False:
+            self.sleepTimer.start()
 
 
     def startNotificationTimer(self, timertime = NOTIFICATION_CHECK_TIME):
@@ -678,7 +704,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.notificationTimer.cancel()
             self.notificationTimer = threading.Timer(timertime, self.notificationAction)
 
-        self.notificationTimer.start()
+        if self.Player.stopped == False:
+            self.notificationTimer.start()
 
 
     # This is called when the sleep timer expires
@@ -696,6 +723,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log("notificationAction")
         docheck = False
 
+        if self.showNextItem == False:
+            return
+
         if self.Player.isPlaying():
             if self.notificationLastChannel != self.currentChannel:
                 docheck = True
@@ -710,10 +740,26 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 self.notificationLastChannel = self.currentChannel
                 self.notificationLastShow = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition()
                 self.notificationShowedNotif = False
+
+                if self.hideShortItems:
+                    # Don't show any notification if the current show is < 60 seconds
+                    if self.channels[self.currentChannel - 1].getItemDuration(self.notificationLastShow) < 60:
+                        self.notificationShowedNotif = True
+
                 timedif = self.channels[self.currentChannel - 1].getItemDuration(self.notificationLastShow) - self.Player.getTime()
 
-                if timedif < NOTIFICATION_TIME_BEFORE_END and timedif > NOTIFICATION_DISPLAY_TIME:
-                    xbmc.executebuiltin("Notification(Coming Up Next, " + self.channels[self.currentChannel - 1].getItemTitle(self.notificationLastShow + 1).replace(',', '') + ", " + str(NOTIFICATION_DISPLAY_TIME * 1000) + ")")
+                if self.notificationShowedNotif == False and timedif < NOTIFICATION_TIME_BEFORE_END and timedif > NOTIFICATION_DISPLAY_TIME:
+                    nextshow = self.channels[self.currentChannel - 1].fixPlaylistIndex(self.notificationLastShow + 1)
+
+                    if self.hideShortItems:
+                        # Find the next show that is >= 60 seconds long
+                        while nextshow != self.notificationLastShow:
+                            if self.channels[self.currentChannel - 1].getItemDuration(nextshow) >= 60:
+                                break
+
+                            nextshow = self.channels[self.currentChannel - 1].fixPlaylistIndex(nextshow + 1)
+
+                    xbmc.executebuiltin("Notification(Coming Up Next, " + self.channels[self.currentChannel - 1].getItemTitle(nextshow).replace(',', '') + ", " + str(NOTIFICATION_DISPLAY_TIME * 1000) + ")")
                     self.notificationShowedNotif = True
 
         self.startNotificationTimer()
@@ -744,7 +790,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
-        updateDialog.update(53, "Exiting", "Stopping Threads")
+        updateDialog.update(53)
 
         try:
             if self.notificationTimer.isAlive():
@@ -752,7 +798,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
-        updateDialog.update(56, "Exiting", "Stopping Threads")
+        updateDialog.update(56)
 
         try:
             if self.infoTimer.isAlive():
@@ -760,7 +806,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
-        updateDialog.update(59, "Exiting", "Stopping Threads")
+        updateDialog.update(59)
 
         try:
             if self.sleepTimeValue > 0:
@@ -769,7 +815,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
-        updateDialog.update(62, "Exiting", "Stopping Threads")
+        updateDialog.update(62)
 
         try:
             if self.masterTimer.isAlive():
@@ -777,7 +823,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
-        updateDialog.update(65, "Exiting", "Stopping Threads")
+        updateDialog.update(65)
 
         if self.channelThread.isAlive():
             self.channelThread.join()

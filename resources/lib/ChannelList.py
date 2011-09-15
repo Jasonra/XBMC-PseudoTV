@@ -663,6 +663,15 @@ class ChannelList:
 
     def createShowPlaylist(self, show, setting2):
         order = 'random'
+        
+        try:
+            setting = int(setting2)
+
+            if setting & MODE_ORDERAIRDATE > 0:
+                order = 'airdate'
+        except:
+            pass
+
         flename = xbmc.makeLegalFilename(GEN_CHAN_LOC + 'Show_' + show + '_' + order + '.xsp')
 
         try:

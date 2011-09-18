@@ -274,6 +274,9 @@ class ChannelList:
             self.channels[channel - 1].isValid = False
             return False
 
+        if makenewlist:
+            createlist = True
+
         self.channels[channel - 1].loadRules(channel)
         self.runActions(RULES_ACTION_START, channel, self.channels[channel - 1])
         GlobalFileLock.lockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', True)

@@ -30,7 +30,7 @@ from Playlist import PlaylistItem
 
 class RulesList:
     def __init__(self):
-        self.ruleList = [BaseRule(), RenameRule(), NoShowRule(), ScheduleChannelRule(), OnlyWatchedRule(), DontAddChannel(), InterleaveChannel(), ForceRealTime(), AlwaysPause(), ForceResume()]
+        self.ruleList = [BaseRule(), RenameRule(), NoShowRule(), ScheduleChannelRule(), OnlyWatchedRule(), DontAddChannel(), InterleaveChannel(), ForceRealTime(), AlwaysPause(), ForceResume(), ForceRandom(), OnlyUnWatchedRule()]
 
 
     def getRuleCount(self):
@@ -791,6 +791,52 @@ class OnlyWatchedRule(BaseRule):
         return OnlyWatchedRule()
 
 
+    def runAction(self, actionid, channelList, filedata):
+        if actionid == RULES_ACTION_JSON:
+            playcount = re.search('"playcount" *: *([0-9]*?),', filedata)
+            pc = 0
+
+            try:
+                pc = int(playcount.group(1))
+            except:
+                pc = 0
+
+            if pc == 0:
+                return ''
+
+            return filedata
+
+
+
+class OnlyUnWatchedRule(BaseRule):
+    def __init__(self):
+        self.name = "Only Played Unwatched Items"
+        self.optionLabels = []
+        self.optionValues = []
+        self.myId = 11
+        self.actions = RULES_ACTION_JSON
+
+
+    def copy(self):
+        return OnlyUnWatchedRule()
+
+
+    def runAction(self, actionid, channelList, filedata):
+        if actionid == RULES_ACTION_JSON:
+            playcount = re.search('"playcount" *: *([0-9]*?),', filedata)
+            pc = 0
+
+            try:
+                pc = int(playcount.group(1))
+            except:
+                pc = 0
+
+            if pc > 0:
+                return ''
+
+            return filedata
+
+
 
 class DontAddChannel(BaseRule):
     def __init__(self):
@@ -957,4 +1003,25 @@ class ForceResume(BaseRule):
 
         return channeldata
 
+
+
+class ForceRandom(BaseRule):
+    def __init__(self):
+        self.name = "Force Random Mode"
+        self.optionLabels = []
+        self.optionValues = []
+        self.myId = 10
+        self.actions = RULES_ACTION_BEFORE_TIME
+
+
+    def copy(self):
+        return ForceRandom()
+
+
+    def runAction(self, actionid, channelList, channeldata):
+        if actionid == RULES_ACTION_BEFORE_TIME:
+            channeldata.mode &= ~MODE_STARTMODES
+            channeldata.mode |= MODE_RANDOM
+
+        return channeldata
 

@@ -30,7 +30,8 @@ from Playlist import PlaylistItem
 
 class RulesList:
     def __init__(self):
-        self.ruleList = [BaseRule(), RenameRule(), NoShowRule(), ScheduleChannelRule(), OnlyWatchedRule(), DontAddChannel(), InterleaveChannel(), ForceRealTime(), AlwaysPause(), ForceResume(), ForceRandom(), OnlyUnWatchedRule()]
+#        self.ruleList = [BaseRule(), RenameRule(), NoShowRule(), ScheduleChannelRule(), OnlyWatchedRule(), DontAddChannel(), InterleaveChannel(), ForceRealTime(), AlwaysPause(), ForceResume(), ForceRandom(), OnlyUnWatchedRule(), PlayShowInOrder()]
+        self.ruleList = [BaseRule(), ScheduleChannelRule(), NoShowRule(), DontAddChannel(), ForceRandom(), ForceRealTime(), ForceResume(), InterleaveChannel(), OnlyUnWatchedRule(), OnlyWatchedRule(), AlwaysPause(), PlayShowInOrder(), RenameRule()]
 
 
     def getRuleCount(self):
@@ -59,6 +60,10 @@ class BaseRule:
 
 
     def getName(self):
+        return self.name
+
+
+    def getTitle(self):
         return self.name
 
 
@@ -355,6 +360,13 @@ class RenameRule(BaseRule):
         return RenameRule()
 
 
+    def getTitle(self):
+        if len(self.optionValues[0]) > 0:
+            return 'Rename Channel to ' + self.optionValues[0]
+
+        return self.name
+
+
     def onAction(self, act, optionindex):
         self.onActionTextBox(act, optionindex)
         self.validate()
@@ -385,6 +397,13 @@ class NoShowRule(BaseRule):
 
     def copy(self):
         return NoShowRule()
+
+
+    def getTitle(self):
+        if len(self.optionValues[0]) > 0:
+            return "Don't Include '" + self.optionValues[0] + "'"
+
+        return self.name
 
 
     def onAction(self, act, optionindex):
@@ -440,6 +459,13 @@ class ScheduleChannelRule(BaseRule):
 
     def copy(self):
         return ScheduleChannelRule()
+
+
+    def getTitle(self):
+        if len(self.optionValues[0]) > 0:
+            return "Schedule Channel " + self.optionValues[0]
+
+        return self.name
 
 
     def onAction(self, act, optionindex):
@@ -804,37 +830,7 @@ class OnlyWatchedRule(BaseRule):
             if pc == 0:
                 return ''
 
-            return filedata
-
-
-
-class OnlyUnWatchedRule(BaseRule):
-    def __init__(self):
-        self.name = "Only Played Unwatched Items"
-        self.optionLabels = []
-        self.optionValues = []
-        self.myId = 11
-        self.actions = RULES_ACTION_JSON
-
-
-    def copy(self):
-        return OnlyUnWatchedRule()
-
-
-    def runAction(self, actionid, channelList, filedata):
-        if actionid == RULES_ACTION_JSON:
-            playcount = re.search('"playcount" *: *([0-9]*?),', filedata)
-            pc = 0
-
-            try:
-                pc = int(playcount.group(1))
-            except:
-                pc = 0
-
-            if pc > 0:
-                return ''
-
-            return filedata
+        return filedata
 
 
 
@@ -870,6 +866,13 @@ class InterleaveChannel(BaseRule):
 
     def copy(self):
         return InterleaveChannel()
+
+
+    def getTitle(self):
+        if len(self.optionValues[0]) > 0:
+            return "Interleave Channel " + self.optionValues[0]
+
+        return self.name
 
 
     def onAction(self, act, optionindex):
@@ -1024,4 +1027,157 @@ class ForceRandom(BaseRule):
             channeldata.mode |= MODE_RANDOM
 
         return channeldata
+
+
+
+class OnlyUnWatchedRule(BaseRule):
+    def __init__(self):
+        self.name = "Only Played Unwatched Items"
+        self.optionLabels = []
+        self.optionValues = []
+        self.myId = 11
+        self.actions = RULES_ACTION_JSON
+
+
+    def copy(self):
+        return OnlyUnWatchedRule()
+
+
+    def runAction(self, actionid, channelList, filedata):
+        if actionid == RULES_ACTION_JSON:
+            playcount = re.search('"playcount" *: *([0-9]*?),', filedata)
+            pc = 0
+
+            try:
+                pc = int(playcount.group(1))
+            except:
+                pc = 0
+
+            if pc > 0:
+                return ''
+
+        return filedata
+
+
+
+class PlayShowInOrder(BaseRule):
+    def __init__(self):
+        self.name = "Play TV Shows In Order"
+        self.optionLabels = []
+        self.optionValues = []
+        self.showInfo = []
+        self.myId = 12
+        self.actions = RULES_ACTION_START | RULES_ACTION_JSON | RULES_ACTION_LIST
+
+
+    def copy(self):
+        return PlayShowInOrder()
+
+
+    def runAction(self, actionid, channelList, param):
+        if actionid == RULES_ACTION_START:
+            del self.showInfo[:]
+
+        if actionid == RULES_ACTION_JSON:
+            self.storeShowInfo(channelList, param)
+
+        if actionid == RULES_ACTION_LIST:
+            return self.sortShows(channelList, param)
+
+        return param
+
+
+    def storeShowInfo(self, channelList, filedata):
+        # Store the filename, season, and episode number
+        match = re.search('"file" *: *"(.*?)",', filedata)
+
+        if match:
+            showtitle = re.search('"showtitle" *: *"(.*?)"', filedata)
+            season = re.search('"season" *: *(.*?),', filedata)
+            episode = re.search('"episode" *: *(.*?),', filedata)
+
+            try:
+                seasonval = int(season.group(1))
+                epval = int(episode.group(1))
+                self.showInfo.append([showtitle.group(1), match.group(1).replace("\\\\", "\\"), seasonval, epval])
+            except:
+                pass
+
+
+    def sortShows(self, channelList, filelist):
+        if len(self.showInfo) == 0:
+            return filelist
+
+        newfilelist = []
+        self.showInfo.sort(key=lambda seep: seep[3])
+        self.showInfo.sort(key=lambda seep: seep[2])
+        self.showInfo.sort(key=lambda seep: seep[0])
+
+        # Create a new array. It will have 2 dimensions.  The first dimension is a certain show.  This show
+        # name is in index 0 of the second dimension.  The currently used index is in index 1.  The other
+        # items are the file names in season / episode order.
+        showlist = []
+        curshow = self.showInfo[0][0]
+        showlist.append([])
+        showlist[0].append(curshow.lower())
+        showlist[0].append(0)
+
+        for item in self.showInfo:
+            if channelList.threadPause() == False:
+                return filelist
+
+            if item[0] != curshow:
+                curshow = item[0]
+                showlist.append([])
+                showlist[-1].append(curshow.lower())
+                showlist[-1].append(0)
+
+            showstr = self.findInFileList(filelist, item[1])
+
+            if len(showstr) > 0:
+                showlist[-1].append(showstr)
+
+        curindex = 0
+
+        for item in filelist:
+            if channelList.threadPause() == False:
+                return filelist
+
+            # First, get the current show for the entry
+            pasttime = item.find(',')
+
+            if pasttime > -1:
+                endofshow = item.find("//")
+
+                if endofshow > -1:
+                    show = item[pasttime + 1:endofshow].lower()
+
+                    for entry in showlist:
+                        if entry[0] == show:
+                            if len(entry) == 2:
+                                break
+
+                            filelist[curindex] = entry[entry[1] + 2]
+                            entry[1] += 1
+
+                            if entry[1] > (len(entry) - 3):
+                                entry[1] = 0
+
+                            break
+
+            curindex += 1
+
+        return filelist
+
+
+    def findInFileList(self, filelist, text):
+        text = text.lower()
+
+        for item in filelist:
+            tmpitem = item.lower()
+
+            if tmpitem.find(text) > -1:
+                return item
+
+        return ''
 

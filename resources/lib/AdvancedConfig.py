@@ -236,7 +236,7 @@ class AdvancedConfig(xbmcgui.WindowXMLDialog):
 
         for i in range(RULES_PER_PAGE):
             if self.listOffset + i < len(self.ruleList):
-                self.getControl(120 + i).setLabel(str(i + 1 + self.listOffset) + ". " + self.ruleList[i + self.listOffset].getName())
+                self.getControl(120 + i).setLabel(str(i + 1 + self.listOffset) + ". " + self.ruleList[i + self.listOffset].getTitle())
                 self.getControl(120 + i).setEnabled(True)
 
                 if i < (RULES_PER_PAGE - 1):

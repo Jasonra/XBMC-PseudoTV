@@ -286,6 +286,9 @@ class ChannelList:
                 self.channels[channel - 1].totalTimePlayed = int(ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_time', True))
                 createlist = True
 
+                if self.background == False:
+                    self.updateDialog.update(self.updateDialogProgress, "Loading channel " + str(channel), "reading playlist", '')
+
                 if self.channels[channel - 1].setPlaylist(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u') == True:
                     self.channels[channel - 1].isValid = True
                     self.channels[channel - 1].fileName = CHANNELS_LOC + 'channel_' + str(channel) + '.m3u'
@@ -411,7 +414,7 @@ class ChannelList:
             return
 
         # if we actually need to clear anything
-        if self.channels[channel - 1].totalTimePlayed > (60 * 60 * 24):
+        if self.channels[channel - 1].totalTimePlayed > (60 * 60 * 24 * 3):
             try:
                 fle = FileAccess.open(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', 'w')
             except:

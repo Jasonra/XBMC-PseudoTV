@@ -247,7 +247,7 @@ class ChannelList:
     def setupChannel(self, channel, background = False, makenewlist = False, append = False):
         self.log('setupChannel ' + str(channel))
         returnval = False
-        createlist = False
+        createlist = makenewlist
         chtype = 9999
         chsetting1 = ''
         chsetting2 = ''
@@ -273,9 +273,6 @@ class ChannelList:
         if chtype == 9999:
             self.channels[channel - 1].isValid = False
             return False
-
-        if makenewlist:
-            createlist = True
 
         self.channels[channel - 1].loadRules(channel)
         self.runActions(RULES_ACTION_START, channel, self.channels[channel - 1])
@@ -331,20 +328,20 @@ class ChannelList:
 
                 if createlist:
                     ADDON_SETTINGS.setSetting('LastResetTime', str(int(time.time())))
-                    
+
 
         if append == False:
-            if chtype == 6:
+            if chtype == 6 and chsetting2 == str(MODE_ORDERAIRDATE):
                 self.channels[channel - 1].mode = MODE_ORDERAIRDATE
 
             # if there is no start mode in the channel mode flags, set it to the default
             if self.channels[channel - 1].mode & MODE_STARTMODES == 0:
                 if self.startMode == 0:
-                    self.channels[channel - 1].mode = MODE_RESUME
+                    self.channels[channel - 1].mode |= MODE_RESUME
                 elif self.startMode == 1:
-                    self.channels[channel - 1].mode = MODE_REALTIME
+                    self.channels[channel - 1].mode |= MODE_REALTIME
                 elif self.startMode == 2:
-                    self.channels[channel - 1].mode = MODE_RANDOM
+                    self.channels[channel - 1].mode |= MODE_RANDOM
 
         if ((createlist or needsreset) and makenewlist) or append:
             if self.background == False:
@@ -1095,7 +1092,7 @@ class ChannelList:
                                     try:
                                         seasonval = int(season.group(1))
                                         epval = int(episode.group(1))
-                                        seasoneplist.append([season, episode, tmpstr])
+                                        seasoneplist.append([seasonval, epval, tmpstr])
                                     except:
                                         seasoneplist.append([-1, -1, tmpstr])
                                 else:
@@ -1113,7 +1110,7 @@ class ChannelList:
 
             for seepitem in seasoneplist:
                 fileList.append(seepitem[2])
-                
+
         self.log("buildFileList return")
         return fileList
 

@@ -139,6 +139,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             migrate()
 
         self.channelLabelTimer = threading.Timer(5.0, self.hideChannelLabel)
+        self.playerTimer = threading.Timer(2.0, self.playerTimerAction)
         self.infoTimer = threading.Timer(5.0, self.hideInfo)
         self.masterTimer = threading.Timer(5.0, self.becomeMaster)
         self.myEPG = EPGWindow("script.pseudotv.EPG.xml", ADDON_INFO, "default")
@@ -187,6 +188,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.background.setVisible(False)
         self.startSleepTimer()
         self.startNotificationTimer()
+        self.playerTimer.start()
 
         if self.backgroundUpdating < 2 or self.isMaster == False:
             self.channelThread.start()
@@ -765,6 +767,17 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.startNotificationTimer()
 
 
+    def playerTimerAction(self):
+        if self.Player.isPlaying():
+            self.lastPlayTime = int(self.Player.getTime())
+            self.lastPlaylistPosition = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition()
+
+        self.playerTimer = threading.Timer(2.0, self.playerTimerAction)
+
+        if self.Player.stopped == False:
+            self.playerTimer.start()
+
+
     # cleanup and end
     def end(self):
         self.log('end')
@@ -777,12 +790,20 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         updateDialog.update(0, "Exiting", "Removing File Locks")
         GlobalFileLock.close()
 
+        try:
+            if self.playerTimer.isAlive():
+                self.playerTimer.cancel()
+        except:
+            pass
+
         if self.Player.isPlaying():
+            self.lastPlayTime = self.Player.getTime()
+            self.lastPlaylistPosition = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition()
             # Prevent the player from setting the sleep timer
             self.Player.stopped = True
             self.Player.stop()
 
-        updateDialog.update(50, "Exiting", "Stopping Threads")
+        updateDialog.update(1, "Exiting", "Stopping Threads")
 
         try:
             if self.channelLabelTimer.isAlive():
@@ -790,23 +811,17 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
-        updateDialog.update(53)
-
         try:
             if self.notificationTimer.isAlive():
                 self.notificationTimer.cancel()
         except:
             pass
 
-        updateDialog.update(56)
-
         try:
             if self.infoTimer.isAlive():
                 self.infoTimer.cancel()
         except:
             pass
-
-        updateDialog.update(59)
 
         try:
             if self.sleepTimeValue > 0:
@@ -815,38 +830,51 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
-        updateDialog.update(62)
-
         try:
             if self.masterTimer.isAlive():
                 self.masterTimer.cancel()
         except:
             pass
 
-        updateDialog.update(65)
+        updateDialog.update(5)
 
         if self.channelThread.isAlive():
             self.channelThread.join()
 
         if self.timeStarted > 0 and self.isMaster:
+            updateDialog.update(10, "Exiting", "Saving Settings")
+            validcount = 0
+            
             for i in range(self.maxChannels):
-                updateDialog.update(70 + int((30 / self.maxChannels) * i), "Exiting", "Saving Settings")
+                if self.channels[i].isValid:
+                    validcount += 1
+
+            incval = 90.0 / float(validcount)
+
+            for i in range(self.maxChannels):
+                updateDialog.update(10 + (incval * i))
 
                 if self.channels[i].isValid:
                     if self.channels[i].mode & MODE_RESUME == 0:
                         ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(curtime - self.timeStarted + self.channels[i].totalTimePlayed)))
                     else:
-                        tottime = 0
-
-                        for j in range(self.channels[i].playlistPosition):
-                            tottime += self.channels[i].getItemDuration(j)
-
-                        tottime += self.channels[i].showTimeOffset
-
                         if i == self.currentChannel - 1:
-                            tottime += (curtime - self.channels[i].lastAccessTime)
+                            # Determine pltime...the time it at the current playlist position
+                            pltime = 0
+                            self.log("position for current playlist is " + str(self.lastPlaylistPosition))
 
-                        ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(tottime)))
+                            for pos in range(self.lastPlaylistPosition):
+                                pltime += self.channels[i].getItemDuration(pos)
+
+                            ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(pltime + self.lastPlayTime))
+                        else:
+                            tottime = 0
+
+                            for j in range(self.channels[i].playlistPosition):
+                                tottime += self.channels[i].getItemDuration(j)
+
+                            tottime += self.channels[i].showTimeOffset
+                            ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(tottime)))
 
         if self.isMaster:
             try:

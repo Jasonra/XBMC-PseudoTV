@@ -211,6 +211,9 @@ class ChannelList:
 
         self.determineWebServer()
 
+        if USING_EDEN:
+            command = command.replace('fields', 'properties')
+
         # If there have been problems using the server, just skip the attempt and use executejsonrpc
         if self.httpJSON == True:
             try:

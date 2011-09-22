@@ -173,6 +173,15 @@ MADE_CHAN_LOC = os.path.join(CHANNELS_LOC, 'stored') + '/'
 GlobalFileLock = FileLock()
 ADDON_SETTINGS = Settings.Settings()
 
+USING_EDEN = True
+
+try:
+    import xbmcvfs
+    log("Globals - Eden")
+except:
+    USING_EDEN = False
+    log("Globals - Dharma")
+
 TIME_BAR = 'pstvTimeBar.png'
 BUTTON_FOCUS = 'pstvButtonFocus.png'
 BUTTON_NO_FOCUS = 'pstvButtonNoFocus.png'

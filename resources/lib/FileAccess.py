@@ -195,10 +195,12 @@ class FileLock:
         self.lockFileName = Globals.CHANNELS_LOC + FILE_LOCK_NAME
         self.lockedList = []
         self.refreshLocksTimer = threading.Timer(4.0, self.refreshLocks)
+        self.refreshLocksTimer.name = "RefreshLocks"
         self.refreshLocksTimer.start()
         self.isExiting = False
         self.grabSemaphore = threading.BoundedSemaphore()
         self.listSemaphore = threading.BoundedSemaphore()
+        self.log("FileLock instance")
 
 
     def close(self):
@@ -207,6 +209,7 @@ class FileLock:
 
         if self.refreshLocksTimer.isAlive():
             self.refreshLocksTimer.cancel()
+            self.refreshLocksTimer.join()
 
         for item in self.lockedList:
             self.unlockFile(item)
@@ -226,12 +229,14 @@ class FileLock:
 
             self.lockFile(item, True)
 
-        if self.isExiting:
-            self.log("IsExiting")
-            return False
-
         self.refreshLocksTimer = threading.Timer(4.0, self.refreshLocks)
-        self.refreshLocksTimer.start()
+
+        if self.isExiting == False:
+            self.refreshLocksTimer.name = "RefreshLocks"
+            self.refreshLocksTimer.start()
+            return True
+
+        return False
 
 
     def lockFile(self, filename, block = False):
@@ -239,7 +244,7 @@ class FileLock:
         curval = -1
         attempts = 0
         fle = 0
-        
+
         if Globals.CHANNEL_SHARING == False:
             return True
 
@@ -428,7 +433,7 @@ class FileLock:
         filename = filename.lower()
         found = False
         realindex = 0
-        
+
         if Globals.CHANNEL_SHARING == False:
             return True
 
@@ -443,7 +448,7 @@ class FileLock:
                 realindex -= 1
 
             realindex += 1
-            
+
         self.listSemaphore.release()
 
         if found == False:
@@ -475,7 +480,7 @@ class FileLock:
     def isFileLocked(self, filename, block = False):
         self.log("isFileLocked " + filename)
         filename = filename.lower()
-        
+
         if Globals.CHANNEL_SHARING == False:
             return False
 

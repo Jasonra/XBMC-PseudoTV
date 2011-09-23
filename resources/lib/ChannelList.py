@@ -335,7 +335,6 @@ class ChannelList:
                 if createlist:
                     ADDON_SETTINGS.setSetting('LastResetTime', str(int(time.time())))
 
-
         if append == False:
             if chtype == 6 and chsetting2 == str(MODE_ORDERAIRDATE):
                 self.channels[channel - 1].mode = MODE_ORDERAIRDATE
@@ -388,7 +387,7 @@ class ChannelList:
                 self.channels[channel - 1].showTimeOffset = random.randint(0, self.channels[channel - 1].getTotalDuration())
 
             if self.channels[channel - 1].mode & MODE_REALTIME > 0:
-                timedif = int(time.time()) - self.lastExitTime
+                timedif = int(self.myOverlay.timeStarted) - self.lastExitTime
                 self.channels[channel - 1].totalTimePlayed += timedif
 
             if self.channels[channel - 1].mode & MODE_RESUME > 0:

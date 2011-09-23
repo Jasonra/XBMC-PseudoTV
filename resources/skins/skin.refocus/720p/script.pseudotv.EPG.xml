@@ -6,27 +6,14 @@
         <posx>0</posx>
         <posy>0</posy>
     </coordinates>
-    
-    <animation type="WindowOpen" reversible="true">
-        <effect type="zoom" start="500" end="100" center="640,360" time="200" />
-        <effect type="fade" start="0" end="100" time="200" />
-    </animation>
-
-    <animation type="WindowClose" reversible="false">
-        <effect type="zoom" start="100" end="300" center="640,360" easing="in" tween="back" time="300" />
-        <effect type="fade" start="100" end="0" time="300" />
-    </animation>
+	
+	<include>dialogOpen</include>
     
     <controls>    
-        <control type="image">
-            <description>Info Background</description>
-            <aspectratio>scale</aspectratio>
-            <include>screentype</include>
-            <texture background="true">backgrounds/background.png</texture>
-            <include>transition_BG</include>
-        </control>
-        
-        <control type="label">
+		<include>global_Background</include>
+		<include>global_Includes</include>
+		
+		<control type="label">
             <include>PageLabel</include>
             <label>pseudo[COLOR=Color2]tv[/COLOR]</label>
         </control>
@@ -65,10 +52,10 @@
             <posx>360</posx>
             <posy>500</posy>
 			<width>860</width>
-			<height>160</height>
+			<height>180</height>
 			<orientation>vertical</orientation>
 			<itemgap>4</itemgap>
-            <include>transition_Info</include>
+            <include>transition_Container</include>
 			
             <control type="label" id="500">
                 <description>Show Name Label</description>
@@ -86,7 +73,7 @@
             </control>
             <control type="label" id="502">
                 <width>860</width>
-                <height>100</height>
+                <height>120</height>
                 <align>left</align>
                 <aligny>top</aligny>
                 <label>Show Description</label>

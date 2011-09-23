@@ -131,6 +131,8 @@ class BaseRule:
 
 
     def onActionTextBox(self, act, optionindex):
+        action = act.getId()
+
         if act.getId() == ACTION_SELECT_ITEM:
             keyb = xbmc.Keyboard(self.optionValues[optionindex], self.name, False)
             keyb.doModal()
@@ -149,8 +151,8 @@ class BaseRule:
             self.optionValues[optionindex] += chr(button - 0xEFE0)
 
         # Numbers
-        if button >= 0xf030 and button <= 0xf039:
-            self.optionValues[optionindex] += chr(button - 0xF000)
+        if action >= ACTION_NUMBER_0 and action <= ACTION_NUMBER_9:
+            self.optionValues[optionindex] += chr(action - ACTION_NUMBER_0 + 48)
 
         # Backspace
         if button == 0xF008:
@@ -179,40 +181,42 @@ class BaseRule:
 
     def onActionTimeBox(self, act, optionindex):
         self.log("onActionTimeBox")
+        action = act.getId()
 
-        if act.getId() == ACTION_SELECT_ITEM:
+        if action == ACTION_SELECT_ITEM:
             dlg = xbmcgui.Dialog()
             info = dlg.numeric(2, self.optionLabels[optionindex], self.optionValues[optionindex])
 
-            if info[0] == ' ':
-                info = info[1:]
+            if info != None:
+                if info[0] == ' ':
+                    info = info[1:]
 
-            if len(info) == 4:
-                info = "0" + info
+                if len(info) == 4:
+                    info = "0" + info
 
-            self.optionValues[optionindex] = info
+                self.optionValues[optionindex] = info
 
         button = act.getButtonCode()
 
         # Numbers
-        if button >= 0xF030 and button <= 0xF039:
-            value = button - 0xF030
+        if action >= ACTION_NUMBER_0 and action <= ACTION_NUMBER_9:
+            value = action - ACTION_NUMBER_0
             length = len(self.optionValues[optionindex])
 
             if length == 0:
                 if value <= 2:
-                    self.optionValues[optionindex] = chr(button - 0xF000)
+                    self.optionValues[optionindex] = chr(value + 48)
             elif length == 1:
                 if int(self.optionValues[optionindex][0]) == 2:
                     if value < 4:
-                        self.optionValues[optionindex] += chr(button - 0xF000)
+                        self.optionValues[optionindex] += chr(value + 48)
                 else:
-                    self.optionValues[optionindex] += chr(button - 0xF000)
+                    self.optionValues[optionindex] += chr(value + 48)
             elif length == 2:
                 if value < 6:
-                    self.optionValues[optionindex] += ":" + chr(button - 0xF000)
+                    self.optionValues[optionindex] += ":" + chr(value + 48)
             elif length < 5:
-                self.optionValues[optionindex] += chr(button - 0xF000)
+                self.optionValues[optionindex] += chr(value + 48)
 
         # Backspace
         if button == 0xF008:
@@ -224,10 +228,6 @@ class BaseRule:
 
 
     def validateTimeBox(self, optionindex):
-        if len(self.optionValues[optionindex]) != 5 or self.optionValues[optionindex][2] != ':':
-            self.optionValues[optionindex] = "00:00"
-            return
-
         values = []
         broken = False
 
@@ -325,16 +325,20 @@ class BaseRule:
 
 
     def onActionDigitBox(self, act, optionindex):
-        if act.getId() == ACTION_SELECT_ITEM:
+        action = act.getId()
+
+        if action == ACTION_SELECT_ITEM:
             dlg = xbmcgui.Dialog()
             value = dlg.numeric(0, self.optionLabels[optionindex], self.optionValues[optionindex])
-            self.optionValues[optionindex] = value
+
+            if value != None:
+                self.optionValues[optionindex] = value
 
         button = act.getButtonCode()
 
         # Numbers
-        if button >= 0xf030 and button <= 0xf039:
-            self.optionValues[optionindex] += chr(button - 0xF000)
+        if action >= ACTION_NUMBER_0 and action <= ACTION_NUMBER_9:
+            self.optionValues[optionindex] += chr(action - ACTION_NUMBER_0 + 48)
 
         # Backspace
         if button == 0xF008:
@@ -446,7 +450,7 @@ class NoShowRule(BaseRule):
 class ScheduleChannelRule(BaseRule):
     def __init__(self):
         self.name = "Best-Effort Channel Scheduling"
-        self.optionLabels = ['Channel Number', 'Days of the Week (UMTWHFS)', 'Time (HH:MM)', 'Episode Count', 'Starting Episode', 'Starting Date']
+        self.optionLabels = ['Channel Number', 'Days of the Week (UMTWHFS)', 'Time (HH:MM)', 'Episode Count', 'Starting Episode', 'Starting Date (DD/MM/YYYY)']
         self.optionValues = ['0', '', '00:00', '1', '1', '']
         self.myId = 3
         self.actions = RULES_ACTION_START | RULES_ACTION_BEFORE_CLEAR | RULES_ACTION_FINAL_MADE | RULES_ACTION_FINAL_LOADED
@@ -560,7 +564,7 @@ class ScheduleChannelRule(BaseRule):
         newstart = 0
 
         while added == True and minimum.nextScheduledTime != 0:
-            added = minimum.addScheduledShow(channelList, channeldata)
+            added = minimum.addScheduledShow(channelList, channeldata, self.appended)
             newstart = minimum.startIndex
 
             # Determine the new minimum
@@ -586,8 +590,15 @@ class ScheduleChannelRule(BaseRule):
         starttime = 0
         daysofweek = 0
 
+        if len(self.optionValues[2]) != 5 or self.optionValues[2][2] != ':':
+            self.log("Invalid time")
+            self.nextScheduledTime = 0
+            return
+
         try:
-            starttime = time.mktime(time.strptime(self.optionValues[5] + " " + self.optionValues[2], xbmc.getRegion("dateshort") + " %H:%M"))
+            # This is how it should be, but there is a bug in XBMC preventing this
+#            starttime = time.mktime(time.strptime(self.optionValues[5] + " " + self.optionValues[2], xbmc.getRegion("dateshort") + " %H:%M"))
+            starttime = time.mktime(time.strptime(self.optionValues[5] + " " + self.optionValues[2], "%d/%m/%Y %H:%M"))
         except:
             self.log("Invalid date or time")
             self.nextScheduledTime = 0
@@ -636,8 +647,6 @@ class ScheduleChannelRule(BaseRule):
             thedate += delta
 
         self.nextScheduledTime = int(time.mktime(thedate.timetuple()))
-        self.log("Current Time is " + str(int(time.time())))
-        self.log("Scheduled time is " + str(int(self.nextScheduledTime)))
 
 
     def saveOptions(self, channeldata):
@@ -649,7 +658,7 @@ class ScheduleChannelRule(BaseRule):
 
     # Add a single show (or shows) to the channel at nextScheduledTime
     # This needs to modify the startIndex value if something is added
-    def addScheduledShow(self, channelList, channeldata):
+    def addScheduledShow(self, channelList, channeldata, appending):
         self.log("addScheduledShow")
         chan = 0
         epcount = 0
@@ -677,7 +686,8 @@ class ScheduleChannelRule(BaseRule):
             delta = datetime.timedelta(days=1)
             thedate += delta
             self.optionValues[4] = str(startingep + epcount)
-            self.optionValues[5] = thedate.strftime(xbmc.getRegion("dateshort"))
+#            self.optionValues[5] = thedate.strftime(xbmc.getRegion("dateshort"))
+            self.optionValues[5] = thedate.strftime("%d/%m/%Y")
             self.log("Past the scheduled date and time, skipping")
             self.saveOptions(channeldata)
             return True
@@ -686,22 +696,39 @@ class ScheduleChannelRule(BaseRule):
             self.log("channel number is invalid")
             return False
 
+        skiploading = False
+
+        try:
+            if channelList.channels[chan - 1].isValid:
+                skiploading = True
+        except:
+            pass
+
         # Should only do this if necessary
-        channelList.setupChannel(chan, True, True, False)
+        if skiploading == False:
+            if channelList.myOverlay.isMaster:
+                channelList.setupChannel(chan, True, True, False)
+            else:
+                channelList.setupChannel(chan, True, False, False)
 
         if channelList.channels[chan - 1].Playlist.size() < 1:
             self.log("scheduled channel isn't valid")
             return False
 
-        timedif = self.nextScheduledTime - (time.time() - channeldata.totalTimePlayed)
-        self.log("timedif is " + str(timedif))
+        # If the total time played value hasn't been updated
+        if appending == False:
+            timedif = self.nextScheduledTime + channeldata.totalTimePlayed - channelList.lastExitTime
+        else:
+            # If the total time played value HAS been updated
+            timedif = self.nextScheduledTime + channeldata.totalTimePlayed - channelList.myOverlay.timeStarted
+
+        # old version
+#        timedif = self.nextScheduledTime - (time.time() - channeldata.totalTimePlayed)
         showindex = 0
 
         # Find the proper location to insert the show(s)
         while timedif > 120:
-            self.log("show index is " + str(showindex) + ", dur is " + str(channeldata.getItemDuration(showindex)))
             timedif -= channeldata.getItemDuration(showindex)
-            self.log("timedif is " + str(timedif))
             showindex = channeldata.fixPlaylistIndex(showindex + 1)
 
             # Shows that there was a looparound, so exit.
@@ -722,7 +749,6 @@ class ScheduleChannelRule(BaseRule):
 
             # Try a maximum of 5 loops
             for loops in range(5):
-                self.log("Starting rearrange loop " + str(loops + 1))
                 newtime = self.rearrangeShows(showindex, lasttime, channeldata, channelList)
 
                 if channelList.threadPause() == False:
@@ -731,12 +757,9 @@ class ScheduleChannelRule(BaseRule):
                 # If no match found, then stop
                 # If the time difference is less than 2 minutes, also stop
                 if newtime == lasttime or newtime < 120:
-                    self.log("newtime is " + str(newtime) + ", breaking")
                     break
 
                 lasttime = newtime
-
-            self.log("final difference is " + str(lasttime))
 
         for i in range(epcount):
             item = PlaylistItem()
@@ -754,7 +777,8 @@ class ScheduleChannelRule(BaseRule):
         thedate += delta
         self.startIndex = showindex
         self.optionValues[4] = str(startingep + epcount + 1)
-        self.optionValues[5] = thedate.strftime(xbmc.getRegion("dateshort"))
+#        self.optionValues[5] = thedate.strftime(xbmc.getRegion("dateshort"))
+        self.optionValues[5] = thedate.strftime("%d/%m/%Y")
         self.saveOptions(channeldata)
         self.log("successfully scheduled")
         return True

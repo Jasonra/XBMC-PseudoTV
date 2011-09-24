@@ -114,7 +114,7 @@ class BaseRule:
 
 
     def log(self, msg):
-        log("Rule " + self.name + ": " + msg)
+        log("Rule " + self.getTitle() + ": " + msg)
 
 
     def validate(self):
@@ -281,10 +281,8 @@ class BaseRule:
                 loc = self.optionValues[optionindex].find(chr(button))
 
                 if loc != -1:
-                    self.log("Removing key")
                     self.optionValues[optionindex] = self.optionValues[optionindex][:loc] + self.optionValues[optionindex][loc + 1:]
                 else:
-                    self.log("Adding key")
                     self.optionValues[optionindex] += chr(button)
 
         # Backspace
@@ -519,10 +517,59 @@ class ScheduleChannelRule(BaseRule):
             else:
                 self.appended = False
 
+        # When resetting the channel, make sure the starting episode and date are correct.
+        # Work backwards from the current ep and date to set the current date to today and proper ep
+        if actionid == RULES_ACTION_FINAL_MADE and self.hasRun == False:
+            curchan = channeldata.channelNumber
+            ADDON_SETTINGS.setSetting('Channel_' + str(curchan) + '_lastscheduled', '0')
+
+            for rule in channeldata.ruleList:
+                if rule.getId() == self.myId:
+                    rule.reverseStartingEpisode()
+                    rule.nextScheduledTime = 0
+
         if (actionid == RULES_ACTION_FINAL_MADE or actionid == RULES_ACTION_FINAL_LOADED) and (self.hasRun == False):
             self.runSchedulingRules(channelList, channeldata)
 
         return channeldata
+
+
+    def reverseStartingEpisode(self):
+        self.log("reverseStartingEpisode")
+        tmpdate = 0
+
+        try:
+            tmpdate = time.mktime(time.strptime(self.optionValues[5] + " " + self.optionValues[2], "%d/%m/%Y %H:%M"))
+        except:
+            pass
+
+        if tmpdate > 0:
+            count = 0
+            currentdate = int(time.time())
+
+            while tmpdate > currentdate:
+                thedate = datetime.datetime.fromtimestamp(currentdate)
+                self.optionValues[5] = thedate.strftime("%d/%m/%Y")
+                self.determineNextTime()
+
+                if self.nextScheduledTime > 0:
+                    count += 1
+                    currentdate = self.nextScheduledTime + (60 * 60 * 24)
+                else:
+                    break
+
+            try:
+                startep = int(self.optionValues[4])
+                count = startep - count
+
+                if count > 0:
+                    self.optionValues[4] = str(count)
+                    thedate = datetime.datetime.fromtimestamp(int(time.time()))
+#                        self.optionValues[5] = thedate.strftime(xbmc.getRegion("dateshort"))
+                    self.optionValues[5] = thedate.strftime("%d/%m/%Y")
+                    self.saveOptions(channeldata)
+            except:
+                pass
 
 
     def runSchedulingRules(self, channelList, channeldata):
@@ -717,17 +764,15 @@ class ScheduleChannelRule(BaseRule):
 
         # If the total time played value hasn't been updated
         if appending == False:
-            timedif = self.nextScheduledTime + channeldata.totalTimePlayed - channelList.lastExitTime
+            timedif = self.nextScheduledTime - channelList.lastExitTime
         else:
             # If the total time played value HAS been updated
             timedif = self.nextScheduledTime + channeldata.totalTimePlayed - channelList.myOverlay.timeStarted
 
-        # old version
-#        timedif = self.nextScheduledTime - (time.time() - channeldata.totalTimePlayed)
         showindex = 0
 
         # Find the proper location to insert the show(s)
-        while timedif > 120:
+        while timedif > 120 or showindex < self.startIndex:
             timedif -= channeldata.getItemDuration(showindex)
             showindex = channeldata.fixPlaylistIndex(showindex + 1)
 
@@ -744,7 +789,8 @@ class ScheduleChannelRule(BaseRule):
         # rearrange episodes to get an optimal time
         if timedif < -300 and channeldata.isRandom:
             # This is a crappy way to do it, but implementing a subset sum algorithm is
-            # a bit daunting at the moment
+            # a bit daunting at the moment.  Plus this uses a minimum amount of memory, so as
+            # a background task it works well.
             lasttime = int(abs(timedif))
 
             # Try a maximum of 5 loops
@@ -780,7 +826,7 @@ class ScheduleChannelRule(BaseRule):
 #        self.optionValues[5] = thedate.strftime(xbmc.getRegion("dateshort"))
         self.optionValues[5] = thedate.strftime("%d/%m/%Y")
         self.saveOptions(channeldata)
-        self.log("successfully scheduled")
+        self.log("successfully scheduled at index " + str(self.startIndex))
         return True
 
 

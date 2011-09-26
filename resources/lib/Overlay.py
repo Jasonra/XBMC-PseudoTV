@@ -85,6 +85,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.notificationLastShow = 0
         self.notificationShowedNotif = False
         self.isExiting = False
+        self.maxChannels = 0
 
         for i in range(3):
             self.channelLabel.append(xbmcgui.ControlImage(50 + (50 * i), 50, 50, 50, IMAGES_LOC + 'solid.png', colorDiffuse='0xAA00ff00'))

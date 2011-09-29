@@ -955,7 +955,7 @@ class InterleaveChannel(BaseRule):
         self.validateDigitBox(0, 1, 1000, 0)
         self.validateDigitBox(1, 1, 100, 1)
         self.validateDigitBox(2, 1, 100, 1)
-        self.validateDigitBox(3, 1, 1000, 1)
+        self.validateDigitBox(3, 1, 10000, 1)
 
 
     def runAction(self, actionid, channelList, filelist):
@@ -992,23 +992,34 @@ class InterleaveChannel(BaseRule):
                 return filelist
 
             realindex = random.randint(minint, maxint)
+            startindex = 0
+            # Use more memory, but greatly speed up the process by just putting everything into a new list
+            newfilelist = []
 
             while realindex < len(filelist):
                 if channelList.threadPause() == False:
                     return filelist
 
+                while startindex < realindex:
+                    newfilelist.append(filelist[startindex])
+                    startindex += 1
+
                 newstr = str(channelList.channels[chan - 1].getItemDuration(startingep - 1)) + ',' + channelList.channels[chan - 1].getItemTitle(startingep - 1)
                 newstr += "//" + channelList.channels[chan - 1].getItemEpisodeTitle(startingep - 1)
                 newstr += "//" + channelList.channels[chan - 1].getItemDescription(startingep - 1) + '\n' + channelList.channels[chan - 1].getItemFilename(startingep - 1)
-                filelist.insert(realindex, newstr)
-                # Add 1 to account for the thing we just inserted
-                realindex += random.randint(minint, maxint) + 1
+                newfilelist.append(newstr)
+                realindex += random.randint(minint, maxint)
                 startingep += 1
+
+            while startindex < len(filelist):
+                newfilelist.append(filelist[startindex])
+                startindex += 1
 
             startingep = channelList.channels[chan - 1].fixPlaylistIndex(startingep) + 1
             # Write starting episode
             self.optionValues[2] = str(startingep)
             ADDON_SETTINGS.setSetting('Channel_' + str(curchan) + '_rule_' + str(curruleid + 1) + '_opt_4', self.optionValues[2])
+            return newfilelist
 
         return filelist
 

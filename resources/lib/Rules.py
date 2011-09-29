@@ -743,16 +743,7 @@ class ScheduleChannelRule(BaseRule):
             self.log("channel number is invalid")
             return False
 
-        skiploading = False
-
-        try:
-            if channelList.channels[chan - 1].isValid:
-                skiploading = True
-        except:
-            pass
-
-        # Should only do this if necessary
-        if skiploading == False:
+        if len(channelList.channels) < chan or channelList.channels[chan - 1].isSetup == False:
             if channelList.myOverlay.isMaster:
                 channelList.setupChannel(chan, True, True, False)
             else:
@@ -985,7 +976,11 @@ class InterleaveChannel(BaseRule):
                 minint = maxint
                 maxint = v
 
-            channelList.setupChannel(chan, True, True, False)
+            if len(channelList.channels) < chan or channelList.channels[chan - 1].isSetup == False:
+                if channelList.myOverlay.isMaster:
+                    channelList.setupChannel(chan, True, True, False)
+                else:
+                    channelList.setupChannel(chan, True, False, False)
 
             if channelList.channels[chan - 1].Playlist.size() < 1:
                 self.log("The target channel is empty")
@@ -995,6 +990,7 @@ class InterleaveChannel(BaseRule):
             startindex = 0
             # Use more memory, but greatly speed up the process by just putting everything into a new list
             newfilelist = []
+            self.log("Length of original list: " + str(len(filelist)))
 
             while realindex < len(filelist):
                 if channelList.threadPause() == False:
@@ -1019,6 +1015,7 @@ class InterleaveChannel(BaseRule):
             # Write starting episode
             self.optionValues[2] = str(startingep)
             ADDON_SETTINGS.setSetting('Channel_' + str(curchan) + '_rule_' + str(curruleid + 1) + '_opt_4', self.optionValues[2])
+            self.log("Done interleaving, new length is " + str(len(newfilelist)))
             return newfilelist
 
         return filelist

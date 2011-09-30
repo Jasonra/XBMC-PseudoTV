@@ -580,8 +580,18 @@ class ChannelList:
         if israndom:
             random.shuffle(fileList)
 
+        if len(fileList) > 4096:
+            fileList = fileList[:4096]
+
         fileList = self.runActions(RULES_ACTION_LIST, channel, fileList)
         self.channels[channel - 1].isRandom = israndom
+
+        if append:
+            if len(fileList) + self.channels[channel - 1].Playlist.size() > 4096:
+                fileList = fileList[:(4096 - self.channels[channel - 1].Playlist.size())]
+        else:
+            if len(fileList) > 4096:
+                fileList = fileList[:4096]
 
         # Write each entry into the new playlist
         for string in fileList:
@@ -757,7 +767,7 @@ class ChannelList:
             self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "getting file list")
 
         json_folder_detail = self.sendJSON(json_query)
-        self.log(json_folder_detail)
+#        self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
         thedir = ''
 
@@ -1009,7 +1019,7 @@ class ChannelList:
             self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "querying database")
 
         json_folder_detail = self.sendJSON(json_query)
-        self.log(json_folder_detail)
+#        self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in file_detail:
@@ -1168,7 +1178,6 @@ class ChannelList:
 
         self.runningActionChannel = 0
         self.runningActionId = 0
-        self.log("Done running actions")
         return parameter
 
 

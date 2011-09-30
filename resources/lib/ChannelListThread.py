@@ -95,7 +95,7 @@ class ChannelListThread(threading.Thread):
             for i in range(self.myOverlay.maxChannels):
                 modified = True
 
-                while modified == True and self.myOverlay.channels[i].getTotalDuration() < PREP_CHANNEL_TIME:
+                while modified == True and self.myOverlay.channels[i].getTotalDuration() < PREP_CHANNEL_TIME and self.myOverlay.channels[i].Playlist.size() < 4000:
                     # If minimum updating is on, don't attempt to load invalid channels
                     if self.fullUpdating == False and self.myOverlay.channels[i].isValid == False and self.myOverlay.isMaster:
                         break

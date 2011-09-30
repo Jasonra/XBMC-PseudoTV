@@ -145,10 +145,13 @@ class Playlist:
             return False
 
         # past the header, so get the info
-        while i in range(len(lines)):
+        for i in range(len(lines)):
             time.sleep(0)
 
             if realindex + 1 >= len(lines):
+                break
+
+            if len(self.itemlist) > 4096:
                 break
 
             line = lines[realindex]

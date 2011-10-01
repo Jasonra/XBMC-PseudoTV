@@ -417,7 +417,7 @@ class ChannelList:
             return
 
         # if we actually need to clear anything
-        if self.channels[channel - 1].totalTimePlayed > (60 * 60 * 24 * 3):
+        if self.channels[channel - 1].totalTimePlayed > (60 * 60 * 24 * 2):
             try:
                 fle = FileAccess.open(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', 'w')
             except:
@@ -431,7 +431,7 @@ class ChannelList:
             for i in range(self.channels[channel - 1].Playlist.size()):
                 tottime += self.channels[channel - 1].getItemDuration(i)
 
-                if tottime > (self.channels[channel - 1].totalTimePlayed - (60 * 60 * 24)):
+                if tottime > (self.channels[channel - 1].totalTimePlayed - (60 * 60 * 12)):
                     tmpstr = str(self.channels[channel - 1].getItemDuration(i)) + ','
                     tmpstr += self.channels[channel - 1].getItemTitle(i) + "//" + self.channels[channel - 1].getItemEpisodeTitle(i) + "//" + self.channels[channel - 1].getItemDescription(i)
                     tmpstr = tmpstr[:600]

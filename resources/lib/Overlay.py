@@ -857,32 +857,33 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 if self.channels[i].isValid:
                     validcount += 1
 
-            incval = 90.0 / float(validcount)
+            if validcount > 0:
+                incval = 90.0 / float(validcount)
 
-            for i in range(self.maxChannels):
-                updateDialog.update(10 + int((incval * i)))
+                for i in range(self.maxChannels):
+                    updateDialog.update(10 + int((incval * i)))
 
-                if self.channels[i].isValid:
-                    if self.channels[i].mode & MODE_RESUME == 0:
-                        ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(curtime - self.timeStarted + self.channels[i].totalTimePlayed)))
-                    else:
-                        if i == self.currentChannel - 1:
-                            # Determine pltime...the time it at the current playlist position
-                            pltime = 0
-                            self.log("position for current playlist is " + str(self.lastPlaylistPosition))
-
-                            for pos in range(self.lastPlaylistPosition):
-                                pltime += self.channels[i].getItemDuration(pos)
-
-                            ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(pltime + self.lastPlayTime))
+                    if self.channels[i].isValid:
+                        if self.channels[i].mode & MODE_RESUME == 0:
+                            ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(curtime - self.timeStarted + self.channels[i].totalTimePlayed)))
                         else:
-                            tottime = 0
+                            if i == self.currentChannel - 1:
+                                # Determine pltime...the time it at the current playlist position
+                                pltime = 0
+                                self.log("position for current playlist is " + str(self.lastPlaylistPosition))
 
-                            for j in range(self.channels[i].playlistPosition):
-                                tottime += self.channels[i].getItemDuration(j)
+                                for pos in range(self.lastPlaylistPosition):
+                                    pltime += self.channels[i].getItemDuration(pos)
 
-                            tottime += self.channels[i].showTimeOffset
-                            ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(tottime)))
+                                ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(pltime + self.lastPlayTime))
+                            else:
+                                tottime = 0
+
+                                for j in range(self.channels[i].playlistPosition):
+                                    tottime += self.channels[i].getItemDuration(j)
+
+                                tottime += self.channels[i].showTimeOffset
+                                ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(tottime)))
 
         if self.isMaster:
             try:

@@ -17,7 +17,7 @@
 # along with PseudoTV.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import os
+import os, threading
 import xbmc, xbmcgui
 import xbmcaddon
 
@@ -63,6 +63,17 @@ if xbmc.getInfoLabel("Window(10000).Property(PseudoTVRunning)") != "True":
 
     if shouldrestart == False:
         MyOverlayWindow = Overlay.TVOverlay("script.pseudotv.TVOverlay.xml", __cwd__, "default")
+
+        for curthread in threading.enumerate():
+            try:
+                log("Active Thread: " + str(curthread.name), xbmc.LOGERROR)
+
+                if curthread.name != "MainThread":
+                    curthread.join()
+                    log("Joined " + curthread.name)
+            except:
+                pass
+
         del MyOverlayWindow
 
     xbmcgui.Window(10000).setProperty("PseudoTVRunning", "False")

@@ -86,6 +86,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.notificationShowedNotif = False
         self.isExiting = False
         self.maxChannels = 0
+        self.notPlayingCount = 0
 
         for i in range(3):
             self.channelLabel.append(xbmcgui.ControlImage(50 + (50 * i), 50, 50, 50, IMAGES_LOC + 'solid.png', colorDiffuse='0xAA00ff00'))
@@ -773,11 +774,19 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
 
     def playerTimerAction(self):
+        self.playerTimer = threading.Timer(2.0, self.playerTimerAction)
+
         if self.Player.isPlaying():
             self.lastPlayTime = int(self.Player.getTime())
             self.lastPlaylistPosition = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition()
+            self.notPlayingCount = 0
+        else:
+            self.notPlayingCount += 1
+            self.log("Adding to notPlayingCount")
 
-        self.playerTimer = threading.Timer(2.0, self.playerTimerAction)
+            if self.notPlayingCount == 3:
+                self.end()
+                return
 
         if self.Player.stopped == False:
             self.playerTimer.name = "PlayerTimer"
@@ -892,12 +901,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 pass
 
             ADDON_SETTINGS.setSetting('LastExitTime', str(int(curtime)))
-
-        for curthread in threading.enumerate():
-            try:
-                self.log("Active Thread: " + str(curthread.name), xbmc.LOGERROR)
-            except:
-                pass
 
         updateDialog.close()
         self.background.setVisible(False)

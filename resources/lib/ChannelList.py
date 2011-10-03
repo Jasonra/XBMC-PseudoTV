@@ -52,6 +52,7 @@ class ChannelList:
         self.threadPaused = False
         self.runningActionChannel = 0
         self.runningActionId = 0
+        self.enteredChannelCount = 0
         self.background = True
         random.seed()
 
@@ -92,7 +93,7 @@ class ChannelList:
 
         # Go through all channels, create their arrays, and setup the new playlist
         for i in range(self.maxChannels):
-            self.updateDialogProgress = i * 100 // self.maxChannels
+            self.updateDialogProgress = i * 100 // self.enteredChannelCount
             self.updateDialog.update(self.updateDialogProgress, "Loading channel " + str(i + 1), "waiting for file lock")
             self.channels.append(Channel())
 
@@ -112,7 +113,7 @@ class ChannelList:
 
         if foundvalid == False and makenewlists == False:
             for i in range(self.maxChannels):
-                self.updateDialogProgress = i * 100 // self.maxChannels
+                self.updateDialogProgress = i * 100 // self.enteredChannelCount
                 self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(i + 1), "waiting for file lock", '')
                 self.setupChannel(i + 1, False, True, False)
 
@@ -135,6 +136,7 @@ class ChannelList:
     def findMaxChannels(self):
         self.log('findMaxChannels')
         self.maxChannels = 0
+        self.enteredChannelCount = 0
 
         for i in range(999):
             chtype = 9999
@@ -151,9 +153,11 @@ class ChannelList:
             if chtype == 0:
                 if FileAccess.exists(xbmc.translatePath(chsetting1)):
                     self.maxChannels = i + 1
+                    self.enteredChannelCount += 1
             elif chtype < 8:
                 if len(chsetting1) > 0:
                     self.maxChannels = i + 1
+                    self.enteredChannelCount += 1
 
         self.log('findMaxChannels return ' + str(self.maxChannels))
 
@@ -351,7 +355,7 @@ class ChannelList:
 
         if ((createlist or needsreset) and makenewlist) or append:
             if self.background == False:
-                self.updateDialogProgress = (channel - 1) * 100 // self.maxChannels
+                self.updateDialogProgress = (channel - 1) * 100 // self.enteredChannelCount
                 self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(channel), "adding videos", '')
 
             if self.makeChannelList(channel, chtype, chsetting1, chsetting2, append) == True:
@@ -372,7 +376,7 @@ class ChannelList:
 
         # Don't clear history when appending channels
         if self.background == False and append == False and self.myOverlay.isMaster:
-            self.updateDialogProgress = (channel - 1) * 100 // self.maxChannels
+            self.updateDialogProgress = (channel - 1) * 100 // self.enteredChannelCount
             self.updateDialog.update(self.updateDialogProgress, "Loading channel " + str(channel), "clearing history", '')
             self.clearPlaylistHistory(channel)
 

@@ -28,6 +28,7 @@ from resources.lib.Globals import *
 from resources.lib.ChannelList import ChannelList
 from resources.lib.AdvancedConfig import AdvancedConfig
 from resources.lib.FileAccess import FileAccess
+from resources.lib.Migrate import Migrate
 
 
 NUMBER_CHANNEL_TYPES = 8
@@ -63,7 +64,8 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             except:
                 pass
 
-        migrate()
+        migratemaster = Migrate()
+        migratemaster.migrate()
         self.prepareConfig()
         self.myRules = AdvancedConfig("script.pseudotv.AdvancedConfig.xml", ADDON_INFO, "default")
         self.log("onInit return")

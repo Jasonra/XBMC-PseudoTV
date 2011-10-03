@@ -32,6 +32,7 @@ from EPGWindow import EPGWindow
 from ChannelList import ChannelList
 from ChannelListThread import ChannelListThread
 from FileAccess import FileLock, FileAccess
+from Migrate import Migrate
 
 
 
@@ -136,7 +137,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         updateDialog.update(95, "Initializing", "Migrating")
 
         if self.isMaster:
-            migrate()
+            migratemaster = Migrate()
+            migratemaster.migrate()
 
         self.channelLabelTimer = threading.Timer(5.0, self.hideChannelLabel)
         self.playerTimer = threading.Timer(2.0, self.playerTimerAction)

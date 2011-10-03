@@ -20,6 +20,7 @@ import os
 import xbmcaddon, xbmc
 import Settings
 
+
 from FileAccess import FileLock
 
 
@@ -29,106 +30,6 @@ def log(msg, level = xbmc.LOGDEBUG):
         xbmc.log(ADDON_ID + '-' + msg, level)
     except:
         pass
-
-
-def migrate():
-    log("migration")
-    curver = "0.0.0"
-
-    try:
-        curver = ADDON_SETTINGS.getSetting("Version")
-    except:
-        pass
-
-    if compareVersions(curver, VERSION) < 0:
-        if compareVersions(curver, "1.0.2") < 0:
-            log("Migrating to 1.0.2")
-
-            # Migrate to 1.0.2
-            for i in range(200):
-                if os.path.exists(xbmc.translatePath('special://profile/playlists/video') + '/Channel_' + str(i + 1) + '.xsp'):
-                    ADDON_SETTINGS.setSetting("Channel_" + str(i + 1) + "_type", "0")
-                    ADDON_SETTINGS.setSetting("Channel_" + str(i + 1) + "_1", "special://profile/playlists/video/Channel_" + str(i + 1) + ".xsp")
-                elif os.path.exists(xbmc.translatePath('special://profile/playlists/mixed') + '/Channel_' + str(i + 1) + '.xsp'):
-                    ADDON_SETTINGS.setSetting("Channel_" + str(i + 1) + "_type", "0")
-                    ADDON_SETTINGS.setSetting("Channel_" + str(i + 1) + "_1", "special://profile/playlists/mixed/Channel_" + str(i + 1) + ".xsp")
-
-            currentpreset = 0
-
-            for i in range(TOTAL_FILL_CHANNELS):
-                chantype = 9999
-
-                try:
-                    chantype = int(ADDON_SETTINGS.getSetting("Channel_" + str(i + 1) + "_type"))
-                except:
-                    pass
-
-                if chantype == 9999:
-                    addPreset(i + 1, currentpreset)
-                    currentpreset += 1
-
-        # Migrate serial mode to rules
-        if compareVersions(curver, "2.0.0") < 0:
-            for i in range(999):
-                try:
-                    if ADDON_SETTINGS.getSetting("Channel_" + str(i + 1) + "_type") == '6':
-                        if ADDON_SETTINGS.getSetting("Channel_" + str(i + 1) + "_2") == "6":
-                            ADDON_SETTINGS.setSetting("Channel_" + str(i + 1) + "_rulecount", "2")
-                            ADDON_SETTINGS.setSetting("Channel_" + str(i + 1) + "_rule_1_id", "8")
-                            ADDON_SETTINGS.setSetting("Channel_" + str(i + 1) + "_rule_2_id", "9")
-                            ADDON_SETTINGS.setSetting("Channel_" + str(i + 1) + "_2", "4")
-                except:
-                    pass
-
-    ADDON_SETTINGS.setSetting("Version", VERSION)
-
-
-def addPreset(channel, presetnum):
-    networks = ['ABC', 'AMC', 'Bravo', 'CBS', 'Comedy Central', 'Food Network', 'FOX', 'FX', 'HBO', 'NBC', 'SciFi', 'The WB']
-    genres = ['Animation', 'Comedy', 'Documentary', 'Drama', 'Fantasy']
-    studio = ['Brandywine Productions Ltd.', 'Fox 2000 Pictures', 'GK Films', 'Legendary Pictures', 'Universal Pictures']
-
-    if presetnum < len(networks):
-        ADDON_SETTINGS.setSetting("Channel_" + str(channel) + "_type", "1")
-        ADDON_SETTINGS.setSetting("Channel_" + str(channel) + "_1", networks[presetnum])
-    elif presetnum - len(networks) < len(genres):
-        ADDON_SETTINGS.setSetting("Channel_" + str(channel) + "_type", "5")
-        ADDON_SETTINGS.setSetting("Channel_" + str(channel) + "_1", genres[presetnum - len(networks)])
-    elif presetnum - len(networks) - len(genres) < len(studio):
-        ADDON_SETTINGS.setSetting("Channel_" + str(channel) + "_type", "2")
-        ADDON_SETTINGS.setSetting("Channel_" + str(channel) + "_1", studio[presetnum - len(networks) - len(genres)])
-
-
-def compareVersions(version1, version2):
-    retval = 0
-    ver1 = version1.split('.')
-    ver2 = version2.split('.')
-
-    for i in range(min(len(ver1), len(ver2))):
-        try:
-            if int(ver1[i]) < int(ver2[i]):
-                retval = -1
-                break
-
-            if int(ver1[i]) > int(ver2[i]):
-                retval = 1
-                break
-        except:
-            try:
-                v = int(ver1[i])
-                retval = 1
-            except:
-                retval = -1
-
-            break
-
-    if retval == 0:
-        if len(ver1) > len(ver2):
-            retval = 1
-        elif len(ver2) > len(ver1):
-            retval = -1
-
-    return retval
 
 
 ADDON_ID = 'script.pseudotv'

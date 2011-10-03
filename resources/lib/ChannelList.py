@@ -683,7 +683,7 @@ class ChannelList:
 
     def createShowPlaylist(self, show, setting2):
         order = 'random'
-        
+
         try:
             setting = int(setting2)
 
@@ -838,7 +838,7 @@ class ChannelList:
         return newstr
 
 
-    def fillTVInfo(self):
+    def fillTVInfo(self, sortbycount = False):
         self.log("fillTVInfo")
         json_query = '{"jsonrpc": "2.0", "method": "VideoLibrary.GetTVShows", "params": {"fields":["studio", "genre"]}, "id": 1}'
 
@@ -863,19 +863,31 @@ class ChannelList:
                 found = False
                 network = match.group(1).strip()
 
-                for item in self.networkList:
+                for item in range(len(self.networkList)):
                     if self.threadPause() == False:
                         del self.networkList[:]
                         del self.showList[:]
                         del self.showGenreList[:]
                         return
 
-                    if item.lower() == network.lower():
+                    itm = self.networkList[item]
+
+                    if sortbycount:
+                        itm = itm[0]
+
+                    if itm.lower() == network.lower():
                         found = True
+
+                        if sortbycount:
+                            self.networkList[item][1] += 1
+
                         break
 
                 if found == False and len(network) > 0:
-                    self.networkList.append(network)
+                    if sortbycount:
+                        self.networkList.append([network, 1])
+                    else:
+                        self.networkList.append(network)
 
             match = re.search('"label" *: *"(.*?)",', f)
 
@@ -892,28 +904,45 @@ class ChannelList:
                     found = False
                     curgenre = genre.lower().strip()
 
-                    for g in self.showGenreList:
+                    for g in range(len(self.showGenreList)):
                         if self.threadPause() == False:
                             del self.networkList[:]
                             del self.showList[:]
                             del self.showGenreList[:]
                             return
 
-                        if curgenre == g.lower():
+                        itm = self.showGenreList[g]
+
+                        if sortbycount:
+                            itm = itm[0]
+
+                        if curgenre == itm.lower():
                             found = True
+
+                            if sortbycount:
+                                self.showGenreList[g][1] += 1
+
                             break
 
                     if found == False:
-                        self.showGenreList.append(genre.strip())
+                        if sortbycount:
+                            self.showGenreList.append([genre.strip(), 1])
+                        else:
+                            self.showGenreList.append(genre.strip())
 
-        self.networkList.sort(key=lambda x: x.lower())
-        self.showGenreList.sort(key=lambda x: x.lower())
+        if sortbycount:
+            self.networkList.sort(key=lambda x: x[1], reverse = True)
+            self.showGenreList.sort(key=lambda x: x[1], reverse = True)
+        else:
+            self.networkList.sort(key=lambda x: x.lower())
+            self.showGenreList.sort(key=lambda x: x.lower())
+
         self.log("found shows " + str(self.showList))
         self.log("found genres " + str(self.showGenreList))
         self.log("fillTVInfo return " + str(self.networkList))
 
 
-    def fillMovieInfo(self):
+    def fillMovieInfo(self, sortbycount = False):
         self.log("fillMovieInfo")
         studioList = []
         json_query = '{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovies", "params": {"fields":["studio", "genre"]}, "id": 1}'
@@ -941,13 +970,25 @@ class ChannelList:
                     found = False
                     curgenre = genre.lower().strip()
 
-                    for g in self.movieGenreList:
-                        if curgenre == g.lower():
+                    for g in range(len(self.movieGenreList)):
+                        itm = self.movieGenreList[g]
+
+                        if sortbycount:
+                            itm = itm[0]
+
+                        if curgenre == itm.lower():
                             found = True
+
+                            if sortbycount:
+                                self.movieGenreList[g][1] += 1
+
                             break
 
                     if found == False:
-                        self.movieGenreList.append(genre.strip())
+                        if sortbycount:
+                            self.movieGenreList.append([genre.strip(), 1])
+                        else:
+                            self.movieGenreList.append(genre.strip())
 
             match = re.search('"studio" *: *"(.*?)",', f)
 
@@ -962,6 +1003,7 @@ class ChannelList:
                         if studioList[i][0].lower() == curstudio.lower():
                             studioList[i][1] += 1
                             found = True
+                            break
 
                     if found == False and len(curstudio) > 0:
                         studioList.append([curstudio, 1])
@@ -974,6 +1016,7 @@ class ChannelList:
 
         bestmatch = 1
         lastmatch = 1000
+        counteditems = 0
 
         for i in range(maxcount, 0, -1):
             itemcount = 0
@@ -982,16 +1025,26 @@ class ChannelList:
                 if studioList[j][1] == i:
                     itemcount += 1
 
-            if abs(itemcount - 15) < abs(lastmatch - 15):
+            if abs(itemcount + counteditems - 8) < abs(lastmatch - 8):
                 bestmatch = i
                 lastmatch = itemcount
 
-        for i in range(len(studioList)):
-            if studioList[i][1] == bestmatch:
-                self.studioList.append(studioList[i][0])
+            counteditems += itemcount
 
-        self.studioList.sort(key=lambda x: x.lower())
-        self.movieGenreList.sort(key=lambda x: x.lower())
+        if sortbycount:
+            studioList.sort(key=lambda x: x[1], reverse=True)
+            self.movieGenreList.sort(key=lambda x: x[1], reverse=True)
+        else:
+            studioList.sort(key=lambda x: x.lower())
+            self.movieGenreList.sort(key=lambda x: x.lower())
+
+        for i in range(len(studioList)):
+            if studioList[i][1] >= bestmatch:
+                if sortbycount:
+                    self.studioList.append([studioList[i][0], studioList[i][1]])
+                else:
+                    self.studioList.append(studioList[i][0])
+
         self.log("found genres " + str(self.movieGenreList))
         self.log("fillMovieInfo return " + str(self.studioList))
 

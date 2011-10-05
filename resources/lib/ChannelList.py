@@ -1035,7 +1035,7 @@ class ChannelList:
             studioList.sort(key=lambda x: x[1], reverse=True)
             self.movieGenreList.sort(key=lambda x: x[1], reverse=True)
         else:
-            studioList.sort(key=lambda x: x.lower())
+            studioList.sort(key=lambda x: x[0].lower())
             self.movieGenreList.sort(key=lambda x: x.lower())
 
         for i in range(len(studioList)):

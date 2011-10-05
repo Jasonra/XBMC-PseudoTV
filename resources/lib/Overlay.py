@@ -827,12 +827,16 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
+        updateDialog.update(2)
+
         try:
             if self.notificationTimer.isAlive():
                 self.notificationTimer.cancel()
                 self.notificationTimer.join()
         except:
             pass
+
+        updateDialog.update(3)
 
         try:
             if self.infoTimer.isAlive():
@@ -841,12 +845,16 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
+        updateDialog.update(4)
+
         try:
             if self.sleepTimeValue > 0:
                 if self.sleepTimer.isAlive():
                     self.sleepTimer.cancel()
         except:
             pass
+
+        updateDialog.update(5)
 
         try:
             if self.masterTimer.isAlive():
@@ -855,13 +863,23 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         except:
             pass
 
-        updateDialog.update(5)
-
         if self.channelThread.isAlive():
-            self.channelThread.join()
+            for i in range(30):
+                try:
+                    self.channelThread.join(1.0)
+                except:
+                    pass
+
+                if self.channelThread.isAlive() == False:
+                    break
+
+                updateDialog.update(6 + i, "Exiting", "Stopping Threads")
+
+            if self.channelThread.isAlive():
+                self.log("Problem joining channel thread", xbmc.ERROR_LOG)
 
         if self.timeStarted > 0 and self.isMaster:
-            updateDialog.update(10, "Exiting", "Saving Settings")
+            updateDialog.update(35, "Exiting", "Saving Settings")
             validcount = 0
 
             for i in range(self.maxChannels):
@@ -869,10 +887,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                     validcount += 1
 
             if validcount > 0:
-                incval = 90.0 / float(validcount)
+                incval = 65.0 / float(validcount)
 
                 for i in range(self.maxChannels):
-                    updateDialog.update(10 + int((incval * i)))
+                    updateDialog.update(35 + int((incval * i)))
 
                     if self.channels[i].isValid:
                         if self.channels[i].mode & MODE_RESUME == 0:

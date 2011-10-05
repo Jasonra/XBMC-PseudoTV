@@ -13,6 +13,9 @@ Changelog
     Select mode for background channel thread.
     EPG drawing optimization.
     Select between 12-hour and 24-hour clock.
+    Better channel creation for first-time users.
+    Much better time accuracy between restarts.
+    Added Xeebo skin (thanks Steveb).
 
 
 1.2.1

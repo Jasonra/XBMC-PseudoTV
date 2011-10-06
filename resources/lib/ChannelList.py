@@ -242,7 +242,7 @@ class ChannelList:
 
                 conn.close()
             except:
-                pass
+                self.log("Exception when getting JSON data")
 
         if usedhttp == False:
             self.httpJSON = False

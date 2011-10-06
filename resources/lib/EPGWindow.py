@@ -86,8 +86,8 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         delta = datetime.timedelta(minutes=30)
 
         for i in range(3):
-            if self.clockMode == 0:
-                self.getControl(101 + i).setLabel(now.strftime("%I:%M"))
+            if self.clockMode == "0":
+                self.getControl(101 + i).setLabel(now.strftime("%I:%M%p").lower())
             else:
                 self.getControl(101 + i).setLabel(now.strftime("%H:%M"))
 

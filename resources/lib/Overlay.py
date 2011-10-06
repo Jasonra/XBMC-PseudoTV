@@ -263,7 +263,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
     # handle fatal errors: log it, show the dialog, and exit
     def Error(self, line1, line2 = '', line3 = ''):
-        self.log('FATAL ERROR: ' + line1 + line2 + line3, xbmc.LOGFATAL)
+        self.log('FATAL ERROR: ' + line1 + " " + line2 + " " + line3, xbmc.LOGFATAL)
         dlg = xbmcgui.Dialog()
         dlg.ok('Error', line1, line2, line3)
         del dlg
@@ -310,6 +310,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     # set the channel, the proper show offset, and time offset
     def setChannel(self, channel):
         self.log('setChannel ' + str(channel))
+        
+        if self.Player.stopped:
+            return
 
         if channel < 1 or channel > self.maxChannels:
             self.log('setChannel invalid channel ' + str(channel), xbmc.LOGERROR)
@@ -589,6 +592,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         action = act.getId()
         self.log('onAction ' + str(action))
 
+        if self.Player.stopped:
+            return
+
         # Since onAction isnt always called from the same thread (weird),
         # ignore all actions if we're in the middle of processing one
         if self.actionSemaphore.acquire(False) == False:
@@ -667,6 +673,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
                 if dlg.yesno("Exit?", "Are you sure you want to exit PseudoTV?"):
                     self.end()
+                    return  # Don't release the semaphore
                 else:
                     self.startSleepTimer()
 
@@ -726,7 +733,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         # TODO: show some dialog, allow the user to cancel the sleep
         # perhaps modify the sleep time based on the current show
         self.end()
-        self.actionSemaphore.release()
 
 
     def notificationAction(self):

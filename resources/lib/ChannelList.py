@@ -811,6 +811,9 @@ class ChannelList:
                         tmpstr += "\n" + match.group(1).replace("\\\\", "\\")
                         fileList.append(tmpstr)
 
+        if filecount == 0:
+            self.log(json_folder_detail)
+
         return fileList
 
 
@@ -846,7 +849,7 @@ class ChannelList:
             self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "reading TV data")
 
         json_folder_detail = self.sendJSON(json_query)
-        self.log(json_folder_detail)
+#        self.log(json_folder_detail)
         detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in detail:
@@ -937,6 +940,9 @@ class ChannelList:
             self.networkList.sort(key=lambda x: x.lower())
             self.showGenreList.sort(key=lambda x: x.lower())
 
+        if (len(self.showList) == 0) and (len(self.showGenreList) == 0) and (len(self.networkList) == 0):
+            self.log(json_folder_detail)
+
         self.log("found shows " + str(self.showList))
         self.log("found genres " + str(self.showGenreList))
         self.log("fillTVInfo return " + str(self.networkList))
@@ -951,7 +957,7 @@ class ChannelList:
             self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "reading movie data")
 
         json_folder_detail = self.sendJSON(json_query)
-        self.log(json_folder_detail)
+#        self.log(json_folder_detail)
         detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in detail:
@@ -1045,6 +1051,9 @@ class ChannelList:
                 else:
                     self.studioList.append(studioList[i][0])
 
+        if (len(self.movieGenreList) == 0) and (len(self.studioList) == 0):
+            self.log(json_folder_detail)
+
         self.log("found genres " + str(self.movieGenreList))
         self.log("fillMovieInfo return " + str(self.studioList))
 
@@ -1076,7 +1085,7 @@ class ChannelList:
             self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "querying database")
 
         json_folder_detail = self.sendJSON(json_query)
-        self.log(json_folder_detail)
+#        self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in file_detail:
@@ -1183,6 +1192,9 @@ class ChannelList:
 
             for seepitem in seasoneplist:
                 fileList.append(seepitem[2])
+
+        if filecount == 0:
+            self.log(json_folder_detail)
 
         self.log("buildFileList return")
         return fileList

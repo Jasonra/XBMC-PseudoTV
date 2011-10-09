@@ -58,7 +58,6 @@ class ChannelList:
 
 
     def readConfig(self):
-        self.findMaxChannels()
         self.channelResetSetting = int(REAL_SETTINGS.getSetting("ChannelResetSetting"))
         self.log('Channel Reset Setting is ' + str(self.channelResetSetting))
         self.forceReset = REAL_SETTINGS.getSetting('ForceChannelReset') == "true"
@@ -67,6 +66,11 @@ class ChannelList:
         self.startMode = int(REAL_SETTINGS.getSetting("StartMode"))
         self.log('Start Mode is ' + str(self.startMode))
         self.backgroundUpdating = int(REAL_SETTINGS.getSetting("ThreadMode"))
+        self.findMaxChannels()
+
+        if self.forceReset:
+            REAL_SETTINGS.setSetting('ForceChannelReset', "False")
+            self.forceReset = False
 
         try:
             self.lastResetTime = int(ADDON_SETTINGS.getSetting("LastResetTime"))
@@ -90,7 +94,7 @@ class ChannelList:
 
         if self.backgroundUpdating > 0 and self.myOverlay.isMaster == True:
             makenewlists = True
-
+            
         # Go through all channels, create their arrays, and setup the new playlist
         for i in range(self.maxChannels):
             self.updateDialogProgress = i * 100 // self.enteredChannelCount
@@ -158,6 +162,9 @@ class ChannelList:
                 if len(chsetting1) > 0:
                     self.maxChannels = i + 1
                     self.enteredChannelCount += 1
+                    
+            if self.forceReset and (chtype != 9999):
+                ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_changed', "True")
 
         self.log('findMaxChannels return ' + str(self.maxChannels))
 
@@ -304,25 +311,25 @@ class ChannelList:
 
                     # If this channel has been watched for longer than it lasts, reset the channel
                     if self.channelResetSetting == 0 and self.channels[channel - 1].totalTimePlayed < self.channels[channel - 1].getTotalDuration():
-                        createlist = self.forceReset
+                        createlist = False
 
                     if self.channelResetSetting > 0 and self.channelResetSetting < 4:
                         timedif = time.time() - self.lastResetTime
 
                         if self.channelResetSetting == 1 and timedif < (60 * 60 * 24):
-                            createlist = self.forceReset
+                            createlist = False
 
                         if self.channelResetSetting == 2 and timedif < (60 * 60 * 24 * 7):
-                            createlist = self.forceReset
+                            createlist = False
 
                         if self.channelResetSetting == 3 and timedif < (60 * 60 * 24 * 30):
-                            createlist = self.forceReset
+                            createlist = False
 
                         if timedif < 0:
-                            createlist = self.forceReset
+                            createlist = False
 
                     if self.channelResetSetting == 4:
-                        createlist = self.forceReset
+                        createlist = False
             except:
                 pass
 

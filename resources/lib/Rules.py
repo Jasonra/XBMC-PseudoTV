@@ -30,7 +30,6 @@ from Playlist import PlaylistItem
 
 class RulesList:
     def __init__(self):
-#        self.ruleList = [BaseRule(), RenameRule(), NoShowRule(), ScheduleChannelRule(), OnlyWatchedRule(), DontAddChannel(), InterleaveChannel(), ForceRealTime(), AlwaysPause(), ForceResume(), ForceRandom(), OnlyUnWatchedRule(), PlayShowInOrder()]
         self.ruleList = [BaseRule(), ScheduleChannelRule(), NoShowRule(), DontAddChannel(), ForceRandom(), ForceRealTime(), ForceResume(), InterleaveChannel(), OnlyUnWatchedRule(), OnlyWatchedRule(), AlwaysPause(), PlayShowInOrder(), RenameRule()]
 
 
@@ -167,6 +166,10 @@ class BaseRule:
         if button == 0xF020:
             self.optionValues[optionindex] += ' '
 
+        if xbmc.getCondVisibility("Window.IsVisible(10111)"):
+            self.log("shutdown window is visible")
+            xbmc.executebuiltin("Dialog.close(10111)")
+
 
     def onActionDateBox(self, act, optionindex):
         self.log("onActionDateBox")
@@ -289,6 +292,10 @@ class BaseRule:
         if button == 0xF008:
             if len(self.optionValues[optionindex]) >= 1:
                 self.optionValues[optionindex] = self.optionValues[optionindex][:-1]
+
+        if xbmc.getCondVisibility("Window.IsVisible(10111)"):
+            self.log("shutdown window is visible")
+            xbmc.executebuiltin("Dialog.close(10111)")
 
 
     def validateDaysofWeekBox(self, optionindex):

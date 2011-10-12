@@ -88,6 +88,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.isExiting = False
         self.maxChannels = 0
         self.notPlayingCount = 0
+        self.ignoreInfoAction = False
 
         for i in range(3):
             self.channelLabel.append(xbmcgui.ControlImage(50 + (50 * i), 50, 50, 50, IMAGES_LOC + 'solid.png', colorDiffuse='0xAA00ff00'))
@@ -522,6 +523,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 pass
         ##
 
+        if xbmc.getCondVisibility('Player.ShowInfo'):
+            xbmc.executehttpapi("SendKey(0xF049)")
+            self.ignoreInfoAction = True
+
         self.channelLabelTimer.name = "ChannelLabel"
         self.channelLabelTimer.start()
         self.startNotificationTimer(10.0)
@@ -567,6 +572,11 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         self.infoTimer = threading.Timer(timer, self.hideInfo)
         self.infoTimer.name = "InfoTimer"
+
+        if xbmc.getCondVisibility('Player.ShowInfo'):
+            xbmc.executehttpapi("SendKey(0xF049)")
+            self.ignoreInfoAction = True
+
         self.infoTimer.start()
 
 
@@ -679,10 +689,17 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
                 del dlg
         elif action == ACTION_SHOW_INFO:
-            if self.showingInfo:
-                self.hideInfo()
+            if self.ignoreInfoAction:
+                self.ignoreInfoAction = False
             else:
-                self.showInfo(10.0)
+                if self.showingInfo:
+                    self.hideInfo()
+
+                    if xbmc.getCondVisibility('Player.ShowInfo'):
+                        xbmc.executehttpapi("SendKey(0xF049)")
+                        self.ignoreInfoAction = True
+                else:
+                    self.showInfo(10.0)
         elif action >= ACTION_NUMBER_0 and action <= ACTION_NUMBER_9:
             if self.inputChannel < 0:
                 self.inputChannel = action - ACTION_NUMBER_0

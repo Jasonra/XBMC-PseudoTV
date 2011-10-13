@@ -94,7 +94,7 @@ class ChannelList:
 
         if self.backgroundUpdating > 0 and self.myOverlay.isMaster == True:
             makenewlists = True
-            
+
         # Go through all channels, create their arrays, and setup the new playlist
         for i in range(self.maxChannels):
             self.updateDialogProgress = i * 100 // self.enteredChannelCount
@@ -162,7 +162,7 @@ class ChannelList:
                 if len(chsetting1) > 0:
                     self.maxChannels = i + 1
                     self.enteredChannelCount += 1
-                    
+
             if self.forceReset and (chtype != 9999):
                 ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_changed', "True")
 

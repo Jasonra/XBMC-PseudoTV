@@ -69,7 +69,11 @@ if xbmc.getInfoLabel("Window(10000).Property(PseudoTVRunning)") != "True":
                 log("Active Thread: " + str(curthread.name), xbmc.LOGERROR)
 
                 if curthread.name != "MainThread":
-                    curthread.join()
+                    try:
+                        curthread.join()
+                    except:
+                        pass
+
                     log("Joined " + curthread.name)
             except:
                 pass

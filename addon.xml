@@ -6,7 +6,7 @@
 	provider-name="Jason Anderson">
 
 	<requires>
-		<import addon="xbmc.python" version="1.0"/>
+		<import addon="xbmc.python" version="2.0"/>
 	</requires>
 
 	<extension point="xbmc.python.script"

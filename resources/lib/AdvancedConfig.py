@@ -38,8 +38,8 @@ class AdvancedConfig(xbmcgui.WindowXMLDialog):
         self.allRules = RulesList()
 
 
-    def log(self, msg):
-        log('AdvancedConfig: ' + msg)
+    def log(self, msg, level = xbmc.LOGDEBUG):
+        log('AdvancedConfig: ' + msg, level)
 
 
     def onInit(self):

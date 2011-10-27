@@ -30,7 +30,7 @@ from Playlist import PlaylistItem
 
 class RulesList:
     def __init__(self):
-        self.ruleList = [BaseRule(), ScheduleChannelRule(), NoShowRule(), DontAddChannel(), ForceRandom(), ForceRealTime(), ForceResume(), InterleaveChannel(), OnlyUnWatchedRule(), OnlyWatchedRule(), AlwaysPause(), PlayShowInOrder(), RenameRule()]
+        self.ruleList = [BaseRule(), ScheduleChannelRule(), NoShowRule(), DontAddChannel(), ForceRandom(), ForceRealTime(), ForceResume(), InterleaveChannel(), OnlyUnWatchedRule(), OnlyWatchedRule(), AlwaysPause(), PlayShowInOrder(), RenameRule(), SetResetTime()]
 
 
     def getRuleCount(self):
@@ -112,8 +112,8 @@ class BaseRule:
         return BaseRule()
 
 
-    def log(self, msg):
-        log("Rule " + self.getTitle() + ": " + msg)
+    def log(self, msg, level = xbmc.LOGDEBUG):
+        log("Rule " + self.getTitle() + ": " + msg, level)
 
 
     def validate(self):
@@ -1266,3 +1266,67 @@ class PlayShowInOrder(BaseRule):
 
         return ''
 
+
+
+class SetResetTime(BaseRule):
+    def __init__(self):
+        self.name = "Reset Every x Days"
+        self.optionLabels = ['Number of Days']
+        self.optionValues = ['5']
+        self.myId = 13
+        self.actions = RULES_ACTION_START
+
+
+    def copy(self):
+        return SetResetTime()
+
+
+    def getTitle(self):
+        if len(self.optionValues[0]) > 0:
+            if self.optionValues[0] == '1':
+                return "Reset Every Day"
+            else:
+                return "Reset Every " + self.optionValues[0] + " Days"
+
+        return self.name
+
+
+    def onAction(self, act, optionindex):
+        self.onActionDigitBox(act, optionindex)
+        self.validate()
+        return self.optionValues[optionindex]
+
+
+    def validate(self):
+        self.validateDigitBox(0, 1, 50, '')
+
+
+    def runAction(self, actionid, channelList, channeldata):
+        if actionid == RULES_ACTION_START:
+            curchan = channeldata.channelNumber
+            numdays = 0
+
+            try:
+                numdays = int(self.optionValues[0])
+            except:
+                pass
+
+            if numdays <= 0:
+                self.log("Invalid day count: " + str(numdays))
+                return channeldata
+
+            rightnow = int(time.time())
+            nextreset = rightnow
+
+            try:
+                nextreset = int(ADDON_SETTINGS.getSetting('Channel_' + str(curchan) + '_SetResetTime'))
+            except:
+                pass
+
+            if rightnow >= nextreset:
+                channeldata.isValid = False
+                ADDON_SETTINGS.setSetting('Channel_' + str(curchan) + '_changed', 'True')
+                nextreset = rightnow + (60 * 60 * 24 * numdays)
+                ADDON_SETTINGS.setSetting('Channel_' + str(curchan) + '_SetResetTime', str(nextreset))
+
+        return channeldata

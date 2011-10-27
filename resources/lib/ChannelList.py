@@ -276,11 +276,6 @@ class ChannelList:
         except:
             pass
 
-        try:
-            needsreset = ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_changed') == 'True'
-        except:
-            pass
-
         while len(self.channels) < channel:
             self.channels.append(Channel())
 
@@ -292,6 +287,11 @@ class ChannelList:
         self.channels[channel - 1].loadRules(channel)
         self.runActions(RULES_ACTION_START, channel, self.channels[channel - 1])
         GlobalFileLock.lockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', True)
+
+        try:
+            needsreset = ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_changed') == 'True'
+        except:
+            pass
 
         # If possible, use an existing playlist
         # Don't do this if we're appending an existing channel

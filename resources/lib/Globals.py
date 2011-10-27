@@ -60,6 +60,7 @@ CHANNEL_SHARING = False
 if REAL_SETTINGS.getSetting('ChannelSharing') == "true":
     CHANNEL_SHARING = True
     SETTINGS_LOC = REAL_SETTINGS.getSetting('SettingsFolder')
+    log("Channel sharing at " + str(SETTINGS_LOC));
 
 IMAGES_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'images')) + '/'
 PRESETS_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'presets')) + '/'

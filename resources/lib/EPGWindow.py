@@ -312,7 +312,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
                 # Don't show very short videos
                 if self.MyOverlayWindow.hideShortItems and shouldskip == False:
-                    if self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos) < 60:
+                    if self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos) < self.MyOverlayWindow.shortItemLength:
                         shouldskip = True
                         tmpdur = 0
                     else:

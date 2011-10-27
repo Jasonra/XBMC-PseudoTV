@@ -89,6 +89,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.maxChannels = 0
         self.notPlayingCount = 0
         self.ignoreInfoAction = False
+        self.shortItemLength = 60
 
         for i in range(3):
             self.channelLabel.append(xbmcgui.ControlImage(50 + (50 * i), 50, 50, 50, IMAGES_LOC + 'solid.png', colorDiffuse='0xAA00ff00'))
@@ -243,6 +244,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log("Show Next Item - " + str(self.showNextItem))
         self.hideShortItems = REAL_SETTINGS.getSetting("HideClips") == "true"
         self.log("Hide Short Items - " + str(self.hideShortItems))
+        self.shortItemLength = SHORT_CLIP_ENUM[int(REAL_SETTINGS.getSetting("ClipLength"))]
+        self.log("Short item length - " + str(self.shortItemLength))
 
         if FileAccess.exists(self.channelLogos) == False:
             self.channelLogos = IMAGES_LOC
@@ -472,7 +475,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             while curoffset != abs(self.infoOffset):
                 position = self.channels[self.currentChannel - 1].fixPlaylistIndex(position + modifier)
 
-                if self.channels[self.currentChannel - 1].getItemDuration(position) >= 60:
+                if self.channels[self.currentChannel - 1].getItemDuration(position) >= self.shortItemLength:
                     curoffset += 1
         else:
             position = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition() + self.infoOffset
@@ -560,7 +563,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         if self.hideShortItems:
             position = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition() + self.infoOffset
 
-            if self.channels[self.currentChannel - 1].getItemDuration(xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition()) < 60:
+            if self.channels[self.currentChannel - 1].getItemDuration(xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition()) < self.shortItemLength:
                 return
 
         self.getControl(102).setVisible(True)
@@ -776,7 +779,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
                 if self.hideShortItems:
                     # Don't show any notification if the current show is < 60 seconds
-                    if self.channels[self.currentChannel - 1].getItemDuration(self.notificationLastShow) < 60:
+                    if self.channels[self.currentChannel - 1].getItemDuration(self.notificationLastShow) < self.shortItemLength:
                         self.notificationShowedNotif = True
 
                 timedif = self.channels[self.currentChannel - 1].getItemDuration(self.notificationLastShow) - self.Player.getTime()
@@ -787,7 +790,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                     if self.hideShortItems:
                         # Find the next show that is >= 60 seconds long
                         while nextshow != self.notificationLastShow:
-                            if self.channels[self.currentChannel - 1].getItemDuration(nextshow) >= 60:
+                            if self.channels[self.currentChannel - 1].getItemDuration(nextshow) >= self.shortItemLength:
                                 break
 
                             nextshow = self.channels[self.currentChannel - 1].fixPlaylistIndex(nextshow + 1)

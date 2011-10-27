@@ -9,7 +9,7 @@
     	<setting id="StartMode" type="enum" label="30011" values="Resume|Real Time|Random" default="1" />
     	<setting id="ThreadMode" type="enum" label="30012" values="On|Minimum Use|Off" default="0" />
     	<setting id="ChannelSharing" type="bool" label="30015" default="false"/>
-    	<setting id="SettingsFolder" subsetting = "true" type="folder" source="auto" visible="eq(-1,true)" label="30013" default="" />
+    	<setting id="SettingsFolder" subsetting="true" type="folder" source="auto" visible="eq(-1,true)" label="30013" default="" />
     </category>
 
     <category label="30020">
@@ -19,5 +19,6 @@
     	<setting id="ClockMode" type="enum" label="30014" default="0" values="12 Hour|24 Hour"/>
     	<setting id="EnableComingUp" type="bool" label="30016" default="true"/>
     	<setting id="HideClips" type="bool" label="30017" default="true"/>
+    	<setting id="ClipLength" type="enum" subsetting="true" label="30018" visible="eq(-1,true)" values="15|30|60|90|120|180|240|300|360" default="2"/>
     </category>
 </settings>

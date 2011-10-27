@@ -36,7 +36,7 @@ ADDON_ID = 'script.pseudotv'
 REAL_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
 ADDON_INFO = REAL_SETTINGS.getAddonInfo('path')
 
-VERSION = "2.0.0"
+VERSION = "2.0.1"
 
 TIMEOUT = 15 * 1000
 TOTAL_FILL_CHANNELS = 20
@@ -71,6 +71,8 @@ if len(SETTINGS_LOC) == 0:
 CHANNELS_LOC = xbmc.translatePath(os.path.join(SETTINGS_LOC, 'cache')) + '/'
 GEN_CHAN_LOC = os.path.join(CHANNELS_LOC, 'generated') + '/'
 MADE_CHAN_LOC = os.path.join(CHANNELS_LOC, 'stored') + '/'
+
+SHORT_CLIP_ENUM = [15,30,60,90,120,180,240,300,360]
 
 GlobalFileLock = FileLock()
 ADDON_SETTINGS = Settings.Settings()

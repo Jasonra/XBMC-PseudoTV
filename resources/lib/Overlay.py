@@ -21,7 +21,7 @@ import subprocess, os
 import time, threading
 import datetime
 import sys, re
-import random
+import random, traceback
 
 from xml.dom.minidom import parse, parseString
 
@@ -899,7 +899,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 updateDialog.update(6 + i, "Exiting", "Stopping Threads")
 
             if self.channelThread.isAlive():
-                self.log("Problem joining channel thread", xbmc.ERROR_LOG)
+                self.log("Problem joining channel thread", xbmc.LOGERROR)
 
         if self.timeStarted > 0 and self.isMaster:
             updateDialog.update(35, "Exiting", "Saving Settings")

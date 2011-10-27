@@ -19,7 +19,7 @@
 import xbmc, xbmcgui, xbmcaddon
 import subprocess, os
 import time, threading
-import datetime
+import datetime, traceback
 
 from Playlist import Playlist
 from Globals import *
@@ -72,8 +72,8 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             self.channelButtons[i] = []
 
         self.clockMode = ADDON_SETTINGS.getSetting("ClockMode")
-
-
+        
+        
     def onFocus(self, controlid):
         pass
 
@@ -96,8 +96,8 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.log('setTimeLabels return')
 
 
-    def log(self, msg):
-        log('EPG: ' + msg)
+    def log(self, msg, level = xbmc.LOGDEBUG):
+        log('EPGWindow: ' + msg, level)
 
 
     def onInit(self):
@@ -120,45 +120,59 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         except:
             pass
 
-        if self.setChannelButtons(time.time(), self.MyOverlayWindow.currentChannel) == False:
-            self.log('Unable to add channel buttons')
+        try:
+            if self.setChannelButtons(time.time(), self.MyOverlayWindow.currentChannel) == False:
+                self.log('Unable to add channel buttons')
+                return
+
+            curtime = time.time()
+            self.focusIndex = -1
+            basex, basey = self.getControl(113).getPosition()
+            baseh = self.getControl(113).getHeight()
+            basew = self.getControl(113).getWidth()
+
+            # set the button that corresponds to the currently playing show
+            for i in range(len(self.channelButtons[2])):
+                left, top = self.channelButtons[2][i].getPosition()
+                width = self.channelButtons[2][i].getWidth()
+                left = left - basex
+                starttime = self.shownTime + (left / (basew / 5400.0))
+                endtime = starttime + (width / (basew / 5400.0))
+
+                if curtime >= starttime and curtime <= endtime:
+                    self.focusIndex = i
+                    self.setFocus(self.channelButtons[2][i])
+                    self.focusTime = int(time.time())
+                    self.focusEndTime = endtime
+                    break
+
+            # If nothing was highlighted, just select the first button
+            if self.focusIndex == -1:
+                self.focusIndex = 0
+                self.setFocus(self.channelButtons[2][0])
+                left, top = self.channelButtons[2][0].getPosition()
+                width = self.channelButtons[2][0].getWidth()
+                left = left - basex
+                starttime = self.shownTime + (left / (basew / 5400.0))
+                endtime = starttime + (width / (basew / 5400.0))
+                self.focusTime = int(starttime + 30)
+                self.focusEndTime = endtime
+
+            self.focusRow = 2
+            self.setShowInfo()
+        except:
+            self.log("Unknown EPG Initialization Exception", xbmc.LOGERROR)
+            self.log(traceback.format_exc(), xbmc.LOGERROR)
+
+            try:
+                self.close()
+            except:
+                self.log("Error closing", xbmc.LOGERROR)
+
+            self.MyOverlayWindow.sleepTimeValue = 1
+            self.MyOverlayWindow.startSleepTimer()
             return
 
-        curtime = time.time()
-        self.focusIndex = -1
-        basex, basey = self.getControl(113).getPosition()
-        baseh = self.getControl(113).getHeight()
-        basew = self.getControl(113).getWidth()
-
-        # set the button that corresponds to the currently playing show
-        for i in range(len(self.channelButtons[2])):
-            left, top = self.channelButtons[2][i].getPosition()
-            width = self.channelButtons[2][i].getWidth()
-            left = left - basex
-            starttime = self.shownTime + (left / (basew / 5400.0))
-            endtime = starttime + (width / (basew / 5400.0))
-
-            if curtime >= starttime and curtime <= endtime:
-                self.focusIndex = i
-                self.setFocus(self.channelButtons[2][i])
-                self.focusTime = int(time.time())
-                self.focusEndTime = endtime
-                break
-
-        # If nothing was highlighted, just select the first button
-        if self.focusIndex == -1:
-            self.focusIndex = 0
-            self.setFocus(self.channelButtons[2][0])
-            left, top = self.channelButtons[2][0].getPosition()
-            width = self.channelButtons[2][0].getWidth()
-            left = left - basex
-            starttime = self.shownTime + (left / (basew / 5400.0))
-            endtime = starttime + (width / (basew / 5400.0))
-            self.focusTime = int(starttime + 30)
-            self.focusEndTime = endtime
-
-        self.focusRow = 2
-        self.setShowInfo()
         self.log('onInit return')
 
 
@@ -341,25 +355,38 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         action = act.getId()
 
-        if action == ACTION_PREVIOUS_MENU:
-            self.closeEPG()
-        elif action == ACTION_MOVE_DOWN:
-            self.GoDown()
-        elif action == ACTION_MOVE_UP:
-            self.GoUp()
-        elif action == ACTION_MOVE_LEFT:
-            self.GoLeft()
-        elif action == ACTION_MOVE_RIGHT:
-            self.GoRight()
-        elif action == ACTION_STOP:
-            self.closeEPG()
-        elif action == ACTION_SELECT_ITEM:
-            lastaction = time.time() - self.lastActionTime
-
-            if lastaction >= 2:
-                self.selectShow()
+        try:
+            if action == ACTION_PREVIOUS_MENU:
                 self.closeEPG()
-                self.lastActionTime = time.time()
+            elif action == ACTION_MOVE_DOWN:
+                self.GoDown()
+            elif action == ACTION_MOVE_UP:
+                self.GoUp()
+            elif action == ACTION_MOVE_LEFT:
+                self.GoLeft()
+            elif action == ACTION_MOVE_RIGHT:
+                self.GoRight()
+            elif action == ACTION_STOP:
+                self.closeEPG()
+            elif action == ACTION_SELECT_ITEM:
+                lastaction = time.time() - self.lastActionTime
+
+                if lastaction >= 2:
+                    self.selectShow()
+                    self.closeEPG()
+                    self.lastActionTime = time.time()
+        except:
+            self.log("Unknown EPG Exception", xbmc.LOGERROR)
+            self.log(traceback.format_exc(), xbmc.LOGERROR)
+
+            try:
+                self.close()
+            except:
+                self.log("Error closing", xbmc.LOGERROR)
+
+            self.MyOverlayWindow.sleepTimeValue = 1
+            self.MyOverlayWindow.startSleepTimer()
+            return
 
         self.actionSemaphore.release()
         self.log('onAction return')

@@ -118,6 +118,8 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
 
             if self.getControl(194).isSelected():
                 ADDON_SETTINGS.setSetting(setting2, str(MODE_ORDERAIRDATE))
+            else:
+                ADDON_SETTINGS.setSetting(setting2, "0")
         elif chantype == 7:
             ADDON_SETTINGS.setSetting(setting1, self.getControl(200).getLabel())
         elif chantype == 9999:

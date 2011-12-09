@@ -40,6 +40,7 @@ class MyPlayer(xbmc.Player):
     def __init__(self):
         xbmc.Player.__init__(self, xbmc.PLAYER_CORE_AUTO)
         self.stopped = False
+        self.ignoreNextStop = False
 
 
     def log(self, msg, level = xbmc.LOGDEBUG):
@@ -50,13 +51,16 @@ class MyPlayer(xbmc.Player):
         if self.stopped == False:
             self.log('Playback stopped')
 
-            if self.overlay.sleepTimeValue == 0:
-                self.overlay.sleepTimer = threading.Timer(1, self.overlay.sleepAction)
-
-            self.overlay.background.setVisible(True)
-            self.overlay.sleepTimeValue = 1
-            self.overlay.startSleepTimer()
-            self.stopped = True
+            if self.ignoreNextStop == False:
+                if self.overlay.sleepTimeValue == 0:
+                    self.overlay.sleepTimer = threading.Timer(1, self.overlay.sleepAction)
+    
+                self.overlay.background.setVisible(True)
+                self.overlay.sleepTimeValue = 1
+                self.overlay.startSleepTimer()
+                self.stopped = True
+            else:
+                self.ignoreNextStop = False
 
 
 
@@ -369,6 +373,11 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 timedif -= self.channels[self.currentChannel - 1].getCurrentDuration() - self.channels[self.currentChannel - 1].showTimeOffset
                 self.channels[self.currentChannel - 1].addShowPosition(1)
                 self.channels[self.currentChannel - 1].setShowTime(0)
+
+        # First, check to see if the video is a strm
+        if self.channels[self.currentChannel - 1].getItemFilename(self.channels[self.currentChannel - 1].playlistPosition)[-4:].lower() == 'strm':
+            self.log("Ignoring a stop because of a stream")
+            self.Player.ignoreNextStop = True
 
         # set the show offset
         self.Player.playselected(self.channels[self.currentChannel - 1].playlistPosition)
@@ -812,9 +821,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.notPlayingCount += 1
             self.log("Adding to notPlayingCount")
 
-            if self.notPlayingCount == 3:
-                self.end()
-                return
+#            if self.notPlayingCount == 3:
+#                self.end()
+#                return
 
         if self.Player.stopped == False:
             self.playerTimer.name = "PlayerTimer"

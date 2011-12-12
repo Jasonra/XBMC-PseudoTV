@@ -66,6 +66,8 @@ class ChannelList:
         self.startMode = int(REAL_SETTINGS.getSetting("StartMode"))
         self.log('Start Mode is ' + str(self.startMode))
         self.backgroundUpdating = int(REAL_SETTINGS.getSetting("ThreadMode"))
+        self.incIceLibrary = REAL_SETTINGS.getSetting('IncludeIceLib') == "true"
+        self.log("IceLibrary is " + str(self.incIceLibrary))
         self.findMaxChannels()
 
         if self.forceReset:
@@ -1127,6 +1129,11 @@ class ChannelList:
                             # Runtime is reported in minutes
                             dur = int(duration.group(1)) * 60
                         except:
+                            dur = 0
+                            
+                    # Remove any file types that we don't want (ex. IceLibrary)
+                    if self.incIceLibrary == False:
+                        if match.group(1).replace("\\\\", "\\")[-4:].lower() == 'strm':
                             dur = 0
 
                     try:

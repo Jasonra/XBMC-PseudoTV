@@ -30,7 +30,7 @@ from Playlist import PlaylistItem
 
 class RulesList:
     def __init__(self):
-        self.ruleList = [BaseRule(), ScheduleChannelRule(), NoShowRule(), DontAddChannel(), ForceRandom(), ForceRealTime(), ForceResume(), InterleaveChannel(), OnlyUnWatchedRule(), OnlyWatchedRule(), AlwaysPause(), PlayShowInOrder(), RenameRule(), SetResetTime()]
+        self.ruleList = [BaseRule(), ScheduleChannelRule(), NoShowRule(), NoIceLibrary(), DontAddChannel(), ForceRandom(), ForceRealTime(), ForceResume(), IncludeIceLibrary(), InterleaveChannel(), OnlyUnWatchedRule(), OnlyWatchedRule(), AlwaysPause(), PlayShowInOrder(), RenameRule(), SetResetTime()]
 
 
     def getRuleCount(self):
@@ -1330,3 +1330,52 @@ class SetResetTime(BaseRule):
                 ADDON_SETTINGS.setSetting('Channel_' + str(curchan) + '_SetResetTime', str(nextreset))
 
         return channeldata
+
+
+
+class NoIceLibrary(BaseRule):
+    def __init__(self):
+        self.name = "Don't Include IceLibrary Streams"
+        self.optionLabels = []
+        self.optionValues = []
+        self.myId = 14
+        self.actions = RULES_ACTION_START | RULES_ACTION_FINAL_MADE | RULES_ACTION_FINAL_LOADED
+
+
+    def copy(self):
+        return NoIceLibrary()
+
+
+    def runAction(self, actionid, channelList, channeldata):
+        if actionid == RULES_ACTION_START:
+            self.storedIceLibValue = channelList.incIceLibrary
+            channelList.incIceLibrary = False
+        elif actionid == RULES_ACTION_FINAL_MADE or actionid == RULES_ACTION_FINAL_LOADED:
+            channelList.incIceLibrary = self.storedIceLibValue
+
+        return channeldata
+
+
+
+class IncludeIceLibrary(BaseRule):
+    def __init__(self):
+        self.name = "Include IceLibrary Streams"
+        self.optionLabels = []
+        self.optionValues = []
+        self.myId = 15
+        self.actions = RULES_ACTION_START | RULES_ACTION_FINAL_MADE | RULES_ACTION_FINAL_LOADED
+
+
+    def copy(self):
+        return IncludeIceLibrary()
+
+
+    def runAction(self, actionid, channelList, channeldata):
+        if actionid == RULES_ACTION_START:
+            self.storedIceLibValue = channelList.incIceLibrary
+            channelList.incIceLibrary = True
+        elif actionid == RULES_ACTION_FINAL_MADE or actionid == RULES_ACTION_FINAL_LOADED:
+            channelList.incIceLibrary = self.storedIceLibValue
+
+        return channeldata
+

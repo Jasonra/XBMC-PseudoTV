@@ -747,7 +747,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         if self.notificationTimer.isAlive():
             self.notificationTimer.cancel()
-            self.notificationTimer = threading.Timer(timertime, self.notificationAction)
+
+        self.notificationTimer = threading.Timer(timertime, self.notificationAction)
 
         if self.Player.stopped == False:
             self.notificationTimer.name = "NotificationTimer"

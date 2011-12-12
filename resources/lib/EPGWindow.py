@@ -72,8 +72,8 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             self.channelButtons[i] = []
 
         self.clockMode = ADDON_SETTINGS.getSetting("ClockMode")
-        
-        
+
+
     def onFocus(self, controlid):
         pass
 
@@ -245,26 +245,28 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
     # create the buttons for the specified channel in the given row
     def setButtons(self, starttime, curchannel, row):
         self.log('setButtons ' + str(starttime) + ", " + str(curchannel) + ", " + str(row))
-        
+
         try:
             curchannel = self.MyOverlayWindow.fixChannel(curchannel)
             basex, basey = self.getControl(111 + row).getPosition()
             baseh = self.getControl(111 + row).getHeight()
             basew = self.getControl(111 + row).getWidth()
-    
+
             if xbmc.Player().isPlaying() == False:
                 self.log('No video is playing, not adding buttons')
                 self.closeEPG()
                 return False
-    
+
             # go through all of the buttons and remove them
             for button in self.channelButtons[row]:
                 self.removeControl(button)
-    
+
+            self.log("deleted buttons")
             del self.channelButtons[row][:]
-    
+
             # if the channel is paused, then only 1 button needed
             if self.MyOverlayWindow.channels[curchannel - 1].isPaused:
+                self.log("adding 1 button")
                 self.channelButtons[row].append(xbmcgui.ControlButton(basex, basey, basew, baseh, self.MyOverlayWindow.channels[curchannel - 1].getCurrentTitle() + " (paused)", focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor=self.textcolor, focusedColor=self.focusedcolor))
                 self.addControl(self.channelButtons[row][0])
             else:
@@ -281,37 +283,42 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                     playlistpos = self.MyOverlayWindow.channels[curchannel - 1].playlistPosition
                     videotime = self.MyOverlayWindow.channels[curchannel - 1].showTimeOffset
                     reftime = self.MyOverlayWindow.channels[curchannel - 1].lastAccessTime
-    
+
                 # normalize reftime to the beginning of the video
                 reftime -= videotime
-    
+                self.log("while reftime: current is " + str(reftime))
+
                 while reftime > starttime:
                     playlistpos -= 1
                     # No need to check bounds on the playlistpos, the duration function makes sure it is correct
                     reftime -= self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos)
-    
+
+                self.log("while reftime again")
+
                 while reftime + self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos) < starttime:
                     reftime += self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos)
                     playlistpos += 1
-    
+
                 # create a button for each show that runs in the next hour and a half
                 endtime = starttime + 5400
                 totaltime = 0
-    
-                while reftime < endtime:
+                self.log("while reftime part 3")
+                totalloops = 0
+
+                while reftime < endtime and totalloops < 1000:
                     xpos = int(basex + (totaltime * (basew / 5400.0)))
                     tmpdur = self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos)
                     shouldskip = False
-    
+
                     # this should only happen the first time through this loop
                     # it shows the small portion of the show before the current one
                     if reftime < starttime:
                         tmpdur -= starttime - reftime
                         reftime = starttime
-    
+
                         if tmpdur < 60 * 3:
                             shouldskip = True
-    
+
                     # Don't show very short videos
                     if self.MyOverlayWindow.hideShortItems and shouldskip == False:
                         if self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos) < self.MyOverlayWindow.shortItemLength:
@@ -320,29 +327,33 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                         else:
                             nextlen = self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos + 1)
                             prevlen = self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos - 1)
-    
+
                             if nextlen < 60:
                                 tmpdur += nextlen / 2
-    
+
                             if prevlen < 60:
                                 tmpdur += prevlen / 2
-    
+
                     width = int((basew / 5400.0) * tmpdur)
-    
+
                     if width < 30 and shouldskip == False:
                         width = 30
                         tmpdur = int(30.0 / (basew / 5400.0))
-    
+
                     if width + xpos > basex + basew:
                         width = basex + basew - xpos
-    
+
                     if shouldskip == False and width >= 30:
                         self.channelButtons[row].append(xbmcgui.ControlButton(xpos, basey, width, baseh, self.MyOverlayWindow.channels[curchannel - 1].getItemTitle(playlistpos), focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor=self.textcolor, focusedColor=self.focusedcolor))
                         self.addControl(self.channelButtons[row][-1])
-    
+
                     totaltime += tmpdur
                     reftime += tmpdur
                     playlistpos += 1
+                    totalloops += 1
+                    
+                if totalloops >= 1000:
+                    self.log("Broken big loop, too many loops, reftime is " + str(reftime) + ", endtime is " + str(endtime))
         except:
             self.log("Exception in setButtons", xbmc.LOGERROR)
             self.log(traceback.format_exc(), xbmc.LOGERROR)

@@ -54,7 +54,7 @@ class MyPlayer(xbmc.Player):
             if self.ignoreNextStop == False:
                 if self.overlay.sleepTimeValue == 0:
                     self.overlay.sleepTimer = threading.Timer(1, self.overlay.sleepAction)
-    
+
                 self.overlay.background.setVisible(True)
                 self.overlay.sleepTimeValue = 1
                 self.overlay.startSleepTimer()
@@ -94,6 +94,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.notPlayingCount = 0
         self.ignoreInfoAction = False
         self.shortItemLength = 60
+        self.runningActionChannel = 0
 
         for i in range(3):
             self.channelLabel.append(xbmcgui.ControlImage(50 + (50 * i), 50, 50, 50, IMAGES_LOC + 'solid.png', colorDiffuse='0xAA00ff00'))
@@ -318,7 +319,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
     # set the channel, the proper show offset, and time offset
     def setChannel(self, channel):
         self.log('setChannel ' + str(channel))
-        
+        self.runActions(RULES_ACTION_OVERLAY_SET_CHANNEL, channel, self.channels[channel - 1])
+
         if self.Player.stopped:
             return
 
@@ -413,6 +415,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         self.showChannelLabel(self.currentChannel)
         self.lastActionTime = time.time()
+        self.runActions(RULES_ACTION_OVERLAY_SET_CHANNEL_END, channel, self.channels[channel - 1])
         self.log('setChannel return')
 
 
@@ -531,6 +534,11 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         if self.showChannelBug == True:
             try:
                 self.getControl(103).setImage(self.channelLogos + self.channels[self.currentChannel - 1].name + '.png')
+            except:
+                pass
+        else:
+            try:
+                self.getControl(103).setImage('')
             except:
                 pass
         ##
@@ -763,6 +771,28 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         # TODO: show some dialog, allow the user to cancel the sleep
         # perhaps modify the sleep time based on the current show
         self.end()
+
+
+    # Run rules for a channel
+    def runActions(self, action, channel, parameter):
+        self.log("runActions " + str(action) + " on channel " + str(channel))
+
+        if channel < 1:
+            return
+
+        self.runningActionChannel = channel
+        index = 0
+
+        for rule in self.channels[channel - 1].ruleList:
+            if rule.actions & action > 0:
+                self.runningActionId = index
+                parameter = rule.runAction(action, self, parameter)
+
+            index += 1
+
+        self.runningActionChannel = 0
+        self.runningActionId = 0
+        return parameter
 
 
     def notificationAction(self):

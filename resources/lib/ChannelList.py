@@ -1130,7 +1130,7 @@ class ChannelList:
                             dur = int(duration.group(1)) * 60
                         except:
                             dur = 0
-                            
+
                     # Remove any file types that we don't want (ex. IceLibrary)
                     if self.incIceLibrary == False:
                         if match.group(1).replace("\\\\", "\\")[-4:].lower() == 'strm':

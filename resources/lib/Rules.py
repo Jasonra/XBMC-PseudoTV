@@ -30,7 +30,7 @@ from Playlist import PlaylistItem
 
 class RulesList:
     def __init__(self):
-        self.ruleList = [BaseRule(), ScheduleChannelRule(), NoShowRule(), NoIceLibrary(), DontAddChannel(), ForceRandom(), ForceRealTime(), ForceResume(), IncludeIceLibrary(), InterleaveChannel(), OnlyUnWatchedRule(), OnlyWatchedRule(), AlwaysPause(), PlayShowInOrder(), RenameRule(), SetResetTime()]
+        self.ruleList = [BaseRule(), ScheduleChannelRule(), HandleChannelLogo(), NoShowRule(), DontAddChannel(), ForceRandom(), ForceRealTime(), ForceResume(), HandleIceLibrary(), InterleaveChannel(), OnlyUnWatchedRule(), OnlyWatchedRule(), AlwaysPause(), PlayShowInOrder(), RenameRule(), SetResetTime()]
 
 
     def getRuleCount(self):
@@ -256,6 +256,24 @@ class BaseRule:
         if broken:
             self.optionValues[optionindex] = "00:00"
             return
+
+
+    def onActionSelectBox(self, act, optionindex):
+        if act.getId() == ACTION_SELECT_ITEM:
+            optioncount = len(self.selectBoxOptions[optionindex])
+            cursel = -1
+
+            for i in range(optioncount):
+                if self.selectBoxOptions[optionindex][i] == self.optionValues[optionindex]:
+                    cursel = i
+                    break
+
+            cursel += 1
+
+            if cursel >= optioncount:
+                cursel = 0
+
+            self.optionValues[optionindex] = self.selectBoxOptions[optionindex][cursel]
 
 
     def onActionDaysofWeekBox(self, act, optionindex):
@@ -1333,23 +1351,40 @@ class SetResetTime(BaseRule):
 
 
 
-class NoIceLibrary(BaseRule):
+class HandleIceLibrary(BaseRule):
     def __init__(self):
-        self.name = "Don't Include IceLibrary Streams"
-        self.optionLabels = []
-        self.optionValues = []
+        self.name = "IceLibrary Streams"
+        self.optionLabels = ['Include Streams']
+        self.optionValues = ['Yes']
         self.myId = 14
         self.actions = RULES_ACTION_START | RULES_ACTION_FINAL_MADE | RULES_ACTION_FINAL_LOADED
+        self.selectBoxOptions = [["Yes", "No"]]
 
 
     def copy(self):
-        return NoIceLibrary()
+        return HandleIceLibrary()
+
+
+    def getTitle(self):
+        if self.optionValues[0] == 'Yes':
+            return 'Include IceLibrary Streams'
+        else:
+            return 'Exclude IceLibrary Streams'
+
+
+    def onAction(self, act, optionindex):
+        self.onActionSelectBox(act, optionindex)
+        return self.optionValues[optionindex]
 
 
     def runAction(self, actionid, channelList, channeldata):
         if actionid == RULES_ACTION_START:
             self.storedIceLibValue = channelList.incIceLibrary
-            channelList.incIceLibrary = False
+
+            if self.optionValues[0] == 'Yes':
+                channelList.incIceLibrary = True
+            else:
+                channelList.incIceLibrary = False
         elif actionid == RULES_ACTION_FINAL_MADE or actionid == RULES_ACTION_FINAL_LOADED:
             channelList.incIceLibrary = self.storedIceLibValue
 
@@ -1357,25 +1392,44 @@ class NoIceLibrary(BaseRule):
 
 
 
-class IncludeIceLibrary(BaseRule):
+class HandleChannelLogo(BaseRule):
     def __init__(self):
-        self.name = "Include IceLibrary Streams"
-        self.optionLabels = []
-        self.optionValues = []
+        self.name = "Channel Logo"
+        self.optionLabels = ['Display the Logo']
+        self.optionValues = ['Yes']
         self.myId = 15
-        self.actions = RULES_ACTION_START | RULES_ACTION_FINAL_MADE | RULES_ACTION_FINAL_LOADED
+        self.actions = RULES_ACTION_OVERLAY_SET_CHANNEL | RULES_ACTION_OVERLAY_SET_CHANNEL_END
+        self.selectBoxOptions = [["Yes", "No"]]
 
 
     def copy(self):
-        return IncludeIceLibrary()
+        return HandleChannelLogo()
 
 
-    def runAction(self, actionid, channelList, channeldata):
-        if actionid == RULES_ACTION_START:
-            self.storedIceLibValue = channelList.incIceLibrary
-            channelList.incIceLibrary = True
-        elif actionid == RULES_ACTION_FINAL_MADE or actionid == RULES_ACTION_FINAL_LOADED:
-            channelList.incIceLibrary = self.storedIceLibValue
+    def getTitle(self):
+        if self.optionValues[0] == 'Yes':
+            return 'Display the Channel Logo'
+        else:
+            return 'Hide the Channel Logo'
+
+
+    def onAction(self, act, optionindex):
+        self.onActionSelectBox(act, optionindex)
+        return self.optionValues[optionindex]
+
+
+    def runAction(self, actionid, overlay, channeldata):
+        if actionid == RULES_ACTION_OVERLAY_SET_CHANNEL:
+            self.storedLogoValue = overlay.showChannelBug
+
+            if self.optionValues[0] == 'Yes':
+                overlay.showChannelBug = True
+                self.log("setting channel bug to true")
+            else:
+                overlay.showChannelBug = False
+        elif actionid == RULES_ACTION_OVERLAY_SET_CHANNEL_END:
+            overlay.showChannelBug = self.storedLogoValue
+            self.log("set channel bug to " + str(overlay.showChannelBug))
 
         return channeldata
 

@@ -381,6 +381,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.log("Ignoring a stop because of a stream")
             self.Player.ignoreNextStop = True
 
+        # Mute the channel before changing
+        xbmc.executebuiltin("Mute()");
         # set the show offset
         self.Player.playselected(self.channels[self.currentChannel - 1].playlistPosition)
         # set the time offset
@@ -396,6 +398,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                     self.Player.pause()
 
                     if self.waitForVideoPaused() == False:
+                        xbmc.executebuiltin("Mute()");
                         return
             except:
                 self.log('Exception during seek on paused channel', xbmc.LOGERROR)
@@ -413,6 +416,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 except:
                     self.log('Exception during seek', xbmc.LOGERROR)
 
+        # Unmute
+        xbmc.executebuiltin("Mute()");
         self.showChannelLabel(self.currentChannel)
         self.lastActionTime = time.time()
         self.runActions(RULES_ACTION_OVERLAY_SET_CHANNEL_END, channel, self.channels[channel - 1])

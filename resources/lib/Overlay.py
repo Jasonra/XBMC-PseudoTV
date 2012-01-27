@@ -858,7 +858,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.log("Adding to notPlayingCount")
 
         if self.channels[self.currentChannel - 1].getCurrentFilename()[-4:].lower() != 'strm':
-            if self.notPlayingCount == 3:
+            if self.notPlayingCount >= 3:
                 self.end()
                 return
 

@@ -78,7 +78,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
     def onAction(self, act):
         action = act.getId()
 
-        if action == ACTION_PREVIOUS_MENU:
+        if action in ACTION_PREVIOUS_MENU:
             if self.showingList == False:
                 self.cancelChan()
                 self.hideChanDetails()

@@ -695,7 +695,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                 self.showInfo(10.0)
             else:
                 xbmc.executebuiltin("PlayerControl(SmallSkipForward)")
-        elif action == ACTION_PREVIOUS_MENU:
+        elif action in ACTION_PREVIOUS_MENU:
             if self.showingInfo:
                 self.hideInfo()
             else:

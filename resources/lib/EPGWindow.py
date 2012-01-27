@@ -372,7 +372,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         action = act.getId()
 
         try:
-            if action == ACTION_PREVIOUS_MENU:
+            if action in ACTION_PREVIOUS_MENU:
                 self.closeEPG()
             elif action == ACTION_MOVE_DOWN:
                 self.GoDown()

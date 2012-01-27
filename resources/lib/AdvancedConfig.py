@@ -72,7 +72,7 @@ class AdvancedConfig(xbmcgui.WindowXMLDialog):
         if focusid >= 160:
             self.getControl(focusid).setLabel(self.ruleList[self.selectedRuleIndex].onAction(act, (focusid - 160) + (self.optionRowOffset * 2)))
 
-        if action == ACTION_PREVIOUS_MENU:
+        if action in ACTION_PREVIOUS_MENU:
             if self.selectedRuleIndex > -1:
                 xbmc.executebuiltin("SetProperty(itempress,100)")
                 xbmc.executebuiltin("Control.SetFocus(120)")

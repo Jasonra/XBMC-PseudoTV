@@ -857,9 +857,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.notPlayingCount += 1
             self.log("Adding to notPlayingCount")
 
-#            if self.notPlayingCount == 3:
-#                self.end()
-#                return
+        if self.channels[self.currentChannel - 1].getCurrentFilename()[-4:].lower() != 'strm':
+            if self.notPlayingCount == 3:
+                self.end()
+                return
 
         if self.Player.stopped == False:
             self.playerTimer.name = "PlayerTimer"

@@ -1,0 +1,460 @@
+<window>
+	<allowoverlay>no</allowoverlay>
+
+	<coordinates>
+		<system>1</system>
+		<posx>0</posx>
+		<posy>0</posy>
+	</coordinates>
+
+	<include>ControlsOpenCloseAnim</include>
+
+	<controls>
+
+		<control type="group">	
+			<include>BackgroundDefault</include>
+			<include>BackgroundOpenCloseAnim</include>			
+		</control>
+
+		<control type="group">
+			<posx>175</posx>
+			<posy>510</posy>
+			<include>ControlsOpenCloseAnim</include>
+
+			<control type="image" id="503">
+				<width>128</width>
+				<height>64</height>
+				<aspectratio align="right">keep</aspectratio>
+			</control>
+
+			<control type="grouplist">
+				<posx>185</posx>
+				<itemgap>0</itemgap>
+
+				<control type="label" id="500">
+					<width>830</width>
+					<height>25</height>
+					<font>FullMediaInfoTitleFont</font>
+					<textcolor>GreyColor2</textcolor>
+					<aligny>center</aligny>
+				</control>
+
+				<control type="label" id="501">
+					<width>830</width>
+					<height>19</height>
+					<aligny>center</aligny>
+					<font>FullMediaInfoFont</font>
+					<textcolor>DefaultColor2</textcolor>
+				</control>
+
+				<control type="label">
+					<label/>
+					<height>5</height>
+				</control>
+
+				<control type="label" id="502">
+					<width>860</width>
+					<height>110</height>
+					<align>left</align>
+					<aligny>top</aligny>
+					<font>FullMediaInfoDescFont</font>
+					<textcolor>GreyColor2</textcolor>
+					<shadowcolor>ShadowColor</shadowcolor>
+					<wrapmultiline>true</wrapmultiline>
+				</control>
+
+			</control>
+		</control>
+
+		<control type="group">
+			<posx>120</posx>
+			<posy>166</posy>
+			<include>ControlsOpenCloseAnim</include>
+
+			<control type="image">
+				<posx>0</posx>
+				<width>230</width>
+				<height>29</height>
+				<texture border="5">controls/button-nofocus.png</texture>
+			</control>
+
+			<control type="label" id="104">
+				<description>Date Label</description>
+				<posx>10</posx>
+				<width>220</width>
+				<height>29</height>
+				<font>font13</font>
+				<textcolor>GreyColor2</textcolor>
+				<selectedcolor>GreyColor2</selectedcolor>
+				<aligny>center</aligny>
+				<align>left</align>
+				<label>Current Date</label>
+			</control>
+
+			<control type="image">
+				<posx>240</posx>
+				<width>300</width>
+				<height>29</height>
+				<texture border="5">controls/button-nofocus.png</texture>
+			</control>
+			<control type="label" id="101">
+				<description>Time 1 Label</description>
+				<posx>250</posx>
+				<width>290</width>
+				<height>29</height>
+				<font>font13</font>
+				<textcolor>GreyColor2</textcolor>
+				<selectedcolor>GreyColor2</selectedcolor>
+				<aligny>center</aligny>
+				<align>left</align>
+				<label>Time 1</label>
+			</control>			
+
+			<control type="image">
+				<posx>549</posx>
+				<width>300</width>
+				<height>29</height>
+				<texture border="5">controls/button-nofocus.png</texture>
+			</control>
+
+			<control type="label" id="102">
+				<description>Time 2 Label</description>
+				<posx>559</posx>
+				<width>290</width>
+				<height>29</height>
+				<font>font13</font>
+				<textcolor>GreyColor2</textcolor>
+				<selectedcolor>GreyColor2</selectedcolor>
+				<aligny>center</aligny>
+				<align>left</align>
+				<label>Time 2</label>
+			</control>
+
+			<control type="image">
+				<posx>858</posx>
+				<width>300</width>
+				<height>29</height>
+				<texture border="5">controls/button-nofocus.png</texture>
+			</control>
+
+			<control type="label" id="103">
+				<description>Time 3 Label</description>
+				<posx>868</posx>
+				<width>290</width>
+				<height>29</height>
+				<font>font13</font>
+				<textcolor>GreyColor2</textcolor>
+				<selectedcolor>GreyColor2</selectedcolor>
+				<aligny>center</aligny>
+				<align>left</align>
+				<label>Time 3</label>
+			</control>
+
+		</control>
+
+		<!--TIME LINES-->
+
+		<control type="group" id="111">
+			<posx>360</posx>
+			<posy>200</posy>
+			<width>940</width>
+			<height>40</height>
+		</control>
+
+		<control type="group" id="112">
+			<posx>360</posx>
+			<posy>245</posy>
+			<width>940</width>
+			<height>40</height>
+		</control>
+
+		<control type="group" id="113">
+			<posx>360</posx>
+			<posy>290</posy>
+			<width>940</width>
+			<height>40</height>
+		</control>
+
+		<control type="group" id="114">
+			<posx>360</posx>
+			<posy>335</posy>
+			<width>940</width>
+			<height>40</height>
+		</control>
+
+		<control type="group" id="115">
+			<posx>360</posx>
+			<posy>380</posy>
+			<width>940</width>
+			<height>40</height>
+		</control>
+
+		<control type="group" id="116">
+			<posx>360</posx>
+			<posy>425</posy>
+			<width>940</width>
+			<height>40</height>
+		</control>
+
+		<!--TIME BAR-->
+
+		<control type="image" id="120">
+			<description>Time Bar</description>
+			<posx>360</posx>
+			<posy>200</posy>
+			<width>22</width>
+			<height>265</height>
+		</control>
+
+		<!--CHANNEL BUTTONS AND LABELS-->
+
+		<control type="image">
+			<posx>120</posx>
+			<posy>200</posy>
+			<width>230</width>
+			<height>40</height>
+			<texture border="5">controls/button-nofocus.png</texture>
+		</control>
+
+		<control type="label" id="301">
+			<description>Channel 1 Name</description>
+			<posx>160</posx>
+			<posy>200</posy>
+			<width>200</width>
+			<height>40</height>
+			<label>Channel</label>
+			<font>WideListFont2</font>
+			<textcolor>WhiteColor</textcolor>
+			<selectedcolor>SelectedColor</selectedcolor>
+			<aligny>center</aligny>
+			<align>left</align>							
+		</control>
+
+		<control type="label" id="311">
+			<description>Channel 1 Number</description>
+			<posx>150</posx>
+			<posy>200</posy>
+			<width>30</width>
+			<height>40</height>
+			<label>1</label>
+			<font>WideListFont2</font>
+			<textcolor>WhiteColor</textcolor>
+			<selectedcolor>SelectedColor</selectedcolor>
+			<aligny>center</aligny>
+			<align>right</align>
+		</control>
+
+		<control type="image">
+			<posx>120</posx>
+			<posy>245</posy>
+			<width>230</width>
+			<height>40</height>
+			<texture border="5">controls/button-nofocus.png</texture>
+		</control>
+
+		<control type="label" id="302">
+			<description>Channel 2 Name</description>
+			<posx>160</posx>
+			<posy>245</posy>
+			<width>200</width>
+			<height>40</height>
+			<label>Channel</label>
+			<font>WideListFont2</font>
+			<textcolor>WhiteColor</textcolor>
+			<selectedcolor>SelectedColor</selectedcolor>
+			<aligny>center</aligny>
+			<align>left</align>
+		</control>
+
+		<control type="label" id="312">
+			<description>Channel 2 Number</description>
+			<posx>150</posx>
+			<posy>245</posy>
+			<width>30</width>
+			<height>40</height>
+			<label>2</label>
+			<font>WideListFont2</font>
+			<textcolor>WhiteColor</textcolor>
+			<selectedcolor>SelectedColor</selectedcolor>
+			<aligny>center</aligny>
+			<align>right</align>
+		</control>
+
+		<control type="image">
+			<posx>120</posx>
+			<posy>290</posy>
+			<width>230</width>
+			<height>40</height>
+			<texture border="5">controls/button-nofocus.png</texture>
+		</control>
+
+		<control type="label" id="303">
+			<description>Channel 3 Name</description>
+			<posx>160</posx>
+			<posy>290</posy>
+			<width>200</width>
+			<height>40</height>
+			<label>Channel</label>
+			<font>WideListFont2</font>
+			<textcolor>WhiteColor</textcolor>
+			<selectedcolor>SelectedColor</selectedcolor>
+			<aligny>center</aligny>
+			<align>left</align>
+		</control>
+
+		<control type="label" id="313">
+			<description>Channel 3 Number</description>
+			<posx>150</posx>
+			<posy>290</posy>
+			<width>30</width>
+			<height>40</height>
+			<label>3</label>
+			<font>WideListFont2</font>
+			<textcolor>WhiteColor</textcolor>
+			<selectedcolor>SelectedColor</selectedcolor>
+			<aligny>center</aligny>
+			<align>right</align>
+		</control>
+
+		<control type="image">
+			<posx>120</posx>
+			<posy>335</posy>
+			<width>230</width>
+			<height>40</height>
+			<texture border="5">controls/button-nofocus.png</texture>
+		</control>
+
+		<control type="label" id="304">
+			<description>Channel 4 Name</description>
+			<posx>160</posx>
+			<posy>335</posy>
+			<width>200</width>
+			<height>40</height>
+			<label>Channel</label>
+			<font>WideListFont2</font>
+			<textcolor>WhiteColor</textcolor>
+			<selectedcolor>SelectedColor</selectedcolor>
+			<aligny>center</aligny>
+			<align>left</align>
+		</control>
+
+		<control type="label" id="314">
+			<description>Channel 4 Number</description>
+			<posx>150</posx>
+			<posy>335</posy>
+			<width>30</width>
+			<height>40</height>
+			<label>4</label>
+			<font>WideListFont2</font>
+			<textcolor>WhiteColor</textcolor>
+			<selectedcolor>SelectedColor</selectedcolor>
+			<aligny>center</aligny>
+			<align>right</align>
+		</control>
+
+		<control type="image">
+			<posx>120</posx>
+			<posy>380</posy>
+			<width>230</width>
+			<height>40</height>
+			<texture border="5">controls/button-nofocus.png</texture>
+		</control>
+
+		<control type="label" id="305">
+			<description>Channel 5 Name</description>
+			<posx>160</posx>
+			<posy>380</posy>
+			<width>200</width>
+			<height>40</height>
+			<label>Channel</label>
+			<font>WideListFont2</font>
+			<textcolor>WhiteColor</textcolor>
+			<selectedcolor>SelectedColor</selectedcolor>
+			<aligny>center</aligny>
+			<align>left</align>
+		</control>
+
+		<control type="label" id="315">
+			<description>Channel 5 Number</description>
+			<posx>150</posx>
+			<posy>380</posy>
+			<width>30</width>
+			<height>40</height>
+			<label>5</label>
+			<font>WideListFont2</font>
+			<textcolor>WhiteColor</textcolor>
+			<selectedcolor>SelectedColor</selectedcolor>
+			<aligny>center</aligny>
+			<align>right</align>
+		</control>
+
+		<control type="image">
+			<posx>120</posx>
+			<posy>425</posy>
+			<width>230</width>
+			<height>40</height>
+			<texture border="5">controls/button-nofocus.png</texture>
+		</control>
+
+		<control type="label" id="306">
+			<description>Channel 6 Name</description>
+			<posx>160</posx>
+			<posy>425</posy>
+			<width>200</width>
+			<height>40</height>
+			<label>Channel</label>
+			<font>WideListFont2</font>
+			<textcolor>WhiteColor</textcolor>
+			<selectedcolor>SelectedColor</selectedcolor>
+			<aligny>center</aligny>
+			<align>left</align>
+		</control>
+
+		<control type="label" id="316">
+			<description>Channel 6 Number</description>
+			<posx>150</posx>
+			<posy>425</posy>
+			<width>30</width>
+			<height>40</height>
+			<label>6</label>
+			<font>WideListFont2</font>
+			<textcolor>WhiteColor</textcolor>
+			<selectedcolor>SelectedColor</selectedcolor>
+			<aligny>center</aligny>
+			<align>right</align>
+		</control>
+
+		<control type="group">
+			<description>Top Bar Area</description>
+			<include>TopBarImage</include>
+			<include>TopBarOpenCloseAnim</include>
+			<include>Notifications</include>
+
+			<control type="grouplist">
+				<posx>10</posx>
+				<posy>StatusBarPosY</posy>
+				<height>43</height>
+				<width>740</width>
+				<itemgap>8</itemgap>
+				<orientation>horizontal</orientation>
+				<usecontrolcoords>true</usecontrolcoords>
+
+				<control type="image">
+					<posy>2</posy>
+					<width>42</width>
+					<height>42</height>
+					<texture>pstvLogo.png</texture>
+					<aspectratio>scale</aspectratio>
+				</control>
+
+				<control type="label">
+					<include>BreadCrumbLabel</include>
+					<label>[UPPERCASE]Pseudo TV[/UPPERCASE]</label>
+					<include>BreadCrumbSlideLvl2Anim</include>
+				</control>
+
+			</control>			
+		</control>
+
+	</controls>
+</window>

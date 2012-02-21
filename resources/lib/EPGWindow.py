@@ -115,10 +115,10 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             focusedcolor = int(self.getControl(100).getLabel2(), 16)
 
             if textcolor > 0:
-                self.textcolor = hex(textcolor)[2:-1]
+                self.textcolor = hex(textcolor)[2:]
 
             if focusedcolor > 0:
-                self.focusedcolor = hex(focusedcolor)[2:-1]
+                self.focusedcolor = hex(focusedcolor)[2:]
         except:
             pass
 

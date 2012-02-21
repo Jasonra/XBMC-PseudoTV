@@ -23,7 +23,7 @@
 				<posy>0</posy>
 				<width>943</width>
 				<height>520</height>
-				<texture>browser_background.png</texture>
+				<texture>backgrounds/background.png</texture>
 			</control>
 			<control type="label">
 				<description>heading label</description>
@@ -38,19 +38,6 @@
 				<textcolor>white</textcolor>
 			</control>
 			<control type="image">
-				<description>scraper image</description>
-				<posx>25</posx>
-				<posy>275</posy>
-				<width>220</width>
-				<height>220</height>
-				<bordersize>5</bordersize>
-				<aspectratio>keep</aspectratio>
-				<bordertexture>info_cover_border.png</bordertexture>
-				<info>ListItem.Thumb</info>
-				<visible>!IsEmpty(ListItem.Thumb)</visible>
-			</control>
-			<control type="image">
-				<description>scraper image</description>
 				<posx>25</posx>
 				<posy>275</posy>
 				<width>220</width>
@@ -77,8 +64,8 @@
                     <ondown>121</ondown>
                     <width>640</width>
                     <height>44</height>
-					<texturefocus>line_frame_device_white.png</texturefocus>
-					<texturenofocus>list_frame_device.png</texturenofocus>
+					<texturefocus>views/line_frame_device_white.png</texturefocus>
+					<texturenofocus>views/list_frame_device.png</texturenofocus>
                     <visible allowhiddenfocus="true">Control.HasFocus(120) | ![StringCompare(Window.Property(itempress),120) | StringCompare(Window.Property(itempress),121) | StringCompare(Window.Property(itempress),122) | StringCompare(Window.Property(itempress),123) | StringCompare(Window.Property(itempress),124) | StringCompare(Window.Property(itempress),125) | StringCompare(Window.Property(itempress),126)]</visible>
                     <onclick>SetProperty(itempress,120)</onclick>
                     <onclick>SetFocus(130)</onclick>
@@ -94,8 +81,8 @@
                     <ondown>122</ondown>
                     <width>640</width>
                     <height>44</height>
-					<texturefocus>line_frame_device_white.png</texturefocus>
-					<texturenofocus>list_frame_device.png</texturenofocus>
+					<texturefocus>views/line_frame_device_white.png</texturefocus>
+					<texturenofocus>views/list_frame_device.png</texturenofocus>
                     <visible>![StringCompare(Window.Property(itempress),120) | StringCompare(Window.Property(itempress),121) | StringCompare(Window.Property(itempress),122) | StringCompare(Window.Property(itempress),123) | StringCompare(Window.Property(itempress),124) | StringCompare(Window.Property(itempress),125) | StringCompare(Window.Property(itempress),126)]</visible>
                     <onclick>SetProperty(itempress,121)</onclick>
                     <onclick>SetFocus(130)</onclick>
@@ -111,8 +98,8 @@
                     <ondown>123</ondown>
                     <width>640</width>
                     <height>44</height>
-					<texturefocus>line_frame_device_white.png</texturefocus>
-					<texturenofocus>list_frame_device.png</texturenofocus>
+					<texturefocus>views/line_frame_device_white.png</texturefocus>
+					<texturenofocus>views/list_frame_device.png</texturenofocus>
                     <visible>![StringCompare(Window.Property(itempress),120) | StringCompare(Window.Property(itempress),121) | StringCompare(Window.Property(itempress),122) | StringCompare(Window.Property(itempress),123) | StringCompare(Window.Property(itempress),124) | StringCompare(Window.Property(itempress),125) | StringCompare(Window.Property(itempress),126)]</visible>
                     <onclick>SetProperty(itempress,122)</onclick>
                     <onclick>SetFocus(130)</onclick>
@@ -128,8 +115,8 @@
                     <ondown>124</ondown>
                     <width>640</width>
                     <height>44</height>
-					<texturefocus>line_frame_device_white.png</texturefocus>
-					<texturenofocus>list_frame_device.png</texturenofocus>
+					<texturefocus>views/line_frame_device_white.png</texturefocus>
+					<texturenofocus>views/list_frame_device.png</texturenofocus>
                     <visible>![StringCompare(Window.Property(itempress),120) | StringCompare(Window.Property(itempress),121) | StringCompare(Window.Property(itempress),122) | StringCompare(Window.Property(itempress),123) | StringCompare(Window.Property(itempress),124) | StringCompare(Window.Property(itempress),125) | StringCompare(Window.Property(itempress),126)]</visible>
                     <onclick>SetProperty(itempress,123)</onclick>
                     <onclick>SetFocus(130)</onclick>
@@ -145,8 +132,8 @@
                     <ondown>125</ondown>
                     <width>640</width>
                     <height>44</height>
-					<texturefocus>line_frame_device_white.png</texturefocus>
-					<texturenofocus>list_frame_device.png</texturenofocus>
+					<texturefocus>views/line_frame_device_white.png</texturefocus>
+					<texturenofocus>views/list_frame_device.png</texturenofocus>
                     <visible>![StringCompare(Window.Property(itempress),120) | StringCompare(Window.Property(itempress),121) | StringCompare(Window.Property(itempress),122) | StringCompare(Window.Property(itempress),123) | StringCompare(Window.Property(itempress),124) | StringCompare(Window.Property(itempress),125) | StringCompare(Window.Property(itempress),126)]</visible>
                     <onclick>SetProperty(itempress,124)</onclick>
                     <onclick>SetFocus(130)</onclick>
@@ -162,8 +149,8 @@
                     <ondown>126</ondown>
                     <width>640</width>
                     <height>44</height>
-					<texturefocus>line_frame_device_white.png</texturefocus>
-					<texturenofocus>list_frame_device.png</texturenofocus>
+					<texturefocus>views/line_frame_device_white.png</texturefocus>
+					<texturenofocus>views/list_frame_device.png</texturenofocus>
                     <visible>![StringCompare(Window.Property(itempress),120) | StringCompare(Window.Property(itempress),121) | StringCompare(Window.Property(itempress),122) | StringCompare(Window.Property(itempress),123) | StringCompare(Window.Property(itempress),124) | StringCompare(Window.Property(itempress),125) | StringCompare(Window.Property(itempress),126)]</visible>
                     <onclick>SetProperty(itempress,125)</onclick>
                     <onclick>SetFocus(130)</onclick>
@@ -178,8 +165,8 @@
                     <onup>125</onup>
                     <width>640</width>
                     <height>44</height>
-					<texturefocus>line_frame_device_white.png</texturefocus>
-					<texturenofocus>list_frame_device.png</texturenofocus>
+					<texturefocus>views/line_frame_device_white.png</texturefocus>
+					<texturenofocus>views/list_frame_device.png</texturenofocus>
                     <visible>![StringCompare(Window.Property(itempress),120) | StringCompare(Window.Property(itempress),121) | StringCompare(Window.Property(itempress),122) | StringCompare(Window.Property(itempress),123) | StringCompare(Window.Property(itempress),124) | StringCompare(Window.Property(itempress),125) | StringCompare(Window.Property(itempress),126)]</visible>
                     <onclick>SetProperty(itempress,126)</onclick>
                     <onclick>SetFocus(130)</onclick>
@@ -194,8 +181,8 @@
                     <ondown>102</ondown>
                     <width>640</width>
                     <height>44</height>
-					<texturefocus>line_frame_device_white.png</texturefocus>
-					<texturenofocus>list_frame_device.png</texturenofocus>
+					<texturefocus>views/line_frame_device_white.png</texturefocus>
+					<texturenofocus>views/list_frame_device.png</texturenofocus>
                     <onclick>SetProperty(itempress,100)</onclick>
                     <onclick>SetFocus(120)</onclick>
                     <visible allowhiddenfocus="true">Control.HasFocus(130) | StringCompare(Window.Property(itempress),120) | StringCompare(Window.Property(itempress),121) | StringCompare(Window.Property(itempress),122) | StringCompare(Window.Property(itempress),123) | StringCompare(Window.Property(itempress),124) | StringCompare(Window.Property(itempress),125) | StringCompare(Window.Property(itempress),126)</visible>
@@ -273,8 +260,8 @@
                         <posy>10</posy>
                         <width>640</width>
                         <height>44</height>
-						<texturefocus>line_frame_device_white.png</texturefocus>
-						<texturenofocus>list_frame_device.png</texturenofocus>
+						<texturefocus>views/line_frame_device_white.png</texturefocus>
+						<texturenofocus>views/list_frame_device.png</texturenofocus>
                         <align>center</align>
                         <textcolor>white</textcolor>
 						<focusedcolor>black</focusedcolor>
@@ -328,8 +315,8 @@
                         <posy>100</posy>
                         <width>310</width>
                         <height>44</height>
-						<texturefocus>line_frame_device_white.png</texturefocus>
-						<texturenofocus>list_frame_device.png</texturenofocus>
+						<texturefocus>views/line_frame_device_white.png</texturefocus>
+						<texturenofocus>views/list_frame_device.png</texturenofocus>
                         <align>center</align>
                         <onup>131</onup>
                         <ondown>162</ondown>
@@ -343,8 +330,8 @@
                         <posy>100</posy>
                         <width>310</width>
                         <height>44</height>
-						<texturefocus>line_frame_device_white.png</texturefocus>
-						<texturenofocus>list_frame_device.png</texturenofocus>
+						<texturefocus>views/line_frame_device_white.png</texturefocus>
+						<texturenofocus>views/list_frame_device.png</texturenofocus>
                         <align>center</align>
                         <onup>131</onup>
                         <ondown>163</ondown>
@@ -359,8 +346,8 @@
                         <posy>180</posy>
                         <width>310</width>
                         <height>44</height>
-						<texturefocus>line_frame_device_white.png</texturefocus>
-						<texturenofocus>list_frame_device.png</texturenofocus>
+						<texturefocus>views/line_frame_device_white.png</texturefocus>
+						<texturenofocus>views/list_frame_device.png</texturenofocus>
                         <align>center</align>
                         <onup>160</onup>
                         <onright>163</onright>
@@ -374,8 +361,8 @@
                         <posy>180</posy>
                         <width>310</width>
                         <height>44</height>
-						<texturefocus>line_frame_device_white.png</texturefocus>
-						<texturenofocus>list_frame_device.png</texturenofocus>
+						<texturefocus>views/line_frame_device_white.png</texturefocus>
+						<texturenofocus>views/list_frame_device.png</texturenofocus>
                         <align>center</align>
                         <onup>161</onup>
                         <onleft>162</onleft>

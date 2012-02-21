@@ -1380,6 +1380,7 @@ class HandleIceLibrary(BaseRule):
     def runAction(self, actionid, channelList, channeldata):
         if actionid == RULES_ACTION_START:
             self.storedIceLibValue = channelList.incIceLibrary
+            self.log("Option for IceLibrary is " + self.optionValues[0])
 
             if self.optionValues[0] == 'Yes':
                 channelList.incIceLibrary = True

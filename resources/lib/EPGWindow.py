@@ -52,6 +52,8 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             self.mediaPath = xbmc.translatePath('special://skin/media/' + ADDON_ID + '/')
         elif os.path.exists(xbmc.translatePath('special://skin/media/' + TIME_BAR)):
             self.mediaPath = xbmc.translatePath('special://skin/media/')
+        elif xbmc.skinHasImage(xbmc.translatePath(ADDON_ID + '/' + TIME_BAR)):
+            self.mediaPath = xbmc.translatePath(ADDON_ID + '/')
         elif xbmc.skinHasImage(TIME_BAR):
             self.mediaPath = ''
         else:
@@ -62,10 +64,14 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         # Use the given focus and non-focus textures if they exist.  Otherwise use the defaults.
         if os.path.exists(self.mediaPath + BUTTON_FOCUS):
             self.textureButtonFocus = self.mediaPath + BUTTON_FOCUS
+        elif xbmc.skinHasImage(self.mediaPath + BUTTON_FOCUS):
+            self.textureButtonFocus = self.mediaPath + BUTTON_FOCUS
         else:
             self.textureButtonFocus = 'button-focus.png'
 
         if os.path.exists(self.mediaPath + BUTTON_NO_FOCUS):
+            self.textureButtonNoFocus = self.mediaPath + BUTTON_NO_FOCUS
+        elif xbmc.skinHasImage(self.mediaPath + BUTTON_NO_FOCUS):
             self.textureButtonNoFocus = self.mediaPath + BUTTON_NO_FOCUS
         else:
             self.textureButtonNoFocus = 'button-nofocus.png'

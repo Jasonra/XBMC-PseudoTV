@@ -336,6 +336,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.lastActionTime = 0
         timedif = 0
         self.getControl(102).setVisible(False)
+        self.getControl(103).setImage('')
         self.showingInfo = False
 
         # first of all, save playing state, time, and playlist offset for

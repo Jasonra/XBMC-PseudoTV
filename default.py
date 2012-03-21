@@ -16,31 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with PseudoTV.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-import os, threading
+
 import xbmc, xbmcgui
 import xbmcaddon
-
-from resources.lib.Globals import *
-
 
 
 # Script constants
 __scriptname__ = "PseudoTV"
 __author__     = "Jason102"
 __url__        = "http://github.com/Jasonra/XBMC-PseudoTV"
-__version__    = VERSION
 __settings__   = xbmcaddon.Addon(id='script.pseudotv')
-__language__   = __settings__.getLocalizedString
 __cwd__        = __settings__.getAddonInfo('path')
 
 
-import resources.lib.Overlay as Overlay
-
-
 # Adapting a solution from ronie (http://forum.xbmc.org/showthread.php?t=97353)
-if xbmc.getInfoLabel("Window(10000).Property(PseudoTVRunning)") != "True":
-    xbmcgui.Window(10000).setProperty("PseudoTVRunning", "True")
+if xbmcgui.Window(10000).getProperty("PseudoTVRunning") != "True":
+    xbmcgui.Window(10000).setProperty("PseudoTVRunning", "True")    
     shouldrestart = False
 
     if xbmc.executehttpapi("GetGuiSetting(1, services.webserver)")[4:] == "False":
@@ -62,24 +53,6 @@ if xbmc.getInfoLabel("Window(10000).Property(PseudoTVRunning)") != "True":
                 shouldrestart = True
 
     if shouldrestart == False:
-        MyOverlayWindow = Overlay.TVOverlay("script.pseudotv.TVOverlay.xml", __cwd__, "default")
-
-        for curthread in threading.enumerate():
-            try:
-                log("Active Thread: " + str(curthread.name), xbmc.LOGERROR)
-
-                if curthread.name != "MainThread":
-                    try:
-                        curthread.join()
-                    except:
-                        pass
-
-                    log("Joined " + curthread.name)
-            except:
-                pass
-
-        del MyOverlayWindow
-
-    xbmcgui.Window(10000).setProperty("PseudoTVRunning", "False")
+        xbmc.executebuiltin('RunScript("' + __cwd__ + '/pseudotv.py' + '")')
 else:
-    xbmc.log('script.PseudoTV - Already running, exiting')
+    xbmc.log('script.PseudoTV - Already running, exiting', xbmc.LOGERROR)

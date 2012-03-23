@@ -36,14 +36,14 @@ if xbmcgui.Window(10000).getProperty("PseudoTVRunning") != "True":
 
     if xbmc.executehttpapi("GetGuiSetting(1, services.webserver)")[4:] == "False":
         try:
-            forcedserver = REAL_SETTINGS.getSetting("ForcedWebServer") == "True"
+            forcedserver = __settings__.getSetting("ForcedWebServer") == "True"
         except:
             forcedserver = False
 
         if forcedserver == False:
             dlg = xbmcgui.Dialog()
             retval = dlg.yesno('PseudoTV', 'PseudoTV will run more efficiently with the web', 'server enabled.  Would you like to turn it on?')
-            REAL_SETTINGS.setSetting("ForcedWebServer", "True")
+            __settings__.setSetting("ForcedWebServer", "True")
 
             if retval:
                 xbmc.executehttpapi("SetGUISetting(3, services.webserverport, 8152)")

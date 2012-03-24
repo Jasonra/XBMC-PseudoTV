@@ -21,5 +21,6 @@
     	<setting id="EnableComingUp" type="bool" label="30016" default="true"/>
     	<setting id="HideClips" type="bool" label="30017" default="true"/>
     	<setting id="ClipLength" type="enum" subsetting="true" label="30018" visible="eq(-1,true)" values="15|30|60|90|120|180|240|300|360" default="2"/>
+    	<setting id="ShowSeEp" type="bool" label="30021" default="true"/>
     </category>
 </settings>

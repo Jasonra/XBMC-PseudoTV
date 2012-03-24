@@ -36,7 +36,7 @@ ADDON_ID = 'script.pseudotv'
 REAL_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
 ADDON_INFO = REAL_SETTINGS.getAddonInfo('path')
 
-VERSION = "2.0.1"
+VERSION = "2.1.0"
 
 TIMEOUT = 15 * 1000
 TOTAL_FILL_CHANNELS = 20

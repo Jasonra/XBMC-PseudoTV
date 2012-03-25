@@ -1170,7 +1170,7 @@ class ChannelList:
                                     epval = int(episode.group(1))
                                     
                                     if self.showSeasonEpisode:
-                                        swtitle = swtitle + '(S' + str(seasonval) + 'E' + str(epval) + ')'
+                                        swtitle = swtitle + '(S' + ('0' if seasonval < 10 else '') + str(seasonval) + ' E' + ('0' if epval < 10 else '') + str(epval) + ')'
                                 except:
                                     seasonval = -1
                                     epval = -1

@@ -100,9 +100,19 @@ class FLVParser:
             try:
                 self.File.seek(-4, 1)
                 data = int(struct.unpack('>I', self.File.read(4))[0])
+
+                if data < 1:
+                    self.log('Invalid packet data')
+                    return None
+
                 self.File.seek(-4 - data, 1)
                 tag = FLVTagHeader()
                 tag.readHeader(self.File)
+
+                if tag.datasize <= 0:
+                    self.log('Invalid packet header')
+                    return None
+
                 self.File.seek(-8, 1)
                 self.log("detected tag type " + str(tag.tagtype))
                 curloc = self.File.tell()

@@ -489,7 +489,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         self.mixedGenreList.sort(key=lambda x: x.lower())
         self.listcontrol = self.getControl(102)
 
-        for i in range(200):
+        for i in range(999):
             theitem = xbmcgui.ListItem()
             theitem.setLabel(str(i + 1))
             self.listcontrol.addItem(theitem)
@@ -507,7 +507,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
     def updateListing(self, channel = -1):
         self.log("updateListing")
         start = 0
-        end = 200
+        end = 999
 
         if channel > -1:
             start = channel - 1

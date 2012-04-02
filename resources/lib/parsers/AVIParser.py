@@ -151,21 +151,21 @@ class AVIParser:
             return 0
 
         if data.fourcc[0:4] != "AVI ":
-            self.log("Not a basic AVI: " + str(data.fourcc[:2]))
+            self.log("Wrong FourCC")
             return 0
 
         # Header List
         data = self.getChunkOrList()
 
         if data.fourcc != "hdrl":
-            self.log("Header not found: " + str(data.fourcc))
+            self.log("Header not found")
             return 0
 
         # Header chunk
         data = self.getChunkOrList()
 
         if data.fourcc != 'avih':
-            self.log('Header chunk not found: ' + str(data.fourcc))
+            self.log('Header chunk not found')
             return 0
 
         self.parseHeader(data)

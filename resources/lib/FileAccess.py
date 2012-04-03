@@ -21,6 +21,7 @@ import subprocess, os, shutil
 import time, threading
 import random, os
 import Globals
+from SMBFile import SMBManager
 
 VFS_AVAILABLE = False
 
@@ -31,8 +32,10 @@ except:
     pass
 
 
+
 FILE_LOCK_MAX_FILE_TIMEOUT = 13
 FILE_LOCK_NAME = "FileLock.dat"
+Manager = SMBManager()
 
 
 
@@ -46,13 +49,13 @@ class FileAccess:
     def open(filename, mode):
         fle = 0
         filename = xbmc.makeLegalFilename(filename)
+        FileAccess.log("trying to open " + filename)
 
-        if os.path.exists(filename) == False:
-            if filename[0:6].lower() == 'smb://':
-                fle = FileAccess.openSMB(filename, mode)
+        if filename[0:6].lower() == 'smb://':
+            fle = FileAccess.openSMB(filename, mode)
 
-                if fle != 0:
-                    return fle
+            if fle != 0:
+                return fle
 
         # Even if we can't find the file, try to open it anyway
         try:
@@ -87,8 +90,11 @@ class FileAccess:
         if os.path.exists(filename):
             return True
 
-        if filename[0:6].lower() == 'smb://':
-            return FileAccess.existsSMB(filename)
+        if VFS_AVAILABLE == True:
+            return xbmcvfs.exists(filename)
+        else:
+            if filename[0:6].lower() == 'smb://':
+                return FileAccess.existsSMB(filename)
 
         return False
 
@@ -96,14 +102,18 @@ class FileAccess:
     @staticmethod
     def openSMB(filename, mode):
         fle = 0
+        FileAccess.log("smb stuff")
 
         if os.name.lower() == 'nt':
-            filename = '\\\\' + filename[6:]
+            newname = '\\\\' + filename[6:]
 
             try:
-                fle = open(filename, mode)
+                fle = open(newname, mode)
             except:
                 fle = 0
+
+        if fle == 0:
+            fle = Manager.openFile(filename, mode)
 
         return fle
 

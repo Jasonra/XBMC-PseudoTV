@@ -194,11 +194,12 @@ class SMBConnection(SMB):
 ###############################################################################
     def readFile(self, service_name, path, file_obj, offset, timeout = 30):
         """
-        Retrieve the contents of the file at *path* on the *service_name* and write these contents to the provided *file_obj*.
+        Retrieve a packet of bytes from a specific location in a file at *path* on the *service_name* and write these contents to the provided *file_obj*.
 
         :param string/unicode service_name: the name of the shared folder for the *path*
         :param string/unicode path: Path of the file on the remote server. If the file cannot be opened for reading, an :doc:`OperationFailure<smb_exceptions>` will be called in the returned *Deferred* errback.
         :param file_obj: A file-like object that has a *write* method. Data will be written continuously to *file_obj* until EOF is received from the remote service.
+		:param offset: The offset in bytes to start reading the file.
         :return: A 2-element tuple of ( file attributes of the file on server, number of bytes retrieved ).
                  The file attributes is an integer value made up from a bitwise-OR of *SMB_FILE_ATTRIBUTE_xxx* bits (see smb_constants.py)
         """
@@ -216,8 +217,10 @@ class SMBConnection(SMB):
             raise failure
 
         self.is_busy = True
+
         try:
             self._readFile(service_name, path, file_obj, cb, eb, offset, timeout = timeout)
+
             while self.is_busy:
                 self._pollForNetBIOSPacket(timeout)
         finally:

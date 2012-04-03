@@ -120,6 +120,17 @@ class NBNS:
             return trn_id, None
 
 
+    def prepareNameQuery(self, trn_id, name, is_broadcast = True):
+        header = struct.pack(self.HEADER_STRUCT_FORMAT,
+                             trn_id, (is_broadcast and 0x0110) or 0x0100, 1, 0, 0, 0)
+        payload = encode_name(name, 0x20) + '\x00\x20\x00\x01'
+
+        return header + payload
+
+
+###############################################################################
+#	Added by Jason Anderson
+###############################################################################
     def decodeIPQueryPacket(self, data):
         if len(data) < self.HEADER_STRUCT_SIZE:
             raise Exception
@@ -147,18 +158,12 @@ class NBNS:
             return trn_id, None
 
 
-    def prepareNameQuery(self, trn_id, name, is_broadcast = True):
-        header = struct.pack(self.HEADER_STRUCT_FORMAT,
-                             trn_id, (is_broadcast and 0x0110) or 0x0100, 1, 0, 0, 0)
-        payload = encode_name(name, 0x20) + '\x00\x20\x00\x01'
-
-        return header + payload
-
-
-
     def prepareNetNameQuery(self, trn_id):
         header = struct.pack(self.HEADER_STRUCT_FORMAT,
                              trn_id, 0x0010, 1, 0, 0, 0)
         payload = encode_name('*', 0) + '\x00\x21\x00\x01'
 
         return header + payload
+###############################################################################
+#	End addition
+###############################################################################

@@ -58,6 +58,9 @@ class NetBIOS(NBNS):
 
         return self._pollForNetBIOSPacket(trn_id, timeout)
 
+###############################################################################
+#	Added by Jason Anderson
+###############################################################################
     def queryIPForName(self, ip, port = 137, timeout = 30):
         """
         Send a query on the network and hopes that if machine matching the *name* will reply with its IP address.
@@ -74,7 +77,10 @@ class NetBIOS(NBNS):
         data = self.prepareNetNameQuery(trn_id)
         self.write(data, ip, port)
         return self._pollForQueryPacket(trn_id, timeout)
-		
+###############################################################################
+#	End addition
+###############################################################################
+
     #
     # Protected Methods
     #
@@ -103,7 +109,10 @@ class NetBIOS(NBNS):
                 else:
                     raise ex
 
-					
+
+###############################################################################
+#	Added by Jason Anderson
+###############################################################################
     def _pollForQueryPacket(self, wait_trn_id, timeout):
         end_time = time.time() - timeout
         while True:
@@ -127,3 +136,6 @@ class NetBIOS(NBNS):
                         raise ex
                 else:
                     raise ex
+###############################################################################
+#	End addition
+###############################################################################

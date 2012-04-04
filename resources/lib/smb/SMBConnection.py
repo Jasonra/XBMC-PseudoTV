@@ -412,10 +412,17 @@ class SMBConnection(SMB):
     def _pollForNetBIOSPacket(self, timeout):
         read_len = 4
         data = ''
+        end_time = time.time() + timeout
 
         while read_len > 0:
             try:
-                ready, _, _ = select.select([ self.sock ], [ ], [ ], timeout)
+                _timeout = end_time - time.time()
+
+                if _timeout <= 0:
+                    raise SMBTimeout
+
+                ready, _, _ = select.select([ self.sock ], [ ], [ ], _timeout)
+
                 if not ready:
                     raise SMBTimeout
 

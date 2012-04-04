@@ -27,7 +27,7 @@ import socket
 
 class SMBManager:
 	def __init__(self):
-		self.hosts = []
+		self.connections = []
 
 
 	def log(self, msg, level = xbmc.LOGDEBUG):
@@ -95,18 +95,20 @@ class SMBManager:
 		filepath = filename
 		self.log("File dir: " + filedir)
 		self.log("File path: " + filepath)
+		connection = 0
 		serverip = ''
 		hostname = ''
 
 		# See if the host is in our list
-		for curhost in self.hosts:
-			if curhost[0] == host or curhost[1] == host:
-				serverip = curhost[0]
-				hostname = curhost[1]
-				self.log("Got the host info from cache")
+		for curconn in self.connections:
+			if curconn.hostname == host or curconn.serverip == host:
+				serverip = curconn.serverip
+				hostname = curconn.hostname
+				connection = curconn
+				self.log("Using an existing connection")
 				break
 
-		if serverip == '':
+		if connection == 0:
 			# Now make sure we have the IP and host name
 			# See if the host name we have is an IP or not
 			try:
@@ -114,41 +116,158 @@ class SMBManager:
 				serverip = host
 				conn = NetBIOS(broadcast = False)
 				hostname = conn.queryIPForName(host, timeout = 5)[0]
-				self.hosts.append([serverip, hostname])
 			except:
 				hostname = host
 				conn = NetBIOS()
 
 				try:
 					serverip = conn.queryName(host, timeout = 5)[0]
-					self.hosts.append([serverip, hostname])
 				except:
 					self.log("Unable to get the server and IP")
 					serverip = ''
 					hostname = ''
 
-		if serverip == '':
-			self.log("Unable to get the IP or hostname for " + str(host))
+		if serverip == '' or hostname == '':
+			self.log("Unable to get the IP or hostname for " + str(host), xbmc.LOGERROR)
 			return
 
-		myfile = SMBFile(serverip, hostname, username, password, filepath, filedir, mode)
+		if connection == 0:
+			connection = Connection(serverip, hostname, username, password)
+			self.connections.append(connection)
+
+		myfile = SMBFile(connection, filepath, filedir, mode)
 		return myfile
 
 
 
-class SMBFile:
-	def __init__(self, serverip, hostname, username, password, filepath, filedir, mode):
-		self.conn = None
+class Connection:
+	def __init__(self, ip, host, username, password):
+		self.serverip = ip
+		self.hostname = host
+		self.username = username
+		self.password = password
 		self.lastConnection = 0
+		self.conn = 0
+		self.alive = False
+		self.ntlmv2 = True
+		self.dead = False
+
+		if self.connect() == False:
+			self.ntlmv2 = False
+
+			if self.connect() == False:
+				self.dead = True
+				self.log("Couldn't connect to " + ip + " with the name " + host + ", " + username + " / " + password, xbmc.LOGERROR)
+
+
+	def connect(self):
+		# Try the most basic connection
+		self.conn = SMBConnection(self.username, self.password, 'PseudoTV', self.hostname, '', use_ntlm_v2=self.ntlmv2)
+
+		try:
+			if self.conn.connect(self.serverip, timeout=5):
+				self.log('Connected')
+				self.lastConnection = time.time()
+				self.alive = True
+				return True
+		except:
+			pass
+
+		self.alive = False
+		self.conn = 0
+		self.log('No connection!')
+		return False
+
+
+	def log(self, msg, level = xbmc.LOGDEBUG):
+		Globals.log('Connection: ' + msg, level)
+
+
+	def check(self):
+		if self.dead:
+			return False
+
+		if time.time() - self.lastConnection < 10:
+			self.lastConnection = time.time()
+			return True
+
+		self.log("connection stale")
+		self.conn.close()
+		self.alive = False
+
+		if self.connect() == False:
+			self.dead = True
+
+		return self.alive
+
+
+	def reconnect(self):
+		if self.dead:
+			return False
+
+		self.log("Reconnecting")
+
+		if self.conn:
+			self.conn.close()
+			self.conn = 0
+
+		self.alive = False
+
+		if self.connect() == False:
+			self.dead = True
+
+		return self.alive
+
+
+	def retrieveFile(self, fdir, fpath, fhandle):
+		if self.dead:
+			return (0,0)
+
+		file_attributes = 0
+		filesize = 0
+
+		try:
+			file_attributes, filesize = self.conn.retrieveFile(fdir, fpath, fhandle)
+		except:
+			if self.reconnect() == True:
+				try:
+					file_attributes, filesize = self.conn.retrieveFile(fdir, fpath, fhandle)
+				except:
+					self.reconnect()
+					return (0,0)
+
+		return (file_attributes, filesize)
+
+
+	def readFile(self, fdir, fpath, fhandle, offset):
+		if self.dead:
+			return (0,0)
+
+		file_attributes = 0
+		readsize = 0
+
+		try:
+			file_attributes, readsize = self.conn.readFile(fdir, fpath, fhandle, offset)
+		except:
+			if self.reconnect() == True:
+				try:
+					file_attributes, readsize = self.conn.readFile(fdir, fpath, fhandle, offset)
+				except:
+					self.reconnect()
+					return (0,0)
+
+		return (file_attributes, readsize)
+
+
+
+class SMBFile:
+	def __init__(self, connection, filepath, filedir, mode):
+		self.connection = connection
 		self.isOpen = True
 		self.currentOffset = 0
 		self.fileDir = filedir
 		self.filePath = filepath
 		self.mode = mode
-		self.username = username
-		self.password = password
-		self.server = hostname
-		self.serverip = serverip
 		self.fileSize = -1
 		self.cache = ''
 
@@ -159,11 +278,6 @@ class SMBFile:
 
 	def close(self):
 		self.isOpen = False
-
-		if self.conn:
-			self.conn.close()
-			self.conn = None
-
 		self.currentOffset = 0
 		self.fileSize = -1
 
@@ -173,25 +287,24 @@ class SMBFile:
 
 
 	def readlines(self):
-		if self.checkConn() == False:
-			return
+		if self.connection.check() == False:
+			return ''
 
 		tempfh = SMBReadFile()
-		file_attributes, filesize = self.conn.retrieveFile(self.fileDir, self.filePath, tempfh)
+		file_attributes, filesize = self.connection.retrieveFile(self.fileDir, self.filePath, tempfh)
 		return tempfh.getvalue()
 
 
 	def read(self, bytes):
-		if self.checkConn() == False:
-			return
+		if self.connection.check() == False:
+			return ''
 
 		tempfh = SMBReadFile()
 		readamount = 0
 		offset = self.currentOffset
 
 		while(len(self.cache) < bytes):
-			self.log("Reading")
-			file_attributes, readsize = self.conn.readFile(self.fileDir, self.filePath, tempfh, offset + readamount)
+			file_attributes, readsize = self.connection.readFile(self.fileDir, self.filePath, tempfh, offset + readamount)
 			readamount += readsize
 
 			if readsize <= 0:
@@ -224,6 +337,9 @@ class SMBFile:
 				self.currentOffset += offset
 			else:
 				if direction == 2:
+					if self.fileSize < 0:
+						self.determineFileSize()
+
 					self.currentOffset = self.fileSize + offset
 
 
@@ -231,34 +347,42 @@ class SMBFile:
 		return self.currentOffset
 
 
-	def checkConn(self):
-		if self.conn:
-			if time.time() - self.lastConnection < 10:
-				self.lastConnection = time.time()
-				return True
+	def determineFileSize(self):
+		data = ''
+		maxsize = 0
+		minsize = 0
+		myoffset = self.currentOffset
+		self.currentOffset = 100
+		self.cache = ''
 
-			self.log("connection stale")
-			self.conn.close()
+		# Find the uppper-end of the file size
+		data = self.read(1)
 
-		# Try the most basic connection
-		self.conn = SMBConnection(self.username, self.password, 'PseudoTV', self.server, '', use_ntlm_v2=True)
+		while len(data) > 0:
+			minsize = self.currentOffset
+			self.currentOffset *= 2
+			self.cache = ''
+			data = self.read(1)
 
-		if self.conn.connect(self.serverip, timeout=5):
-			self.log('Connected')
-			self.lastConnection = time.time()
-			return True
+		maxsize = self.currentOffset
 
-		self.log('Trying again')
-		# Try using ntlm v1
-		self.conn = SMBConnection(self.username, self.password, 'PseudoTV', self.server, '', use_ntlm_v2=False)
+		# Now narrow down the gap to 100 or less bytes
+		while(maxsize - minsize > 100):
+			self.currentOffset = ((maxsize - minsize) / 2) + minsize
+			self.cache = ''
+			data = self.read(1)
 
-		if self.conn.connect(self.serverip, timeout=5):
-			self.log('second')
-			self.lastConnection = time.time()
-			return True
+			if len(data) > 0:
+				minsize = self.currentOffset
+			else:
+				maxsize = self.currentOffset
 
-		self.log('No connection!')
-		return False
+		# Now read 100 bytes.  Whatever we get + minsize is the total file size
+		self.cache = ''
+		data = self.read(100)
+		self.fileSize = minsize + len(data)
+		self.currentOffset = myoffset
+		self.cache = ''
 
 
 

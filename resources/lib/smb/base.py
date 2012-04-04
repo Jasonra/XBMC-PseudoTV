@@ -676,7 +676,7 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             if not read_message.status.hasError:
                 file_obj.write(read_message.payload.data)
                 closeFid(read_message.tid, kwargs['fid'])
-                callback(( file_obj, kwargs['file_attributes'], kwargs['offset']+read_message.payload.data_length ))  # Note that this is a tuple of 3-elements
+                callback(( file_obj, kwargs['file_attributes'], read_message.payload.data_length ))  # Note that this is a tuple of 3-elements
             else:
                 messages_history.append(read_message)
                 closeFid(read_message.tid, kwargs['fid'])

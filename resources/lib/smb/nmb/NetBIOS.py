@@ -86,10 +86,10 @@ class NetBIOS(NBNS):
     #
 
     def _pollForNetBIOSPacket(self, wait_trn_id, timeout):
-        end_time = time.time() - timeout
+        end_time = time.time() + timeout
         while True:
             try:
-                _timeout = time.time()-end_time
+                _timeout = end_time - time.time()
                 if _timeout <= 0:
                     return None
 

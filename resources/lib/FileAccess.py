@@ -102,7 +102,6 @@ class FileAccess:
     @staticmethod
     def openSMB(filename, mode):
         fle = 0
-        FileAccess.log("smb stuff")
 
         if os.name.lower() == 'nt':
             newname = '\\\\' + filename[6:]

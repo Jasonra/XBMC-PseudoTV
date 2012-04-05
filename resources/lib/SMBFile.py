@@ -35,6 +35,8 @@ class SMBManager:
 
 
 	def openFile(self, filename, mode):
+		self.log("openFile " + filename)
+
 		if filename[0:6].lower() == 'smb://':
 			filename = filename[6:]
 
@@ -151,6 +153,7 @@ class Connection:
 		self.alive = False
 		self.ntlmv2 = True
 		self.dead = False
+		self.log("Trying to connect to " + ip + " with the name " + host + ", " + username + " / " + password)
 
 		if self.connect() == False:
 			self.ntlmv2 = False
@@ -161,6 +164,7 @@ class Connection:
 
 
 	def connect(self):
+		self.log("connect")
 		# Try the most basic connection
 		self.conn = SMBConnection(self.username, self.password, 'PseudoTV', self.hostname, '', use_ntlm_v2=self.ntlmv2)
 
@@ -205,7 +209,7 @@ class Connection:
 		if self.dead:
 			return False
 
-		self.log("Reconnecting")
+		self.log("reconnect")
 
 		if self.conn:
 			self.conn.close()

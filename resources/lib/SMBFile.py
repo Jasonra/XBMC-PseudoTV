@@ -46,7 +46,7 @@ class SMBManager:
 		self.log("base: " + filename)
 		# Now see if there is a username and password
 		index = filename.find(':')
-		username = 'guest'
+		username = ''
 		password = ''
 
 		if index > 0:
@@ -154,7 +154,15 @@ class Connection:
 		self.ntlmv2 = True
 		self.dead = False
 		self.log("Trying to connect to " + ip + " with the name " + host + ", " + username + " / " + password)
+		self.tryConnection()
 
+		if self.dead and self.username == '' and self.password == '':
+			self.username = 'guest'
+			self.ntlmv2 = True
+			self.dead = False
+
+
+	def tryConnection(self):
 		if self.connect() == False:
 			self.ntlmv2 = False
 

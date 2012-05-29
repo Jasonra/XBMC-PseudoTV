@@ -70,7 +70,14 @@ class SMBProtocolFactory(ClientFactory):
     protocol = SMBProtocol
     log = logging.getLogger('SMB.SMBFactory')
 
-    def __init__(self, username, password, my_name, remote_name, domain = '', use_ntlm_v2 = True):
+    #: SMB messages will never be signed regardless of remote server's configurations; access errors will occur if the remote server requires signing.
+    SIGN_NEVER = 0
+    #: SMB messages will be signed when remote server supports signing but not requires signing.
+    SIGN_WHEN_SUPPORTED = 1
+    #: SMB messages will only be signed when remote server requires signing.
+    SIGN_WHEN_REQUIRED = 2
+
+    def __init__(self, username, password, my_name, remote_name, domain = '', use_ntlm_v2 = True, sign_options = SIGN_WHEN_REQUIRED):
         """
         Create a new SMBProtocolFactory instance. You will pass this instance to *reactor.connectTCP()* which will then instantiate the TCP connection to the remote SMB/CIFS server.
         Note that the default TCP port for most SMB/CIFS servers is 139.
@@ -88,6 +95,10 @@ class SMBProtocolFactory(ClientFactory):
                                     The choice of NTLMv1 and NTLMv2 is configured on the remote server, and there is no mechanism to auto-detect which algorithm has been configured.
                                     Hence, we can only "guess" or try both algorithms.
                                     On Sambda, Windows Vista and Windows 7, NTLMv2 is enabled by default. On Windows XP, we can use NTLMv1 before NTLMv2.
+        :param int sign_options: Determines whether SMB messages will be signed. Default is *SIGN_WHEN_REQUIRED*.
+                                 If *SIGN_WHEN_REQUIRED* (value=2), SMB messages will only be signed when remote server requires signing.
+                                 If *SIGN_WHEN_SUPPORTED* (value=1), SMB messages will be signed when remote server supports signing but not requires signing.
+                                 If *SIGN_NEVER* (value=0), SMB messages will never be signed regardless of remote server's configurations; access errors will occur if the remote server requires signing.
         """
         self.username = username
         self.password = password
@@ -95,6 +106,7 @@ class SMBProtocolFactory(ClientFactory):
         self.remote_name = remote_name
         self.domain = domain
         self.use_ntlm_v2 = use_ntlm_v2
+        self.sign_options = sign_options
         self.instance = None    #: The single SMBProtocol instance for each SMBProtocolFactory instance. Usually, you should not need to touch this attribute directly.
 
     #
@@ -173,6 +185,8 @@ class SMBProtocolFactory(ClientFactory):
         """
         Retrieve the contents of the file at *path* on the *service_name* and write these contents to the provided *file_obj*.
 
+        Use *retrieveFileFromOffset()* method if you need to specify the offset to read from the remote *path* and/or the maximum number of bytes to write to the *file_obj*.
+
         The meaning of the *timeout* parameter will be different from other file operation methods. As the downloaded file usually exceeeds the maximum size
         of each SMB/CIFS data message, it will be packetized into a series of request messages (each message will request about about 60kBytes).
         The *timeout* parameter is an integer/float value that specifies the timeout interval for these individual SMB/CIFS message to be transmitted and downloaded from the remote SMB/CIFS server.
@@ -180,14 +194,33 @@ class SMBProtocolFactory(ClientFactory):
         :param string/unicode service_name: the name of the shared folder for the *path*
         :param string/unicode path: Path of the file on the remote server. If the file cannot be opened for reading, an :doc:`OperationFailure<smb_exceptions>` will be called in the returned *Deferred* errback.
         :param file_obj: A file-like object that has a *write* method. Data will be written continuously to *file_obj* until EOF is received from the remote service.
-        :return: A *twisted.internet.defer.Deferred* instance. The callback function will be called with a 3-element tuple of ( *file_obj*, file attributes of the file on server, number of bytes retrieved ).
+        :return: A *twisted.internet.defer.Deferred* instance. The callback function will be called with a 3-element tuple of ( *file_obj*, file attributes of the file on server, number of bytes written to *file_obj* ).
+                 The file attributes is an integer value made up from a bitwise-OR of *SMB_FILE_ATTRIBUTE_xxx* bits (see smb_constants.py)
+        """
+        return self.retrieveFileFromOffset(service_name, path, file_obj, 0L, -1L, timeout)
+
+    def retrieveFileFromOffset(self, service_name, path, file_obj, offset = 0L, max_length = -1L, timeout = 30):
+        """
+        Retrieve the contents of the file at *path* on the *service_name* and write these contents to the provided *file_obj*.
+
+        The meaning of the *timeout* parameter will be different from other file operation methods. As the downloaded file usually exceeeds the maximum size
+        of each SMB/CIFS data message, it will be packetized into a series of request messages (each message will request about about 60kBytes).
+        The *timeout* parameter is an integer/float value that specifies the timeout interval for these individual SMB/CIFS message to be transmitted and downloaded from the remote SMB/CIFS server.
+
+        :param string/unicode service_name: the name of the shared folder for the *path*
+        :param string/unicode path: Path of the file on the remote server. If the file cannot be opened for reading, an :doc:`OperationFailure<smb_exceptions>` will be called in the returned *Deferred* errback.
+        :param file_obj: A file-like object that has a *write* method. Data will be written continuously to *file_obj* until EOF is received from the remote service.
+        :param integer/long offset: the offset in the remote *path* where the first byte will be read and written to *file_obj*. Must be either zero or a positive integer/long value.
+        :param integer/long max_length: maximum number of bytes to read from the remote *path* and write to the *file_obj*. Specify a negative value to read from *offset* to the EOF.
+                                        If zero, the *Deferred* callback is invoked immediately after the file is opened successfully for reading.
+        :return: A *twisted.internet.defer.Deferred* instance. The callback function will be called with a 3-element tuple of ( *file_obj*, file attributes of the file on server, number of bytes written to *file_obj* ).
                  The file attributes is an integer value made up from a bitwise-OR of *SMB_FILE_ATTRIBUTE_xxx* bits (see smb_constants.py)
         """
         if not self.instance:
             raise NotConnectedError('Not connected to server')
 
         d = defer.Deferred()
-        self.instance._retrieveFile(service_name, path, file_obj, d.callback, d.errback, timeout = timeout)
+        self.instance._retrieveFileFromOffset(service_name, path, file_obj, d.callback, d.errback, offset, max_length, timeout = timeout)
         return d
 
     def storeFile(self, service_name, path, file_obj, timeout = 30):
@@ -314,6 +347,6 @@ class SMBProtocolFactory(ClientFactory):
     #
 
     def buildProtocol(self, addr):
-        p = self.protocol(self.username, self.password, self.my_name, self.remote_name, self.domain, self.use_ntlm_v2)
+        p = self.protocol(self.username, self.password, self.my_name, self.remote_name, self.domain, self.use_ntlm_v2, self.sign_options)
         p.factory = self
         return p

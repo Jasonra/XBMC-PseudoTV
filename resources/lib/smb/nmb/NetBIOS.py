@@ -58,18 +58,17 @@ class NetBIOS(NBNS):
 
         return self._pollForNetBIOSPacket(trn_id, timeout)
 
-###############################################################################
-#	Added by Jason Anderson
-###############################################################################
     def queryIPForName(self, ip, port = 137, timeout = 30):
         """
-        Send a query on the network and hopes that if machine matching the *name* will reply with its IP address.
+        Send a query to the machine with *ip* and hopes that the machine will reply back with its name.
+
+        The implementation of this function is contributed by Jason Anderson.
 
         :param string ip: If the NBNSProtocol instance was instianted with broadcast=True, then this parameter can be an empty string. We will leave it to the OS to determine an appropriate broadcast address.
                           If the NBNSProtocol instance was instianted with broadcast=False, then you should provide a target IP to send the query.
         :param integer port: The NetBIOS-NS port (IANA standard defines this port to be 137). You should not touch this parameter unless you know what you are doing.
         :param integer/float timeout: Number of seconds to wait for a reply, after which the method will return None
-        :return: A list of IP addresses in dotted notation (aaa.bbb.ccc.ddd). On timeout, returns None.
+        :return: A list of string containing the names of the machine at *ip*. On timeout, returns None.
         """
         assert self.sock, 'Socket is already closed'
 
@@ -77,19 +76,16 @@ class NetBIOS(NBNS):
         data = self.prepareNetNameQuery(trn_id)
         self.write(data, ip, port)
         return self._pollForQueryPacket(trn_id, timeout)
-###############################################################################
-#	End addition
-###############################################################################
 
     #
     # Protected Methods
     #
 
     def _pollForNetBIOSPacket(self, wait_trn_id, timeout):
-        end_time = time.time() + timeout
+        end_time = time.time() - timeout
         while True:
             try:
-                _timeout = end_time - time.time()
+                _timeout = time.time()-end_time
                 if _timeout <= 0:
                     return None
 
@@ -109,10 +105,9 @@ class NetBIOS(NBNS):
                 else:
                     raise ex
 
-
-###############################################################################
-#	Added by Jason Anderson
-###############################################################################
+    #
+    # Contributed by Jason Anderson
+    #
     def _pollForQueryPacket(self, wait_trn_id, timeout):
         end_time = time.time() - timeout
         while True:
@@ -136,6 +131,3 @@ class NetBIOS(NBNS):
                         raise ex
                 else:
                     raise ex
-###############################################################################
-#	End addition
-###############################################################################

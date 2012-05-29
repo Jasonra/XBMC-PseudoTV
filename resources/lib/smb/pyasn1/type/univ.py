@@ -224,14 +224,14 @@ class BitString(base.AbstractSimpleAsn1Item):
                     return tuple(r)
                 else:
                     raise error.PyAsn1Error(
-                        'Bad BIT STRING value notation %s' % value
+                        'Bad BIT STRING value notation %s' % (value,)
                         )                
             else:
                 for i in value.split(','):
                     j = self.__namedValues.getValue(i)
                     if j is None:
                         raise error.PyAsn1Error(
-                            'Unknown bit identifier \'%s\'' % i
+                            'Unknown bit identifier \'%s\'' % (i,)
                             )
                     if j >= len(r):
                         r.extend([0]*(j-len(r)+1))
@@ -368,7 +368,7 @@ class OctetString(base.AbstractSimpleAsn1Item):
         else:
             numbers = tuple(value)
         if [ x for x in numbers if x < 32 or x > 126 ]:
-            return '0x' + ''.join([ '%x' % x for x in numbers ])
+            return '0x' + ''.join([ '%.2x' % x for x in numbers ])
         else:
             return str(value)
 
@@ -376,7 +376,7 @@ class OctetString(base.AbstractSimpleAsn1Item):
         if self._value is base.noValue:
             return self.__class__.__name__ + '()'
         if [ x for x in self.asNumbers() if x < 32 or x > 126 ]:
-            return self.__class__.__name__ + '(hexValue=\'' + ''.join([ '%x' % x for x in self.asNumbers() ])+'\')'
+            return self.__class__.__name__ + '(hexValue=\'' + ''.join([ '%.2x' % x for x in self.asNumbers() ])+'\')'
         else:
             return self.__class__.__name__ + '(\'' + self.prettyOut(self._value) + '\')'
                                 
@@ -528,7 +528,7 @@ class Real(base.AbstractSimpleAsn1Item):
                         )
             if value[1] not in (2, 10):
                 raise error.PyAsn1Error(
-                    'Prohibited base for Real value: %s' % value[1]
+                    'Prohibited base for Real value: %s' % (value[1],)
                     )
             if value[1] == 10:
                 value = self.__normalizeBase10(value)
@@ -648,7 +648,7 @@ class SetOf(base.AbstractConstructedAsn1Item):
     def _verifyComponent(self, idx, value):
         if self._componentType is not None and \
                not self._componentType.isSuperTypeOf(value):
-            raise error.PyAsn1Error('Component type error %s' % value)
+            raise error.PyAsn1Error('Component type error %s' % (value,))
 
     def getComponentByPosition(self, idx): return self._componentValues[idx]
     def setComponentByPosition(self, idx, value=None, verifyConstraints=True):
@@ -924,9 +924,9 @@ class Choice(Set):
             return self._componentValues[self._currentIdx] >= other
         return NotImplemented
     if sys.version_info[0] <= 2:
-        def __nonzero__(self, other): return bool(self._componentValues)
+        def __nonzero__(self): return bool(self._componentValues)
     else:
-        def __bool__(self, other): return bool(self._componentValues)
+        def __bool__(self): return bool(self._componentValues)
 
     def __len__(self): return self._currentIdx is not None and 1 or 0
     

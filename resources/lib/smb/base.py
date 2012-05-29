@@ -36,11 +36,16 @@ class SMB(NMBSession):
 
     log = logging.getLogger('SMB.SMB')
 
-    def __init__(self, username, password, my_name, remote_name, domain = '', use_ntlm_v2 = True):
+    SIGN_NEVER = 0
+    SIGN_WHEN_SUPPORTED = 1
+    SIGN_WHEN_REQUIRED = 2
+
+    def __init__(self, username, password, my_name, remote_name, domain = '', use_ntlm_v2 = True, sign_options = SIGN_WHEN_REQUIRED):
         NMBSession.__init__(self, my_name, remote_name)
         self.username = username
         self.password = password
         self.domain = domain
+        self.sign_options = sign_options
         self.use_ntlm_v2 = use_ntlm_v2 #: Similar to LMAuthenticationPolicy and NTAuthenticationPolicy as described in [MS-CIFS] 3.2.1.1
         self.smb_message = SMBMessage()
         self.pending_requests = { }  #: MID mapped to _PendingRequest instance
@@ -49,8 +54,12 @@ class SMB(NMBSession):
 
         self.has_negotiated = False
         self.has_authenticated = False
+        self.is_signing_active = False           #: True if the remote server accepts message signing. All outgoing messages will be signed. Simiar to IsSigningActive as described in [MS-CIFS] 3.2.1.2
+        self.signing_session_key = None          #: Session key for signing packets, if signing is active. Similar to SigningSessionKey as described in [MS-CIFS] 3.2.1.2
+        self.signing_challenge_response = None   #: Contains the challenge response for signing, if signing is active. Similar to SigningChallengeResponse as described in [MS-CIFS] 3.2.1.2
         self.mid = 0
         self.uid = 0
+        self.next_signing_id = 2     #: Similar to ClientNextSendSequenceNumber as described in [MS-CIFS] 3.2.1.2
 
         # Most of the following attributes will be initialized upon receipt of SMB_COM_NEGOTIATE message from server (via self._updateServerInfo method)
         self.use_plaintext_authentication = False  #: Similar to PlaintextAuthenticationPolicy in in [MS-CIFS] 3.2.1.1
@@ -58,6 +67,7 @@ class SMB(NMBSession):
         self.max_buffer_size = 0   #: Similar to MaxBufferSize as described in [MS-CIFS] 3.2.1.1
         self.max_mpx_count = 0     #: Similar to MaxMpxCount as described in [MS-CIFS] 3.2.1.1
         self.capabilities = 0
+        self.security_mode = 0     #: Initialized from the SecurityMode field of the SMB_COM_NEGOTIATE message
 
         self.log.info('Authetication with remote machine "%s" for user "%s" will be using NTLM %s authentication (%s extended security)',
                       self.remote_name, self.username,
@@ -102,7 +112,24 @@ class SMB(NMBSession):
         if smb_message.mid == 0:
             smb_message.mid = self._getNextMID()
         smb_message.uid = self.uid
-        smb_message.raw_data = smb_message.encode()
+        if self.is_signing_active:
+            smb_message.flags2 |= SMB_FLAGS2_SMB_SECURITY_SIGNATURE
+
+            # Increment the next_signing_id as described in [MS-CIFS] 3.2.4.1.3
+            smb_message.security = self.next_signing_id
+            self.next_signing_id += 2  # All our defined messages currently have responses, so always increment by 2
+            raw_data = smb_message.encode()
+
+            md = ntlm.MD5(self.signing_session_key)
+            if self.signing_challenge_response:
+                md.update(self.signing_challenge_response)
+            md.update(raw_data)
+            signature = md.digest()[:8]
+
+            self.log.debug('MID is %d. Signing ID is %d. Signature is %s. Total raw message is %d bytes', smb_message.mid, smb_message.security, binascii.hexlify(signature), len(raw_data))
+            smb_message.raw_data = raw_data[:14] + signature + raw_data[22:]
+        else:
+            smb_message.raw_data = smb_message.encode()
         self.sendNMBMessage(smb_message.raw_data)
 
     def _getNextMID(self):
@@ -181,12 +208,10 @@ class SMB(NMBSession):
         self.max_buffer_size = payload.max_buffer_size
         self.max_mpx_count = payload.max_mpx_count
         self.use_plaintext_authentication = not bool(payload.security_mode & NEGOTIATE_ENCRYPT_PASSWORDS)
+        self.security_mode = payload.security_mode
 
         if self.use_plaintext_authentication:
             self.log.warning('Remote server only supports plaintext authentication. Your password can be stolen easily over the network.')
-
-        if payload.security_mode & NEGOTIATE_SECURITY_SIGNATURES_REQUIRE:
-            raise UnsupportedFeature('Remote server requires secure SMB message signing but current version pysmb does not support this yet.')
 
 
     def _handleSessionChallenge(self, message, ntlm_token):
@@ -213,7 +238,8 @@ class SMB(NMBSession):
                                                      nt_challenge_response,
                                                      lm_challenge_response,
                                                      session_key,
-                                                     self.username)
+                                                     self.username,
+                                                     self.domain)
 
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('NT challenge response is "%s" (%d bytes)', binascii.hexlify(nt_challenge_response), len(nt_challenge_response))
@@ -221,6 +247,25 @@ class SMB(NMBSession):
 
         blob = securityblob.generateAuthSecurityBlob(ntlm_data)
         self._sendSMBMessage(SMBMessage(ComSessionSetupAndxRequest__WithSecurityExtension(0, blob)))
+
+        if self.security_mode & NEGOTIATE_SECURITY_SIGNATURES_REQUIRE:
+            self.log.info('Server requires all SMB messages to be signed')
+            self.is_signing_active = (self.sign_options != SMB.SIGN_NEVER)
+        elif self.security_mode & NEGOTIATE_SECURITY_SIGNATURES_ENABLE:
+            self.log.info('Server supports SMB signing')
+            self.is_signing_active = (self.sign_options == SMB.SIGN_WHEN_SUPPORTED)
+        else:
+            self.is_signing_active = False
+
+        if self.is_signing_active:
+            self.log.info("SMB signing activated. All SMB messages will be signed.")
+            self.signing_session_key = session_key
+            if self.capabilities & CAP_EXTENDED_SECURITY:
+                self.signing_challenge_response = None
+            else:
+                self.signing_challenge_response = blob
+        else:
+            self.log.info("SMB signing deactivated. SMB messages will NOT be signed.")
 
 
     def _handleNegotiateResponse(self, message):
@@ -445,7 +490,8 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
 
                 filename = data_bytes[offset2:offset2+filename_length].decode('UTF-16LE')
                 short_name = short_name.decode('UTF-16LE')
-                results.append(SharedFile(create_time, last_access_time, last_write_time, last_attr_change_time,
+                results.append(SharedFile(convertFILETIMEtoEpoch(create_time), convertFILETIMEtoEpoch(last_access_time),
+                                          convertFILETIMEtoEpoch(last_write_time), convertFILETIMEtoEpoch(last_attr_change_time),
                                           file_size, alloc_size, file_attributes, short_name, filename))
 
                 if next_offset:
@@ -563,6 +609,9 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             sendFindFirst(self.connected_trees[service_name])
 
     def _retrieveFile(self, service_name, path, file_obj, callback, errback, timeout = 30):
+        return self._retrieveFileFromOffset(service_name, path, file_obj, callback, errback, 0L, -1L, timeout)
+
+    def _retrieveFileFromOffset(self, service_name, path, file_obj, callback, errback, starting_offset, max_length, timeout = 30):
         if not self.has_authenticated:
             raise NotReadyError('SMB connection not authenticated')
 
@@ -583,11 +632,15 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
         def openCB(open_message, **kwargs):
             messages_history.append(open_message)
             if not open_message.status.hasError:
-                sendRead(open_message.tid, open_message.payload.fid, 0L, open_message.payload.file_attributes)
+                if max_length == 0:
+                    closeFid(open_message.tid, open_message.payload.fid)
+                    callback(( file_obj, open_message.payload.file_attributes, 0L ))
+                else:
+                    sendRead(open_message.tid, open_message.payload.fid, starting_offset, open_message.payload.file_attributes, 0L, max_length)
             else:
                 errback(OperationFailure('Failed to retrieve %s on %s: Unable to open file' % ( path, service_name ), messages_history))
 
-        def sendRead(tid, fid, offset, file_attributes):
+        def sendRead(tid, fid, offset, file_attributes, read_len, remaining_len):
             read_count = self.max_raw_size - 2
             m = SMBMessage(ComReadAndxRequest(fid = fid,
                                               offset = offset,
@@ -595,17 +648,33 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                                               min_return_bytes_count = min(0xFFFF, read_count)))
             m.tid = tid
             self._sendSMBMessage(m)
-            self.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, readCB, errback, fid = fid, offset = offset, file_attributes = file_attributes)
+            self.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, readCB, errback, fid = fid, offset = offset, file_attributes = file_attributes,
+                                                           read_len = read_len, remaining_len = remaining_len)
 
         def readCB(read_message, **kwargs):
             # To avoid crazy memory usage when retrieving large files, we do not save every read_message in messages_history.
             if not read_message.status.hasError:
-                file_obj.write(read_message.payload.data)
-                if read_message.payload.data_length < (self.max_raw_size - 2):
-                    closeFid(read_message.tid, kwargs['fid'])
-                    callback(( file_obj, kwargs['file_attributes'], kwargs['offset']+read_message.payload.data_length ))  # Note that this is a tuple of 3-elements
+                read_len = kwargs['read_len']
+                remaining_len = kwargs['remaining_len']
+                data_len = read_message.payload.data_length
+                if max_length > 0:
+                    if data_len > remaining_len:
+                        file_obj.write(read_message.payload.data[:remaining_len])
+                        read_len += remaining_len
+                        remaining_len = 0
+                    else:
+                        file_obj.write(read_message.payload.data)
+                        remaining_len -= data_len
+                        read_len += data_len
                 else:
-                    sendRead(read_message.tid, kwargs['fid'], kwargs['offset']+read_message.payload.data_length, kwargs['file_attributes'])
+                    file_obj.write(read_message.payload.data)
+                    read_len += data_len
+
+                if (max_length > 0 and remaining_len <= 0) or data_len < (self.max_raw_size - 2):
+                    closeFid(read_message.tid, kwargs['fid'])
+                    callback(( file_obj, kwargs['file_attributes'], read_len ))  # Note that this is a tuple of 3-elements
+                else:
+                    sendRead(read_message.tid, kwargs['fid'], kwargs['offset']+data_len, kwargs['file_attributes'], read_len, remaining_len)
             else:
                 messages_history.append(read_message)
                 closeFid(read_message.tid, kwargs['fid'])
@@ -631,81 +700,6 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
             messages_history.append(m)
         else:
             sendOpen(self.connected_trees[service_name])
-
-
-###############################################################################
-#	Added by Jason Anderson
-###############################################################################
-    def _readFile(self, service_name, path, file_obj, callback, errback, readoffset, timeout = 30):
-        if not self.has_authenticated:
-            raise NotReadyError('SMB connection not authenticated')
-
-        path = path.replace('/', '\\')
-        messages_history = [ ]
-
-        def sendOpen(tid, readoffset):
-            m = SMBMessage(ComOpenAndxRequest(filename = path,
-                                              access_mode = 0x0040,  # Sharing mode: Deny nothing to others
-                                              open_mode = 0x0001,    # Failed if file does not exist
-                                              search_attributes = SMB_FILE_ATTRIBUTE_HIDDEN | SMB_FILE_ATTRIBUTE_SYSTEM,
-                                              timeout = timeout * 1000))
-            m.tid = tid
-            self._sendSMBMessage(m)
-            self.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, openCB, errback, curoff = readoffset)
-            messages_history.append(m)
-
-        def openCB(open_message, **kwargs):
-            messages_history.append(open_message)
-            curoff = long(kwargs['curoff'])
-            if not open_message.status.hasError:
-                sendRead(open_message.tid, open_message.payload.fid, curoff, open_message.payload.file_attributes)
-            else:
-                errback(OperationFailure('Failed to retrieve %s on %s: Unable to open file' % ( path, service_name ), messages_history))
-
-        def sendRead(tid, fid, offset, file_attributes):
-            read_count = self.max_raw_size - 2
-            m = SMBMessage(ComReadAndxRequest(fid = fid,
-                                              offset = offset,
-                                              max_return_bytes_count = read_count,
-                                              min_return_bytes_count = min(0xFFFF, read_count)))
-            m.tid = tid
-            self._sendSMBMessage(m)
-            self.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, readCB, errback, fid = fid, offset = offset, file_attributes = file_attributes)
-
-        def readCB(read_message, **kwargs):
-            if not read_message.status.hasError:
-                file_obj.write(read_message.payload.data)
-                closeFid(read_message.tid, kwargs['fid'])
-                callback(( file_obj, kwargs['file_attributes'], read_message.payload.data_length ))  # Note that this is a tuple of 3-elements
-            else:
-                messages_history.append(read_message)
-                closeFid(read_message.tid, kwargs['fid'])
-                errback(OperationFailure('Failed to retrieve %s on %s: Read failed' % ( path, service_name ), messages_history))
-
-        def closeFid(tid, fid):
-            m = SMBMessage(ComCloseRequest(fid))
-            m.tid = tid
-            self._sendSMBMessage(m)
-            messages_history.append(m)
-
-        if not self.connected_trees.has_key(service_name):
-            def connectCB(connect_message, **kwargs):
-                messages_history.append(connect_message)
-                if not connect_message.status.hasError:
-                    sendOpen(connect_message.tid, readoffset)
-                else:
-                    errback(OperationFailure('Failed to retrieve %s on %s: Unable to connect to shared device' % ( path, service_name ), messages_history))
-
-            m = SMBMessage(ComTreeConnectAndxRequest(r'\\%s\%s' % ( self.remote_name.upper(), service_name ), SERVICE_ANY, ''))
-            self._sendSMBMessage(m)
-            self.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, connectCB, errback, path = service_name)
-            messages_history.append(m)
-        else:
-            sendOpen(self.connected_trees[service_name], readoffset)
-###############################################################################
-#	End addition
-###############################################################################
-
 
     def _storeFile(self, service_name, path, file_obj, callback, errback, timeout = 30):
         if not self.has_authenticated:
@@ -733,13 +727,15 @@ c8 4f 32 4b 70 16 d3 01 12 78 5a 47 bf 6e e1 88
                 errback(OperationFailure('Failed to store %s on %s: Unable to open file' % ( path, service_name ), messages_history))
 
         def sendWrite(tid, fid, offset):
-            write_count = min(self.max_raw_size, 0xFFFF)
+            # For message signing, the total SMB message size must be not exceed the max_buffer_size. Non-message signing does not have this limitation
+            write_count = min((self.is_signing_active and (self.max_buffer_size-64)) or self.max_raw_size, 0xFFFF-1)  # Need to minus 1 byte from 0xFFFF because of the first NULL byte in the ComWriteAndxRequest message data
             data_bytes = file_obj.read(write_count)
-            if data_bytes:
+            data_len = len(data_bytes)
+            if data_len > 0:
                 m = SMBMessage(ComWriteAndxRequest(fid = fid, offset = offset, data_bytes = data_bytes))
                 m.tid = tid
                 self._sendSMBMessage(m)
-                self.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, writeCB, errback, fid = fid, offset = offset+len(data_bytes))
+                self.pending_requests[m.mid] = _PendingRequest(m.mid, int(time.time()) + timeout, writeCB, errback, fid = fid, offset = offset+data_len)
             else:
                 closeFid(tid, fid)
                 callback(( file_obj, offset ))  # Note that this is a tuple of 2-elements

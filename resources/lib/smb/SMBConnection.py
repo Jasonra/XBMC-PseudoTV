@@ -9,7 +9,14 @@ class SMBConnection(SMB):
 
     log = logging.getLogger('SMB.SMBConnection')
 
-    def __init__(self, username, password, my_name, remote_name, domain = '', use_ntlm_v2 = True):
+    #: SMB messages will never be signed regardless of remote server's configurations; access errors will occur if the remote server requires signing.
+    SIGN_NEVER = 0
+    #: SMB messages will be signed when remote server supports signing but not requires signing.
+    SIGN_WHEN_SUPPORTED = 1
+    #: SMB messages will only be signed when remote server requires signing.
+    SIGN_WHEN_REQUIRED = 2
+
+    def __init__(self, username, password, my_name, remote_name, domain = '', use_ntlm_v2 = True, sign_options = SIGN_WHEN_REQUIRED):
         """
         Create a new SMBConnection instance.
 
@@ -28,8 +35,12 @@ class SMBConnection(SMB):
                                     The choice of NTLMv1 and NTLMv2 is configured on the remote server, and there is no mechanism to auto-detect which algorithm has been configured.
                                     Hence, we can only "guess" or try both algorithms.
                                     On Sambda, Windows Vista and Windows 7, NTLMv2 is enabled by default. On Windows XP, we can use NTLMv1 before NTLMv2.
+        :param int sign_options: Determines whether SMB messages will be signed. Default is *SIGN_WHEN_REQUIRED*.
+                                 If *SIGN_WHEN_REQUIRED* (value=2), SMB messages will only be signed when remote server requires signing.
+                                 If *SIGN_WHEN_SUPPORTED* (value=1), SMB messages will be signed when remote server supports signing but not requires signing.
+                                 If *SIGN_NEVER* (value=0), SMB messages will never be signed regardless of remote server's configurations; access errors will occur if the remote server requires signing.
         """
-        SMB.__init__(self, username, password, my_name, remote_name, domain, use_ntlm_v2)
+        SMB.__init__(self, username, password, my_name, remote_name, domain, use_ntlm_v2, sign_options)
         self.sock = None
         self.auth_result = None
         self.is_busy = False
@@ -47,7 +58,8 @@ class SMBConnection(SMB):
     def write(self, data):
         assert self.sock
         data_len = len(data)
-        assert self.sock.send(data) == data_len
+        sentlen = self.sock.send(data)
+        assert sentlen == data_len
 
     #
     # Public Methods
@@ -60,7 +72,7 @@ class SMBConnection(SMB):
         You must call this method before attempting any of the file operations with the remote server.
         This method will block until the SMB connection has attempted at least one authentication.
 
-        :return: A boolean value indicating the result of the authentication attempt: True if authentication is successful; False, if otherwise.
+        :return: A boolean value indicating the result of the authentication atttempt: True if authentication is successful; False, if otherwise.
         """
         if self.sock:
             self.sock.close()
@@ -159,10 +171,27 @@ class SMBConnection(SMB):
         """
         Retrieve the contents of the file at *path* on the *service_name* and write these contents to the provided *file_obj*.
 
+        Use *retrieveFileFromOffset()* method if you wish to specify the offset to read from the remote *path* and/or the number of bytes to write to the *file_obj*.
+
         :param string/unicode service_name: the name of the shared folder for the *path*
         :param string/unicode path: Path of the file on the remote server. If the file cannot be opened for reading, an :doc:`OperationFailure<smb_exceptions>` will be called in the returned *Deferred* errback.
         :param file_obj: A file-like object that has a *write* method. Data will be written continuously to *file_obj* until EOF is received from the remote service.
-        :return: A 2-element tuple of ( file attributes of the file on server, number of bytes retrieved ).
+        :return: A 2-element tuple of ( file attributes of the file on server, number of bytes written to *file_obj* ).
+                 The file attributes is an integer value made up from a bitwise-OR of *SMB_FILE_ATTRIBUTE_xxx* bits (see smb_constants.py)
+        """
+        return self.retrieveFileFromOffset(service_name, path, file_obj, 0L, -1L, timeout)
+
+    def retrieveFileFromOffset(self, service_name, path, file_obj, offset = 0L, max_length = -1L, timeout = 30):
+        """
+        Retrieve the contents of the file at *path* on the *service_name* and write these contents to the provided *file_obj*.
+
+        :param string/unicode service_name: the name of the shared folder for the *path*
+        :param string/unicode path: Path of the file on the remote server. If the file cannot be opened for reading, an :doc:`OperationFailure<smb_exceptions>` will be called in the returned *Deferred* errback.
+        :param file_obj: A file-like object that has a *write* method. Data will be written continuously to *file_obj* up to *max_length* number of bytes.
+        :param integer/long offset: the offset in the remote *path* where the first byte will be read and written to *file_obj*. Must be either zero or a positive integer/long value.
+        :param integer/long max_length: maximum number of bytes to read from the remote *path* and write to the *file_obj*. Specify a negative value to read from *offset* to the EOF.
+                                        If zero, the method returns immediately after the file is opened successfully for reading.
+        :return: A 2-element tuple of ( file attributes of the file on server, number of bytes written to *file_obj* ).
                  The file attributes is an integer value made up from a bitwise-OR of *SMB_FILE_ATTRIBUTE_xxx* bits (see smb_constants.py)
         """
         if not self.sock:
@@ -180,57 +209,13 @@ class SMBConnection(SMB):
 
         self.is_busy = True
         try:
-            self._retrieveFile(service_name, path, file_obj, cb, eb, timeout = timeout)
+            self._retrieveFileFromOffset(service_name, path, file_obj, cb, eb, offset, max_length, timeout = timeout)
             while self.is_busy:
                 self._pollForNetBIOSPacket(timeout)
         finally:
             self.is_busy = False
 
         return results[0]
-
-
-###############################################################################
-#	Added by Jason Anderson
-###############################################################################
-    def readFile(self, service_name, path, file_obj, offset, timeout = 30):
-        """
-        Retrieve a packet of bytes from a specific location in a file at *path* on the *service_name* and write these contents to the provided *file_obj*.
-
-        :param string/unicode service_name: the name of the shared folder for the *path*
-        :param string/unicode path: Path of the file on the remote server. If the file cannot be opened for reading, an :doc:`OperationFailure<smb_exceptions>` will be called in the returned *Deferred* errback.
-        :param file_obj: A file-like object that has a *write* method. Data will be written continuously to *file_obj* until EOF is received from the remote service.
-		:param offset: The offset in bytes to start reading the file.
-        :return: A 2-element tuple of ( file attributes of the file on server, number of bytes retrieved ).
-                 The file attributes is an integer value made up from a bitwise-OR of *SMB_FILE_ATTRIBUTE_xxx* bits (see smb_constants.py)
-        """
-        if not self.sock:
-            raise NotConnectedError('Not connected to server')
-
-        results = [ ]
-
-        def cb(r):
-            self.is_busy = False
-            results.append(r[1:])
-
-        def eb(failure):
-            self.is_busy = False
-            raise failure
-
-        self.is_busy = True
-
-        try:
-            self._readFile(service_name, path, file_obj, cb, eb, offset, timeout = timeout)
-
-            while self.is_busy:
-                self._pollForNetBIOSPacket(timeout)
-        finally:
-            self.is_busy = False
-
-        return results[0]
-###############################################################################
-#	End addition
-###############################################################################
-
 
     def storeFile(self, service_name, path, file_obj, timeout = 30):
         """
@@ -412,18 +397,11 @@ class SMBConnection(SMB):
     def _pollForNetBIOSPacket(self, timeout):
         read_len = 4
         data = ''
-        end_time = time.time() + timeout
 
         while read_len > 0:
             try:
-                _timeout = end_time - time.time()
-
-                if _timeout <= 0:
-                    raise SMBTimeout
-
-                ready, _, _ = select.select([ self.sock ], [ ], [ ], _timeout)
-
-                if not ready:
+                ready = select.select([ self.sock ], [ ], [ ], timeout)
+                if not ready[0]:
                     raise SMBTimeout
 
                 d = self.sock.recv(read_len)
@@ -443,8 +421,8 @@ class SMBConnection(SMB):
         read_len = length
         while read_len > 0:
             try:
-                ready, _, _ = select.select([ self.sock ], [ ], [ ], timeout)
-                if not ready:
+                ready = select.select([ self.sock ], [ ], [ ], timeout)
+                if not ready[0]:
                     raise SMBTimeout
 
                 d = self.sock.recv(read_len)

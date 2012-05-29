@@ -160,6 +160,7 @@ class Connection:
 			self.username = 'guest'
 			self.ntlmv2 = True
 			self.dead = False
+			self.tryConnection()
 
 
 	def tryConnection(self):
@@ -168,16 +169,18 @@ class Connection:
 
 			if self.connect() == False:
 				self.dead = True
-				self.log("Couldn't connect to " + ip + " with the name " + host + ", " + username + " / " + password, xbmc.LOGERROR)
+				self.log("Couldn't connect to " + self.serverip + " with the name " + self.hostname + ", " + self.username + " / " + self.password, xbmc.LOGERROR)
 
 
 	def connect(self):
 		self.log("connect")
 		# Try the most basic connection
-		self.conn = SMBConnection(self.username, self.password, 'PseudoTV', self.hostname, '', use_ntlm_v2=self.ntlmv2)
+		self.log('trying: ' + self.username + ' ' + self.password + ' ' + self.hostname)
+		self.conn = SMBConnection(self.username, self.password, 'PSEUDOTV', self.hostname, '', use_ntlm_v2=self.ntlmv2)
 
 		try:
-			if self.conn.connect(self.serverip, timeout=5):
+			self.log('connecting: ' + self.serverip)
+			if self.conn.connect(self.serverip, timeout=10):
 				self.log('Connected')
 				self.lastConnection = time.time()
 				self.alive = True
@@ -259,11 +262,11 @@ class Connection:
 		readsize = 0
 
 		try:
-			file_attributes, readsize = self.conn.readFile(fdir, fpath, fhandle, offset)
+			file_attributes, readsize = self.conn.retrieveFileFromOffset(fdir, fpath, fhandle, offset, 65535L)
 		except:
 			if self.reconnect() == True:
 				try:
-					file_attributes, readsize = self.conn.readFile(fdir, fpath, fhandle, offset)
+					file_attributes, readsize = self.conn.retrieveFileFromOffset(fdir, fpath, fhandle, offset, 65535L)
 				except:
 					self.reconnect()
 					return (0,0)

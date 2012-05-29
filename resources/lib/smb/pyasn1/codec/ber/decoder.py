@@ -2,17 +2,17 @@
 from resources.lib.smb.pyasn1.type import tag, base, univ, char, useful, tagmap
 from resources.lib.smb.pyasn1.codec.ber import eoo
 from resources.lib.smb.pyasn1.compat.octets import oct2int, octs2ints
-from resources.lib.smb.pyasn1 import error
+from resources.lib.smb.pyasn1 import debug, error
 
 class AbstractDecoder:
     protoComponent = None
     def valueDecoder(self, fullSubstrate, substrate, asn1Spec, tagSet,
                      length, state, decodeFun):
-        raise error.PyAsn1Error('Decoder not implemented for %s' % tagSet)
+        raise error.PyAsn1Error('Decoder not implemented for %s' % (tagSet,))
 
     def indefLenValueDecoder(self, fullSubstrate, substrate, asn1Spec, tagSet,
                      length, state, decodeFun):
-        raise error.PyAsn1Error('Indefinite length mode decoder not implemented for %s' % tagSet)
+        raise error.PyAsn1Error('Indefinite length mode decoder not implemented for %s' % (tagSet,))
 
 class AbstractSimpleDecoder(AbstractDecoder):
     def _createComponent(self, asn1Spec, tagSet, value=None):
@@ -71,12 +71,6 @@ class IntegerDecoder(AbstractSimpleDecoder):
         '\xfb': -5
         }
     
-    def _valueFilter(self, value):
-        try:
-            return int(value)
-        except OverflowError:
-            return value
-        
     def valueDecoder(self, fullSubstrate, substrate, asn1Spec, tagSet, length,
                      state, decodeFun):
         substrate = substrate[:length]
@@ -92,16 +86,12 @@ class IntegerDecoder(AbstractSimpleDecoder):
                 value = 0
             for octet in substrate:
                 value = value << 8 | oct2int(octet)
-            value = self._valueFilter(value)
         return self._createComponent(asn1Spec, tagSet, value), substrate
 
 class BooleanDecoder(IntegerDecoder):
     protoComponent = univ.Boolean(0)
-    def _valueFilter(self, value):
-        if value:
-            return 1
-        else:
-            return 0
+    def _createComponent(self, asn1Spec, tagSet, value=None):
+        return IntegerDecoder._createComponent(self, asn1Spec, tagSet, value and 1 or 0)
 
 class BitStringDecoder(AbstractSimpleDecoder):
     protoComponent = univ.BitString(())
@@ -189,8 +179,8 @@ class NullDecoder(AbstractSimpleDecoder):
                      length, state, decodeFun):
         substrate = substrate[:length]        
         r = self._createComponent(asn1Spec, tagSet)
-        if substrate:
-            raise error.PyAsn1Error('Unexpected substrate for Null')
+        if length:
+            raise error.PyAsn1Error('Unexpected %d-octet substrate for Null' % length)
         return r, substrate
 
 class ObjectIdentifierDecoder(AbstractSimpleDecoder):
@@ -200,34 +190,30 @@ class ObjectIdentifierDecoder(AbstractSimpleDecoder):
         substrate = substrate[:length]        
         if not substrate:
             raise error.PyAsn1Error('Empty substrate')
-        oid = (); index = 0        
-        # Get the first subid
-        subId = oct2int(substrate[index])
-        oid = oid + divmod(subId, 40)
 
-        index = index + 1
+        # Get the first subid
+        subId = oct2int(substrate[0])
+        oid = divmod(subId, 40)
+
+        index = 1
         substrateLen = len(substrate)
-        
         while index < substrateLen:
             subId = oct2int(substrate[index])
-            if subId < 128:
-                oid = oid + (subId,)
-                index = index + 1
-            else:
+            index = index + 1
+            if subId > 127:
                 # Construct subid from a number of octets
                 nextSubId = subId
                 subId = 0
-                while nextSubId >= 128 and index < substrateLen:
+                while nextSubId >= 128:
                     subId = (subId << 7) + (nextSubId & 0x7F)
-                    index = index + 1
+                    if index >= substrateLen:
+                        raise error.SubstrateUnderrunError(
+                            'Short substrate for sub-OID past %s' % (oid,)
+                            )
                     nextSubId = oct2int(substrate[index])
-                if index == substrateLen:
-                    raise error.SubstrateUnderrunError(
-                        'Short substrate for OID %s' % oid
-                        )
+                    index = index + 1
                 subId = (subId << 7) + nextSubId
-                oid = oid + (subId,)
-                index = index + 1
+            oid = oid + (subId,)
         return self._createComponent(asn1Spec, tagSet, oid), substrate[index:]
 
 class RealDecoder(AbstractSimpleDecoder):
@@ -551,6 +537,8 @@ class Decoder:
         
     def __call__(self, substrate, asn1Spec=None, tagSet=None,
                  length=None, state=stDecodeTag, recursiveFlag=1):
+        if debug.logger & debug.flagDecoder:
+            debug.logger('decoder called at scope %s with state %d, working with up to %d octets of substrate: %s' % (debug.scope, state, len(substrate), debug.hexdump(substrate)))
         fullSubstrate = substrate
         while state != stStop:
             if state == stDecodeTag:
@@ -598,6 +586,7 @@ class Decoder:
                 else:
                     tagSet = lastTag + tagSet
                 state = stDecodeLength
+                debug.logger and debug.logger & debug.flagDecoder and debug.logger('tag decoded into %r, decoding length' % tagSet)
             if state == stDecodeLength:
                 # Decode length
                 if not substrate:
@@ -625,12 +614,13 @@ class Decoder:
                     for char in lengthString:
                         length = (length << 8) | oct2int(char)
                     size = size + 1
-                state = stGetValueDecoder
                 substrate = substrate[size:]
                 if length != -1 and len(substrate) < length:
                     raise error.SubstrateUnderrunError(
                         '%d-octet short' % (length - len(substrate))
                         )
+                state = stGetValueDecoder
+                debug.logger and debug.logger & debug.flagDecoder and debug.logger('value length decoded into %d, payload substrate is: %s' % (length, debug.hexdump(substrate)))
             if state == stGetValueDecoder:
                 if asn1Spec is None:
                     state = stGetValueDecoderByTag
@@ -669,14 +659,27 @@ class Decoder:
                         state = stDecodeValue
                     else:
                         state = stTryAsExplicitTag
+                if debug.logger and debug.logger & debug.flagDecoder:
+                    debug.logger('codec %s chosen by a built-in type, decoding %s' % (concreteDecoder and concreteDecoder.__class__.__name__ or "<none>", state == stDecodeValue and 'value' or 'as explicit tag'))
+                    debug.scope.push(concreteDecoder is None and '?' or concreteDecoder.protoComponent.__class__.__name__)
             if state == stGetValueDecoderByAsn1Spec:
                 if isinstance(asn1Spec, (dict, tagmap.TagMap)):
                     if tagSet in asn1Spec:
                         __chosenSpec = asn1Spec[tagSet]
                     else:
                         __chosenSpec = None
+                    if debug.logger and debug.logger & debug.flagDecoder:
+                        debug.logger('candidate ASN.1 spec is a map of:')
+                        for t, v in asn1Spec.getPosMap().items():
+                            debug.logger('  %r -> %s' % (t, v.__class__.__name__))
+                        if asn1Spec.getNegMap():
+                            debug.logger('but neither of: ')
+                            for i in asn1Spec.getNegMap().items():
+                                debug.logger('  %r -> %s' % (t, v.__class__.__name__))
+                        debug.logger('new candidate ASN.1 spec is %s, chosen by %r' % (__chosenSpec is None and '<none>' or __chosenSpec.__class__.__name__, tagSet))
                 else:
                     __chosenSpec = asn1Spec
+                    debug.logger and debug.logger & debug.flagDecoder and debug.logger('candidate ASN.1 spec is %s' % asn1Spec.__class__.__name__)
                 if __chosenSpec is not None and (
                        tagSet == __chosenSpec.getTagSet() or \
                        tagSet in __chosenSpec.getTagMap()
@@ -687,9 +690,11 @@ class Decoder:
                            __chosenSpec.typeId in self.__typeMap:
                         # ambiguous type
                         concreteDecoder = self.__typeMap[__chosenSpec.typeId]
+                        debug.logger and debug.logger & debug.flagDecoder and debug.logger('value decoder chosen for an ambiguous type by type ID %s' % (__chosenSpec.typeId,))
                     elif baseTagSet in self.__tagMap:
                         # base type or tagged subtype
                         concreteDecoder = self.__tagMap[baseTagSet]
+                        debug.logger and debug.logger & debug.flagDecoder and debug.logger('value decoder chosen by base %r' % (baseTagSet,))
                     else:
                         concreteDecoder = None
                     if concreteDecoder:
@@ -699,9 +704,13 @@ class Decoder:
                         state = stTryAsExplicitTag
                 elif tagSet == self.__endOfOctetsTagSet:
                     concreteDecoder = self.__tagMap[tagSet]
+                    debug.logger and debug.logger & debug.flagDecoder and debug.logger('end-of-octets found')
                     state = stDecodeValue
                 else:
                     state = stTryAsExplicitTag
+                if debug.logger and debug.logger & debug.flagDecoder:
+                    debug.logger('codec %s chosen by ASN.1 spec, decoding %s' % (state == stDecodeValue and concreteDecoder.__class__.__name__ or "<none>", state == stDecodeValue and 'value' or 'as explicit tag'))
+                    debug.scope.push(__chosenSpec is None and '?' or __chosenSpec.__class__.__name__)
             if state == stTryAsExplicitTag:
                 if tagSet and \
                        tagSet[0][1] == tag.tagFormatConstructed and \
@@ -711,8 +720,10 @@ class Decoder:
                     state = stDecodeValue
                 else:                    
                     state = self.defaultErrorState
+                debug.logger and debug.logger & debug.flagDecoder and debug.logger('codec %s chosen, decoding %s' % (concreteDecoder and concreteDecoder.__class__.__name__ or "<none>", state == stDecodeValue and 'value' or 'as failure'))
             if state == stDumpRawValue:
                 concreteDecoder = self.defaultRawDecoder
+                debug.logger and debug.logger & debug.flagDecoder and debug.logger('codec %s chosen, decoding value' % concreteDecoder.__class__.__name__)
                 state = stDecodeValue
             if state == stDecodeValue:
                 if recursiveFlag:
@@ -734,10 +745,14 @@ class Decoder:
                     else:
                         substrate = _substrate
                 state = stStop
+                debug.logger and debug.logger & debug.flagDecoder and debug.logger('codec %s yields type %s, value:\n%s\n...remaining substrate is: %s' % (concreteDecoder.__class__.__name__, value.__class__.__name__, value.prettyPrint(), substrate and debug.hexdump(substrate) or '<none>'))
             if state == stErrorCondition:
                 raise error.PyAsn1Error(
                     '%r not in asn1Spec: %r' % (tagSet, asn1Spec)
                     )
+        if debug.logger and debug.logger & debug.flagDecoder:
+            debug.scope.pop()
+            debug.logger('decoder left scope %s, call completed' % debug.scope)
         return value, substrate
             
 decode = Decoder(tagMap, typeMap)

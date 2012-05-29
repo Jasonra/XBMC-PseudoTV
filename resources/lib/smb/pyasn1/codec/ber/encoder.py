@@ -2,7 +2,7 @@
 from resources.lib.smb.pyasn1.type import base, tag, univ, char, useful
 from resources.lib.smb.pyasn1.codec.ber import eoo
 from resources.lib.smb.pyasn1.compat.octets import int2oct, ints2octs, null, str2octs
-from resources.lib.smb.pyasn1 import error
+from resources.lib.smb.pyasn1 import debug, error
 
 class Error(Exception): pass
 
@@ -149,18 +149,15 @@ class ObjectIdentifierEncoder(AbstractItemEncoder):
             index = 5
         else:
             if len(oid) < 2:
-                raise error.PyAsn1Error('Short OID %s' % value)
+                raise error.PyAsn1Error('Short OID %s' % (value,))
 
             # Build the first twos
-            index = 0
-            subid = oid[index] * 40
-            subid = subid + oid[index+1]
-            if subid < 0 or subid > 0xff:
+            if oid[0] > 6 or oid[1] > 39 or oid[0] == 6 and oid[1] > 15:
                 raise error.PyAsn1Error(
-                    'Initial sub-ID overflow %s in OID %s' % (oid[index:], value)
+                    'Initial sub-ID overflow %s in OID %s' % (oid[:2], value)
                     )
-            octets = (subid,)
-            index = index + 2
+            octets = (oid[0] * 40 + oid[1],)
+            index = 2
 
         # Cycle through subids
         for subid in oid[index:]:
@@ -313,6 +310,7 @@ class Encoder:
         self.__typeMap = typeMap
 
     def __call__(self, value, defMode=1, maxChunkSize=0):
+        debug.logger & debug.flagEncoder and debug.logger('encoder called for type %s, value:\n%s' % (value.__class__.__name__, value.prettyPrint()))
         tagSet = value.getTagSet()
         if len(tagSet) > 1:
             concreteEncoder = explicitlyTaggedItemEncoder
@@ -322,13 +320,16 @@ class Encoder:
             elif tagSet in self.__tagMap:
                 concreteEncoder = self.__tagMap[tagSet]
             else:
-                baseTagSet = value.baseTagSet
-                if baseTagSet in self.__tagMap:
-                    concreteEncoder = self.__tagMap[baseTagSet]
+                tagSet = value.baseTagSet
+                if tagSet in self.__tagMap:
+                    concreteEncoder = self.__tagMap[tagSet]
                 else:
-                    raise Error('No encoder for %s' % value)
-        return concreteEncoder.encode(
+                    raise Error('No encoder for %s' % (value,))
+        debug.logger & debug.flagEncoder and debug.logger('using value codec %s chosen by %r' % (concreteEncoder.__class__.__name__, tagSet))
+        substrate = concreteEncoder.encode(
             self, value, defMode, maxChunkSize
             )
+        debug.logger & debug.flagEncoder and debug.logger('built %s octets of substrate: %s\nencoder completed' % (len(substrate), debug.hexdump(substrate)))
+        return substrate
 
 encode = Encoder(tagMap, typeMap)

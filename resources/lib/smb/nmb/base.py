@@ -127,10 +127,9 @@ class NBNS:
 
         return header + payload
 
-
-###############################################################################
-#	Added by Jason Anderson
-###############################################################################
+    #
+    # Contributed by Jason Anderson
+    #
     def decodeIPQueryPacket(self, data):
         if len(data) < self.HEADER_STRUCT_SIZE:
             raise Exception
@@ -157,13 +156,12 @@ class NBNS:
         else:
             return trn_id, None
 
-
+    #
+    # Contributed by Jason Anderson
+    #
     def prepareNetNameQuery(self, trn_id):
         header = struct.pack(self.HEADER_STRUCT_FORMAT,
                              trn_id, 0x0010, 1, 0, 0, 0)
         payload = encode_name('*', 0) + '\x00\x21\x00\x01'
 
         return header + payload
-###############################################################################
-#	End addition
-###############################################################################

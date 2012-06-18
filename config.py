@@ -46,6 +46,11 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         self.setting1 = ''
         self.setting2 = ''
         self.savedRules = False
+
+        if CHANNEL_SHARING:
+            realloc = REAL_SETTINGS.getSetting('SettingsFolder')
+            FileAccess.copy(realloc + '/settings2.xml', SETTINGS_LOC + '/settings2.xml')
+
         ADDON_SETTINGS.loadSettings()
         self.doModal()
         self.log("__init__ return")
@@ -83,6 +88,10 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
                 self.cancelChan()
                 self.hideChanDetails()
             else:
+                if CHANNEL_SHARING:
+                    realloc = REAL_SETTINGS.getSetting('SettingsFolder')
+                    FileAccess.copy(SETTINGS_LOC + '/settings2.xml', realloc + '/settings2.xml')
+
                 self.close()
 
 

@@ -292,6 +292,9 @@ class ChannelList:
 
         try:
             needsreset = ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_changed') == 'True'
+
+            if needsreset:
+                self.channels[channel - 1].isSetup = False
         except:
             pass
 
@@ -380,6 +383,7 @@ class ChannelList:
 
                         if needsreset:
                             ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_changed', 'False')
+                            self.channels[channel - 1].isSetup = True
 
         self.runActions(RULES_ACTION_BEFORE_CLEAR, channel, self.channels[channel - 1])
 
@@ -1165,7 +1169,7 @@ class ChannelList:
                                 try:
                                     seasonval = int(season.group(1))
                                     epval = int(episode.group(1))
-                                    
+
                                     if self.showSeasonEpisode:
                                         swtitle = swtitle + '(S' + ('0' if seasonval < 10 else '') + str(seasonval) + ' E' + ('0' if epval < 10 else '') + str(epval) + ')'
                                 except:

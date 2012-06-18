@@ -54,20 +54,16 @@ MODE_REALTIME = 16
 MODE_SERIAL = MODE_RESUME | MODE_ALWAYSPAUSE | MODE_ORDERAIRDATE
 MODE_STARTMODES = MODE_RANDOM | MODE_REALTIME | MODE_RESUME
 
-SETTINGS_LOC = ''
+SETTINGS_LOC = 'special://profile/addon_data/' + ADDON_ID
 CHANNEL_SHARING = False
+LOCK_LOC = xbmc.translatePath(os.path.join(SETTINGS_LOC, 'cache')) + '/'
 
 if REAL_SETTINGS.getSetting('ChannelSharing') == "true":
     CHANNEL_SHARING = True
-    SETTINGS_LOC = REAL_SETTINGS.getSetting('SettingsFolder')
-    log("Channel sharing at " + str(SETTINGS_LOC));
+    LOCK_LOC = xbmc.translatePath(os.path.join(REAL_SETTINGS.getSetting('SettingsFolder'), 'cache')) + '/'
 
 IMAGES_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'images')) + '/'
 PRESETS_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'presets')) + '/'
-
-if len(SETTINGS_LOC) == 0:
-    SETTINGS_LOC = 'special://profile/addon_data/' + ADDON_ID
-
 CHANNELS_LOC = xbmc.translatePath(os.path.join(SETTINGS_LOC, 'cache')) + '/'
 GEN_CHAN_LOC = os.path.join(CHANNELS_LOC, 'generated') + '/'
 MADE_CHAN_LOC = os.path.join(CHANNELS_LOC, 'stored') + '/'

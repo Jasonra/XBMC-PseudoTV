@@ -201,7 +201,7 @@ class FileAccess:
 class FileLock:
     def __init__(self):
         random.seed()
-        self.lockFileName = Globals.CHANNELS_LOC + FILE_LOCK_NAME
+        self.lockFileName = Globals.LOCK_LOC + FILE_LOCK_NAME
         self.lockedList = []
         self.refreshLocksTimer = threading.Timer(4.0, self.refreshLocks)
         self.refreshLocksTimer.name = "RefreshLocks"
@@ -253,10 +253,6 @@ class FileLock:
         curval = -1
         attempts = 0
         fle = 0
-
-        if Globals.CHANNEL_SHARING == False:
-            return True
-
         filename = filename.lower()
         locked = True
 
@@ -336,7 +332,7 @@ class FileLock:
         # timeout should help prevent issues with an old cache.
         for i in range(40):
             # Cycle file names in case one of them is sitting around in the directory
-            self.lockName = Globals.CHANNELS_LOC + str(random.randint(1, 60000)) + ".lock"
+            self.lockName = Globals.LOCK_LOC + str(random.randint(1, 60000)) + ".lock"
 
             try:
                 FileAccess.rename(self.lockFileName, self.lockName)
@@ -442,10 +438,6 @@ class FileLock:
         filename = filename.lower()
         found = False
         realindex = 0
-
-        if Globals.CHANNEL_SHARING == False:
-            return True
-
         # First make sure we actually own the lock
         # Remove it from the list if we do
         self.listSemaphore.acquire()
@@ -489,10 +481,6 @@ class FileLock:
     def isFileLocked(self, filename, block = False):
         self.log("isFileLocked " + filename)
         filename = filename.lower()
-
-        if Globals.CHANNEL_SHARING == False:
-            return False
-
         self.grabSemaphore.acquire()
 
         if self.grabLockFile() == False:

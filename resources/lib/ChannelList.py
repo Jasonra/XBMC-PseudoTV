@@ -289,7 +289,6 @@ class ChannelList:
         self.channels[channel - 1].isSetup = True
         self.channels[channel - 1].loadRules(channel)
         self.runActions(RULES_ACTION_START, channel, self.channels[channel - 1])
-        GlobalFileLock.lockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', True)
 
         try:
             needsreset = ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_changed') == 'True'
@@ -389,8 +388,6 @@ class ChannelList:
             self.updateDialogProgress = (channel - 1) * 100 // self.enteredChannelCount
             self.updateDialog.update(self.updateDialogProgress, "Loading channel " + str(channel), "clearing history", '')
             self.clearPlaylistHistory(channel)
-
-        GlobalFileLock.unlockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
 
         if append == False:
             self.runActions(RULES_ACTION_BEFORE_TIME, channel, self.channels[channel - 1])

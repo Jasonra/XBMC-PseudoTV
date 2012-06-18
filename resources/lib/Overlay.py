@@ -137,10 +137,15 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.background.setVisible(True)
         updateDialog = xbmcgui.DialogProgress()
         updateDialog.create("PseudoTV", "Initializing")
-        updateDialog.update(5, "Initializing", "Grabbing Lock File")
+        self.backupFiles(updateDialog)
         ADDON_SETTINGS.loadSettings()
-        updateDialog.update(70, "Initializing", "Checking Other Instances")
-        self.isMaster = GlobalFileLock.lockFile("MasterLock", False)
+        
+        if CHANNEL_SHARING:
+            updateDialog.update(70, "Initializing", "Checking Other Instances")
+            self.isMaster = GlobalFileLock.lockFile("MasterLock", False)
+        else:
+            self.isMaster = True
+
         updateDialog.update(95, "Initializing", "Migrating")
 
         if self.isMaster:
@@ -151,7 +156,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.playerTimer = threading.Timer(2.0, self.playerTimerAction)
         self.playerTimer.name = "PlayerTimer"
         self.infoTimer = threading.Timer(5.0, self.hideInfo)
-        self.masterTimer = threading.Timer(5.0, self.becomeMaster)
         self.myEPG = EPGWindow("script.pseudotv.EPG.xml", ADDON_INFO, "default")
         self.myEPG.MyOverlayWindow = self
         # Don't allow any actions during initialization
@@ -204,28 +208,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.channelThread.name = "ChannelThread"
             self.channelThread.start()
 
-        if self.isMaster == False:
-            self.masterTimer.name = "MasterTimer"
-            self.masterTimer.start()
-
         self.actionSemaphore.release()
         self.log('onInit return')
-
-
-    def becomeMaster(self):
-        self.isMaster = GlobalFileLock.lockFile("MasterLock", False)
-        self.masterTimer = threading.Timer(5.0, self.becomeMaster)
-
-        if self.isMaster == False and self.isExiting == False:
-            self.masterTimer.name = "MasterTimer"
-            self.masterTimer.start()
-
-            # Perform this after start so that there isn't an issue with evaluation before it is
-            # set.
-            if self.isExiting:
-                self.masterTimer.cancel()
-        elif self.isMaster:
-            self.log("Became master")
 
 
     # setup all basic configuration parameters, including creating the playlists that
@@ -290,6 +274,37 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.setChannel(channel)
         self.background.setVisible(False)
         self.log('channelDown return')
+        
+        
+    def backupFiles(self, updatedlg):
+        self.log('backupFiles')
+
+        if CHANNEL_SHARING == False:
+            return
+
+        updatedlg.update(1, "Initializing", "Copying Channels...")
+        realloc = REAL_SETTINGS.getSetting('SettingsFolder')
+        FileAccess.copy(realloc + '/settings2.xml', SETTINGS_LOC + '/settings2.xml')
+        realloc = xbmc.translatePath(os.path.join(realloc, 'cache')) + '/'
+
+        for i in range(999):
+            FileAccess.copy(realloc + 'channel_' + str(i) + '.m3u', CHANNELS_LOC + 'channel_' + str(i) + '.m3u')
+            updatedlg.update(int(i * .07) + 1, "Initializing", "Copying Channels...")
+
+
+    def storeFiles(self):
+        self.log('storeFiles')
+
+        if CHANNEL_SHARING == False:
+            return
+
+        realloc = REAL_SETTINGS.getSetting('SettingsFolder')
+        FileAccess.copy(SETTINGS_LOC + '/settings2.xml', realloc + '/settings2.xml')
+        realloc = xbmc.translatePath(os.path.join(realloc, 'cache')) + '/'
+
+        for i in range(self.maxChannels):
+            if self.channels[i].isValid:
+                FileAccess.copy(CHANNELS_LOC + 'channel_' + str(i) + '.m3u', realloc + 'channel_' + str(i) + '.m3u')
 
 
     def channelUp(self):
@@ -886,7 +901,11 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.isExiting = True
         updateDialog = xbmcgui.DialogProgress()
         updateDialog.create("PseudoTV", "Exiting")
-        updateDialog.update(0, "Exiting", "Removing File Locks")
+        
+        if CHANNEL_SHARING and self.isMaster:
+            updateDialog.update(0, "Exiting", "Removing File Locks")
+            GlobalFileLock.unlockFile('MasterLock')
+        
         GlobalFileLock.close()
 
         if self.playerTimer.isAlive():
@@ -936,13 +955,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         updateDialog.update(5)
 
-        try:
-            if self.masterTimer.isAlive():
-                self.masterTimer.cancel()
-                self.masterTimer.join()
-        except:
-            pass
-
         if self.channelThread.isAlive():
             for i in range(30):
                 try:
@@ -958,6 +970,14 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             if self.channelThread.isAlive():
                 self.log("Problem joining channel thread", xbmc.LOGERROR)
 
+        if self.isMaster:
+            try:
+                REAL_SETTINGS.setSetting('CurrentChannel', str(self.currentChannel))
+            except:
+                pass
+
+            ADDON_SETTINGS.setSetting('LastExitTime', str(int(curtime)))
+
         if self.timeStarted > 0 and self.isMaster:
             updateDialog.update(35, "Exiting", "Saving Settings")
             validcount = 0
@@ -965,7 +985,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             for i in range(self.maxChannels):
                 if self.channels[i].isValid:
                     validcount += 1
-
+            
             if validcount > 0:
                 incval = 65.0 / float(validcount)
 
@@ -993,14 +1013,8 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
                                 tottime += self.channels[i].showTimeOffset
                                 ADDON_SETTINGS.setSetting('Channel_' + str(i + 1) + '_time', str(int(tottime)))
-
-        if self.isMaster:
-            try:
-                REAL_SETTINGS.setSetting('CurrentChannel', str(self.currentChannel))
-            except:
-                pass
-
-            ADDON_SETTINGS.setSetting('LastExitTime', str(int(curtime)))
+                                
+                self.storeFiles()
 
         updateDialog.close()
         self.background.setVisible(False)

@@ -23,4 +23,8 @@
     	<setting id="ClipLength" type="enum" subsetting="true" label="30018" visible="eq(-1,true)" values="15|30|60|90|120|180|240|300|360" default="2"/>
     	<setting id="ShowSeEp" type="bool" label="30021" default="true"/>
     </category>
+    
+    <category label="30022">
+        <setting id="ChannelDelay" type="enum" label="30023" default="0" values="None|0.25|0.5|0.75|1.0|1.25|1.5|1.75|2.0"/>
+    </category>
 </settings>

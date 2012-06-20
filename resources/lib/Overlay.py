@@ -95,6 +95,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.ignoreInfoAction = False
         self.shortItemLength = 60
         self.runningActionChannel = 0
+        self.channelDelay = 0
 
         for i in range(3):
             self.channelLabel.append(xbmcgui.ControlImage(50 + (50 * i), 50, 50, 50, IMAGES_LOC + 'solid.png', colorDiffuse='0xAA00ff00'))
@@ -235,6 +236,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log("Hide Short Items - " + str(self.hideShortItems))
         self.shortItemLength = SHORT_CLIP_ENUM[int(REAL_SETTINGS.getSetting("ClipLength"))]
         self.log("Short item length - " + str(self.shortItemLength))
+        self.channelDelay = int(REAL_SETTINGS.getSetting("ChannelDelay")) * 250
 
         if FileAccess.exists(self.channelLogos) == False:
             self.channelLogos = IMAGES_LOC
@@ -403,6 +405,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.log("about to mute");
         # Mute the channel before changing
         xbmc.executebuiltin("Mute()");
+        xbmc.sleep(self.channelDelay)
         # set the show offset
         self.Player.playselected(self.channels[self.currentChannel - 1].playlistPosition)
         self.log("playing selected file");

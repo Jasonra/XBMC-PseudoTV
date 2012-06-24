@@ -151,7 +151,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
                 if curtime >= starttime and curtime <= endtime:
                     self.focusIndex = i
-                    self.setFocus(self.channelButtons[2][i].getControl())
+
+                    if(USING_FRODO):
+                        self.setFocus(self.channelButtons[2][i])
+                    else:
+                        self.setFocus(self.channelButtons[2][i].getControl())
+
                     self.focusTime = int(time.time())
                     self.focusEndTime = endtime
                     break
@@ -159,7 +164,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             # If nothing was highlighted, just select the first button
             if self.focusIndex == -1:
                 self.focusIndex = 0
-                self.setFocus(self.channelButtons[2][0].getControl())
+                
+                if(USING_FRODO):
+                    self.setFocus(self.channelButtons[2][0])
+                else:
+                    self.setFocus(self.channelButtons[2][0].getControl())
+
                 left, top = self.channelButtons[2][0].getPosition()
                 width = self.channelButtons[2][0].getWidth()
                 left = left - basex
@@ -206,6 +216,16 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         timex, timey = self.getControl(120).getPosition()
         timew = self.getControl(120).getWidth()
         timeh = self.getControl(120).getHeight()
+        
+        if USING_FRODO:
+            mychans = []
+            
+            for i in range(self.rowCount):
+                if singlerow == -1 or singlerow == i:
+                    mychans.extend(self.channelButtons[i])
+            
+            if len(mychans):
+                self.removeControls(mychans)
 
         for i in range(self.rowCount):
             if singlerow == -1 or singlerow == i:
@@ -224,6 +244,15 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 pass
 
             curchannel = self.MyOverlayWindow.fixChannel(curchannel + 1)
+
+        if USING_FRODO:
+            mychans = []
+            
+            for i in range(self.rowCount):
+                if singlerow == -1 or singlerow == i:
+                    mychans.extend(self.channelButtons[i])
+                
+            self.addControls(mychans)
 
         if time.time() >= starttime and time.time() < starttime + 5400:
             dif = int((starttime + 5400 - time.time()))
@@ -269,7 +298,11 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 return False
 
             # Backup all of the buttons to an array
-            rowbuttons.extend(self.channelButtons[row])
+            if(USING_FRODO):
+                pass
+            else:
+                rowbuttons.extend(self.channelButtons[row])
+
             del self.channelButtons[row][:]
 
             # if the channel is paused, then only 1 button needed
@@ -351,23 +384,27 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
                     if shouldskip == False and width >= 30:
                         mylabel = self.MyOverlayWindow.channels[curchannel - 1].getItemTitle(playlistpos)
-                        found = False
-
-                        for button in rowbuttons:
-                            if button.getLabel() == mylabel:
-                                self.log("moving button", xbmc.LOGERROR)
-                                self.channelButtons[row].append(button)
-                                rowbuttons.remove(button)
-                                found = True
-                                break
-
-                        if found == False:
-                            self.channelButtons[row].append(self.getButton())
-
-                        self.channelButtons[row][-1].setPosition(xpos, basey)
-                        self.channelButtons[row][-1].setWidth(width)
-                        self.channelButtons[row][-1].setHeight(baseh)
-                        self.channelButtons[row][-1].setLabel(mylabel)
+                        
+                        if(USING_FRODO):
+                            self.channelButtons[row].append(xbmcgui.ControlButton(xpos, basey, width, baseh, mylabel, focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor=self.textcolor, focusedColor=self.focusedcolor))
+                        else:
+                            found = False
+    
+                            for button in rowbuttons:
+                                if button.getLabel() == mylabel:
+                                    self.log("moving button", xbmc.LOGERROR)
+                                    self.channelButtons[row].append(button)
+                                    rowbuttons.remove(button)
+                                    found = True
+                                    break
+    
+                            if found == False:
+                                self.channelButtons[row].append(self.getButton())
+    
+                            self.channelButtons[row][-1].setPosition(xpos, basey)
+                            self.channelButtons[row][-1].setWidth(width)
+                            self.channelButtons[row][-1].setHeight(baseh)
+                            self.channelButtons[row][-1].setLabel(mylabel)
 
                     totaltime += tmpdur
                     reftime += tmpdur
@@ -377,8 +414,8 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 if totalloops >= 1000:
                     self.log("Broken big loop, too many loops, reftime is " + str(reftime) + ", endtime is " + str(endtime))
 
-            for button in rowbuttons:
-                self.returnButton(button)
+#            if(USING_FRODO):
+#                self.addControls(self.channelButtons[row])
         except:
             self.log("Exception in setButtons", xbmc.LOGERROR)
             self.log(traceback.format_exc(), xbmc.LOGERROR)
@@ -484,7 +521,15 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
             for i in range(self.rowCount):
                 for x in range(len(self.channelButtons[i])):
-                    if selectedbutton == self.channelButtons[i][x].getControl():
+                    mycontrol = 0
+
+                    if(USING_FRODO):
+                        mycontrol = self.channelButtons[i][x]
+                    else:
+                        mycontrol = self.channelButtons[i][x].getControl()
+
+                    if selectedbutton == mycontrol:
+#                    if selectedbutton == self.channelButtons[i][x].getControl():
                         self.focusRow = i
                         self.focusIndex = x
                         self.selectShow()
@@ -542,7 +587,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             self.setChannelButtons(self.shownTime - 1800, self.centerChannel)
             curbutidx = self.findButtonAtTime(self.focusRow, starttime + 30)
 
-            if (curbutidx - 1) >= 0:
+            if(curbutidx - 1) >= 0:
                 self.focusIndex = curbutidx - 1
             else:
                 self.focusIndex = 0
@@ -555,7 +600,11 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         starttime = self.shownTime + (left / (basew / 5400.0))
         endtime = starttime + (width / (basew / 5400.0))
 
-        self.setFocus(self.channelButtons[self.focusRow][self.focusIndex].getControl())
+        if(USING_FRODO):
+            self.setFocus(self.channelButtons[self.focusRow][self.focusIndex])
+        else:
+            self.setFocus(self.channelButtons[self.focusRow][self.focusIndex].getControl())
+
         self.setShowInfo()
         self.focusEndTime = endtime
         self.focusTime = starttime + 30
@@ -576,7 +625,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             self.setChannelButtons(self.shownTime + 1800, self.centerChannel)
             curbutidx = self.findButtonAtTime(self.focusRow, starttime + 30)
 
-            if (curbutidx + 1) < len(self.channelButtons[self.focusRow]):
+            if(curbutidx + 1) < len(self.channelButtons[self.focusRow]):
                 self.focusIndex = curbutidx + 1
             else:
                 self.focusIndex = len(self.channelButtons[self.focusRow]) - 1
@@ -589,7 +638,11 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         starttime = self.shownTime + (left / (basew / 5400.0))
         endtime = starttime + (width / (basew / 5400.0))
 
-        self.setFocus(self.channelButtons[self.focusRow][self.focusIndex].getControl())
+        if(USING_FRODO):
+            self.setFocus(self.channelButtons[self.focusRow][self.focusIndex])
+        else:
+            self.setFocus(self.channelButtons[self.focusRow][self.focusIndex].getControl())
+
         self.setShowInfo()
         self.focusEndTime = endtime
         self.focusTime = starttime + 30
@@ -600,8 +653,11 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.log('moveButtonsUp')
         xbmcgui.lock()
 
-        for button in self.channelButtons[0]:
-            self.returnButton(button)
+        if(USING_FRODO):
+            self.removeControls(self.channelButtons[0])
+        else:
+            for button in self.channelButtons[0]:
+                self.returnButton(button)
 
         del self.channelButtons[0][:]
 
@@ -622,8 +678,11 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.log('moveButtonsDown')
         xbmcgui.lock()
 
-        for button in self.channelButtons[self.rowCount - 1]:
-            self.returnButton(button)
+        if(USING_FRODO):
+            self.removeControls(self.channelButtons[self.rowCount - 1])
+        else:
+            for button in self.channelButtons[self.rowCount - 1]:
+                self.returnButton(button)
 
         del self.channelButtons[self.rowCount - 1][:]
 
@@ -677,7 +736,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
             if self.focusTime >= starttime and self.focusTime <= endtime:
                 self.focusIndex = i
-                self.setFocus(self.channelButtons[newrow][i].getControl())
+                
+                if(USING_FRODO):
+                    self.setFocus(self.channelButtons[newrow][i])
+                else:
+                    self.setFocus(self.channelButtons[newrow][i].getControl())
+
                 self.setShowInfo()
                 self.focusEndTime = endtime
 
@@ -688,7 +752,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 return
 
         self.focusIndex = 0
-        self.setFocus(self.channelButtons[newrow][0].getControl())
+
+        if(USING_FRODO):
+            self.setFocus(self.channelButtons[newrow][0])
+        else:
+            self.setFocus(self.channelButtons[newrow][0].getControl())
+
         left, top = self.channelButtons[newrow][0].getPosition()
         width = self.channelButtons[newrow][0].getWidth()
         left = left - basex

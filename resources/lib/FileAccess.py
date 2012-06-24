@@ -255,6 +255,7 @@ class FileLock:
         fle = 0
         filename = filename.lower()
         locked = True
+        lines = []
 
         while(locked == True and attempts < FILE_LOCK_MAX_FILE_TIMEOUT):
             locked = False
@@ -375,7 +376,10 @@ class FileLock:
         self.removeLockEntry(lines, filename)
 
         if addentry:
-            lines.append(str(random.randint(1, 60000)) + "," + filename + "\n")
+            try:
+                lines.append(str(random.randint(1, 60000)) + "," + filename + "\n")
+            except:
+                return False
 
         try:
             fle = FileAccess.open(self.lockName, 'w')

@@ -17,7 +17,7 @@
 # along with PseudoTV.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import xbmcaddon, xbmc
+import xbmcaddon, xbmc, xbmcgui
 import Settings
 
 
@@ -74,6 +74,7 @@ GlobalFileLock = FileLock()
 ADDON_SETTINGS = Settings.Settings()
 
 USING_EDEN = True
+USING_FRODO = False
 
 try:
     import xbmcvfs
@@ -81,6 +82,16 @@ try:
 except:
     USING_EDEN = False
     log("Globals - Dharma")
+
+if USING_EDEN:
+    try:
+        log("Trying Frodo")
+        xbmcgui.Window(10000).addControls(0)
+    except TypeError:
+        USING_FRODO = True
+        log("Globals - Frodo")
+    except:
+        pass
 
 TIME_BAR = 'pstvTimeBar.png'
 BUTTON_FOCUS = 'pstvButtonFocus.png'

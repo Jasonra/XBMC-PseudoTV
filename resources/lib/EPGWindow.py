@@ -551,8 +551,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
         # change controls to display the proper junks
         if self.focusRow == self.rowCount - 1:
-            self.moveButtonsUp()
-            self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel + 1), self.rowCount - 1)
+            if USING_FRODO:
+                self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel + 1))
+            else:
+                self.moveButtonsUp()
+                self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel + 1), self.rowCount - 1)
+
             self.focusRow = self.rowCount - 2
 
         self.setProperButton(self.focusRow + 1)
@@ -565,8 +569,12 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         # same as godown
         # change controls to display the proper junks
         if self.focusRow == 0:
-            self.moveButtonsDown()
-            self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel - 1, False), 0)
+            if USING_FRODO:
+                self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel - 1, False))
+            else:
+                self.moveButtonsDown()
+                self.setChannelButtons(self.shownTime, self.MyOverlayWindow.fixChannel(self.centerChannel - 1, False), 0)
+
             self.focusRow = 1
 
         self.setProperButton(self.focusRow - 1)

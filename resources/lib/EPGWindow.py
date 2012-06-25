@@ -414,8 +414,9 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 if totalloops >= 1000:
                     self.log("Broken big loop, too many loops, reftime is " + str(reftime) + ", endtime is " + str(endtime))
 
-#            if(USING_FRODO):
-#                self.addControls(self.channelButtons[row])
+            if not USING_FRODO:
+                for button in rowbuttons:
+                    self.returnButton(button)
         except:
             self.log("Exception in setButtons", xbmc.LOGERROR)
             self.log(traceback.format_exc(), xbmc.LOGERROR)

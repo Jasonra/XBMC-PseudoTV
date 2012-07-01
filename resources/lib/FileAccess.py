@@ -392,7 +392,11 @@ class FileLock:
         for line in lines:
             flewrite += line
 
-        fle.write(flewrite)
+        try:
+            fle.write(flewrite)
+        except:
+            self.log("Exception writing to the log file")
+
         fle.close()
 
 

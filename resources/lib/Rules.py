@@ -30,7 +30,7 @@ from Playlist import PlaylistItem
 
 class RulesList:
     def __init__(self):
-        self.ruleList = [BaseRule(), ScheduleChannelRule(), HandleChannelLogo(), NoShowRule(), DontAddChannel(), ForceRandom(), ForceRealTime(), ForceResume(), HandleIceLibrary(), InterleaveChannel(), OnlyUnWatchedRule(), OnlyWatchedRule(), AlwaysPause(), PlayShowInOrder(), RenameRule(), SetResetTime()]
+        self.ruleList = [BaseRule(), ScheduleChannelRule(), HandleChannelLogo(), NoShowRule(), DontAddChannel(), EvenShowsRule(), ForceRandom(), ForceRealTime(), ForceResume(), HandleIceLibrary(), InterleaveChannel(), OnlyUnWatchedRule(), OnlyWatchedRule(), AlwaysPause(), PlayShowInOrder(), RenameRule(), SetResetTime()]
 
 
     def getRuleCount(self):
@@ -1433,4 +1433,101 @@ class HandleChannelLogo(BaseRule):
             self.log("set channel bug to " + str(overlay.showChannelBug))
 
         return channeldata
+
+
+
+class EvenShowsRule(BaseRule):
+    def __init__(self):
+        self.name = "Even Show Distribution"
+        self.optionLabels = ['Same Show Eps in a Row']
+        self.optionValues = ['2']
+        self.myId = 16
+        self.actions = RULES_ACTION_LIST
+
+
+    def copy(self):
+        return EvenShowsRule()
+
+
+    def getTitle(self):
+        return self.name
+
+
+    def onAction(self, act, optionindex):
+        self.onActionDigitBox(act, optionindex)
+        self.validate()
+        return self.optionValues[optionindex]
+
+
+    def validate(self):
+        self.validateDigitBox(0, 1, 20, 1)
+
+
+    def runAction(self, actionid, channelList, filelist):
+        if actionid == RULES_ACTION_LIST:
+            self.validate()
+            
+            try:
+                opt = int(self.optionValues[0])
+                self.log("Allowed shows in a row: " + str(opt))
+                lastshow = ''
+                realindex = 0
+                inarow = 0
+
+                for index in range(len(filelist)):
+                    item = filelist[index]
+                    self.log("index " + str(index) + " is " + item)
+                    loc = item.find(',')
+
+                    if loc > -1:
+                        loc2 = item.find("//")
+
+                        if loc2 > -1:
+                            showname = item[loc + 1:loc2]
+                            showname = showname.lower()
+
+                            if showname == lastshow:
+                                inarow += 1
+                                self.log("same show now at " + str(inarow))
+                                
+                                if inarow >= opt:
+                                    nextline = self.insertNewShow(filelist, lastshow, index)
+                                    
+                                    if nextline == '':
+                                        filelist = filelist[:index]
+                                        return filelist
+                                    else:
+                                        filelist.insert(index, nextline)
+                                        lastshow = ''
+                            else:
+                                lastshow = showname
+                                self.log("new show: " + lastshow)
+                                inarow = 0
+            except:
+                pass
+
+        return filelist
+        
+        
+    def insertNewShow(self, filelist, lastshow, startindex):
+        self.log("insertNewShow: " + str(startindex) + ", " + str(len(filelist)))
+        for index in range(startindex + 1, len(filelist)):
+            item = filelist[index]
+            self.log("insertNewShow index " + str(index) + " is " + item)
+            loc = item.find(',')
+
+            if loc > -1:
+                loc2 = item.find("//")
+
+                if loc2 > -1:
+                    showname = item[loc + 1:loc2]
+                    showname = showname.lower()
+
+                    if showname != lastshow:
+                        self.log("insertNewShow found " + showname)
+                        filelist.pop(index)
+                        return item
+                        
+        return ''
+
 

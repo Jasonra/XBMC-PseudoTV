@@ -19,6 +19,7 @@
 import xbmc
 import os, struct
 
+from resources.lib.Globals import ascii
 from resources.lib.FileAccess import FileAccess
 
 
@@ -47,14 +48,14 @@ class MP4Parser:
 
 
     def log(self, msg, level = xbmc.LOGDEBUG):
-        xbmc.log('MP4Parser: ' + msg, level)
+        xbmc.log('MP4Parser: ' + ascii(msg), level)
 
 
     def determineLength(self, filename):
         self.log("determineLength " + filename)
 
         try:
-            self.File = FileAccess.open(filename, "rb")
+            self.File = FileAccess.open(filename, "rb", None)
         except:
             self.log("Unable to open the file")
             return

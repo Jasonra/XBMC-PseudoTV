@@ -19,20 +19,21 @@
 import xbmc
 import os, struct
 
+from resources.lib.Globals import ascii
 from resources.lib.FileAccess import FileAccess
 
 
 
 class MKVParser:
     def log(self, msg, level = xbmc.LOGDEBUG):
-        xbmc.log('MKVParser: ' + msg, level)
+        xbmc.log('script.pseudotv-MKVParser: ' + ascii(msg), level)
 
 
     def determineLength(self, filename):
         self.log("determineLength " + filename)
 
         try:
-            self.File = FileAccess.open(filename, "rb")
+            self.File = FileAccess.open(filename, "rb", None)
         except:
             self.log("Unable to open the file")
             return

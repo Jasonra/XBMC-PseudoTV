@@ -21,6 +21,7 @@ import subprocess, os, shutil
 import time, threading
 import random, os
 import Globals
+import codecs
 from SMBFile import SMBManager
 
 VFS_AVAILABLE = False
@@ -46,22 +47,22 @@ class FileAccess:
 
 
     @staticmethod
-    def open(filename, mode):
+    def open(filename, mode, encoding = "utf-8"):
         fle = 0
-        filename = xbmc.makeLegalFilename(filename)
+#        filename = xbmc.makeLegalFilename(filename)
         FileAccess.log("trying to open " + filename)
 
         if filename[0:6].lower() == 'smb://':
-            fle = FileAccess.openSMB(filename, mode)
+            fle = FileAccess.openSMB(filename, mode, encoding)
 
-            if fle != 0:
+            if fle:
                 return fle
 
         # Even if we can't find the file, try to open it anyway
         try:
-            fle = open(filename, mode)
+            fle = codecs.open(filename, mode, encoding)
         except:
-            fle = 0
+            raise IOError()
 
         if fle == 0:
             raise IOError()
@@ -71,8 +72,8 @@ class FileAccess:
 
     @staticmethod
     def copy(orgfilename, newfilename):
-        orgfilename = xbmc.makeLegalFilename(orgfilename)
-        newfilename = xbmc.makeLegalFilename(newfilename)
+#        orgfilename = xbmc.makeLegalFilename(orgfilename)
+#        newfilename = xbmc.makeLegalFilename(newfilename)
 
         if VFS_AVAILABLE == True:
             xbmcvfs.copy(orgfilename, newfilename)
@@ -100,14 +101,14 @@ class FileAccess:
 
 
     @staticmethod
-    def openSMB(filename, mode):
+    def openSMB(filename, mode, encoding = "utf-8"):
         fle = 0
 
         if os.name.lower() == 'nt':
             newname = '\\\\' + filename[6:]
 
             try:
-                fle = open(newname, mode)
+                fle = codecs.open(newname, mode, encoding)
             except:
                 fle = 0
 

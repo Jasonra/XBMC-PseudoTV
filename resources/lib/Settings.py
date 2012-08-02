@@ -107,10 +107,10 @@ class Settings:
             self.log("Unable to open the file for writing")
             return
 
-        flewrite = "<settings>\n"
+        flewrite = Globals.uni("<settings>\n")
 
         for i in range(len(self.currentSettings)):
-            flewrite += '    <setting id="' + self.currentSettings[i][0].encode('ascii', 'ignore') + '" value="' + self.currentSettings[i][1].encode('ascii', 'ignore') + '" />\n'
+            flewrite += '    <setting id="' + self.currentSettings[i][0] + '" value="' + self.currentSettings[i][1] + '" />\n'
 
         flewrite += '</settings>\n'
         fle.write(flewrite)

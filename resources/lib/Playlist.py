@@ -19,7 +19,9 @@
 import xbmcgui, xbmc
 import threading
 import time
+import traceback
 
+from resources.lib.Globals import ascii, uni
 from FileAccess import FileAccess
 
 
@@ -114,7 +116,7 @@ class Playlist:
 
 
     def log(self, msg, level = xbmc.LOGDEBUG):
-        xbmc.log('script.pseudotv-Playlist: ' + msg, level)
+        xbmc.log('script.pseudotv-Playlist: ' + ascii(msg), level)
 
 
     def load(self, filename):
@@ -130,12 +132,16 @@ class Playlist:
             return False
 
         # find and read the header
-        lines = fle.readlines()
+        try:
+            lines = fle.readlines()
+        except:
+            self.log(traceback.format_exc())
+
         fle.close()
         realindex = -1
 
         for i in range(len(lines)):
-            if lines[i] == '#EXTM3U\n':
+            if lines[i].startswith('#EXTM3U'):
                 realindex = i
                 break
 
@@ -154,7 +160,7 @@ class Playlist:
             if len(self.itemlist) > 4096:
                 break
 
-            line = lines[realindex]
+            line = uni(lines[realindex])
 
             if line[:8] == '#EXTINF:':
                 tmpitem = PlaylistItem()
@@ -175,7 +181,7 @@ class Playlist:
                             tmpitem.episodetitle = tmpitem.episodetitle[:index]
 
                 realindex += 1
-                tmpitem.filename = lines[realindex][:-1]
+                tmpitem.filename = uni(lines[realindex][:-1])
                 self.itemlist.append(tmpitem)
                 self.totalDuration += tmpitem.duration
 
@@ -197,7 +203,7 @@ class Playlist:
             self.log("save Unable to open the smart playlist", xbmc.LOGERROR)
             return
 
-        flewrite = "#EXTM3U\n"
+        flewrite = uni("#EXTM3U\n")
 
         for i in range(self.size()):
             tmpstr = str(self.getduration(i)) + ','

@@ -526,7 +526,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.getControl(503).setLabel(self.channels[self.currentChannel - 1].getItemTitle(position))
         self.getControl(504).setLabel(self.channels[self.currentChannel - 1].getItemEpisodeTitle(position))
         self.getControl(505).setLabel(self.channels[self.currentChannel - 1].getItemDescription(position))
-        self.getControl(506).setImage(self.channelLogos + self.channels[self.currentChannel - 1].name + '.png')
+        self.getControl(506).setImage(self.channelLogos + ascii(self.channels[self.currentChannel - 1].name) + '.png')
         self.log('setShowInfo return')
 
 
@@ -564,7 +564,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
 
         if self.showChannelBug == True:
             try:
-                self.getControl(103).setImage(self.channelLogos + self.channels[self.currentChannel - 1].name + '.png')
+                self.getControl(103).setImage(self.channelLogos + ascii(self.channels[self.currentChannel - 1].name) + '.png')
             except:
                 pass
         else:

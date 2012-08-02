@@ -76,7 +76,7 @@ class SMBManager:
 				filename = filename[index:]
 			else:
 				self.log("Unable to determine the host")
-				return
+				return 0
 
 		self.log("host: " + host)
 		# Grab out the file and it's path
@@ -131,7 +131,7 @@ class SMBManager:
 
 		if serverip == '' or hostname == '':
 			self.log("Unable to get the IP or hostname for " + str(host), xbmc.LOGERROR)
-			return
+			return 0
 
 		if connection == 0:
 			connection = Connection(serverip, hostname, username, password)

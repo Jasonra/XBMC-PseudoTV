@@ -13,7 +13,7 @@
 
     <controls>
         <control type="image">
-            <posx>340</posx>
+            <posx>20</posx>
             <posy>160</posy>
             <width>600</width>
             <height>350</height>
@@ -23,7 +23,7 @@
         </control>
 
         <control type="image">
-            <posx>490</posx>
+            <posx>170</posx>
             <posy>180</posy>
             <width>300</width>
             <height>50</height>
@@ -32,7 +32,7 @@
         </control>
 
         <control type="label">
-            <posx>340</posx>
+            <posx>20</posx>
             <posy>190</posy>
             <width>600</width>
             <height>30</height>
@@ -44,7 +44,7 @@
         </control>
 
         <control type="group" id="105">
-            <posx>340</posx>
+            <posx>20</posx>
             <posy>240</posy>
             <width>600</width>
             <height>320</height>

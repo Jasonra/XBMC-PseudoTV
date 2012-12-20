@@ -31,26 +31,26 @@ __cwd__        = __settings__.getAddonInfo('path')
 
 # Adapting a solution from ronie (http://forum.xbmc.org/showthread.php?t=97353)
 if xbmcgui.Window(10000).getProperty("PseudoTVRunning") != "True":
-    xbmcgui.Window(10000).setProperty("PseudoTVRunning", "True")    
+    xbmcgui.Window(10000).setProperty("PseudoTVRunning", "True")
     shouldrestart = False
 
-    if xbmc.executehttpapi("GetGuiSetting(1, services.webserver)")[4:] == "False":
-        try:
-            forcedserver = __settings__.getSetting("ForcedWebServer") == "True"
-        except:
-            forcedserver = False
+#    if xbmc.executehttpapi("GetGuiSetting(1, services.webserver)")[4:] == "False":
+#        try:
+#            forcedserver = __settings__.getSetting("ForcedWebServer") == "True"
+#        except:
+#            forcedserver = False
 
-        if forcedserver == False:
-            dlg = xbmcgui.Dialog()
-            retval = dlg.yesno('PseudoTV', 'PseudoTV will run more efficiently with the web', 'server enabled.  Would you like to turn it on?')
-            __settings__.setSetting("ForcedWebServer", "True")
+#        if forcedserver == False:
+#            dlg = xbmcgui.Dialog()
+#            retval = dlg.yesno('PseudoTV', 'PseudoTV will run more efficiently with the web', 'server enabled.  Would you like to turn it on?')
+#            __settings__.setSetting("ForcedWebServer", "True")
 
-            if retval:
-                xbmc.executehttpapi("SetGUISetting(3, services.webserverport, 8152)")
-                xbmc.executehttpapi("SetGUISetting(1, services.webserver, true)")
-                dlg.ok('PseudoTV', 'XBMC needs to shutdown in order to apply the', 'changes.')
-                xbmc.executebuiltin("RestartApp()")
-                shouldrestart = True
+#            if retval:
+#                xbmc.executehttpapi("SetGUISetting(3, services.webserverport, 8152)")
+#                xbmc.executehttpapi("SetGUISetting(1, services.webserver, true)")
+#                dlg.ok('PseudoTV', 'XBMC needs to shutdown in order to apply the', 'changes.')
+#                xbmc.executebuiltin("RestartApp()")
+#                shouldrestart = True
 
     if shouldrestart == False:
         xbmc.executebuiltin('RunScript("' + __cwd__ + '/pseudotv.py' + '")')

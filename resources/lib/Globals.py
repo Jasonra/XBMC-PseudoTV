@@ -17,7 +17,7 @@
 # along with PseudoTV.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import xbmcaddon, xbmc
+import xbmcaddon, xbmc, xbmcgui
 import Settings
 
 
@@ -27,10 +27,24 @@ from FileAccess import FileLock
 
 def log(msg, level = xbmc.LOGDEBUG):
     try:
-        xbmc.log(ADDON_ID + '-' + msg, level)
+        xbmc.log(ADDON_ID + '-' + ascii(msg), level)
     except:
         pass
 
+
+def uni(string, encoding = 'utf-8'):
+    if isinstance(string, basestring):
+        if not isinstance(string, unicode):
+           string = unicode(string, encoding)
+
+	return string
+
+def ascii(string):
+    if isinstance(string, basestring):
+        if isinstance(string, unicode):
+           string = string.encode('ascii', 'ignore')
+
+	return string
 
 ADDON_ID = 'script.pseudotv'
 REAL_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
@@ -54,20 +68,16 @@ MODE_REALTIME = 16
 MODE_SERIAL = MODE_RESUME | MODE_ALWAYSPAUSE | MODE_ORDERAIRDATE
 MODE_STARTMODES = MODE_RANDOM | MODE_REALTIME | MODE_RESUME
 
-SETTINGS_LOC = ''
+SETTINGS_LOC = 'special://profile/addon_data/' + ADDON_ID
 CHANNEL_SHARING = False
+LOCK_LOC = xbmc.translatePath(os.path.join(SETTINGS_LOC, 'cache')) + '/'
 
 if REAL_SETTINGS.getSetting('ChannelSharing') == "true":
     CHANNEL_SHARING = True
-    SETTINGS_LOC = REAL_SETTINGS.getSetting('SettingsFolder')
-    log("Channel sharing at " + str(SETTINGS_LOC));
+    LOCK_LOC = xbmc.translatePath(os.path.join(REAL_SETTINGS.getSetting('SettingsFolder'), 'cache')) + '/'
 
 IMAGES_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'images')) + '/'
 PRESETS_LOC = xbmc.translatePath(os.path.join(ADDON_INFO, 'resources', 'presets')) + '/'
-
-if len(SETTINGS_LOC) == 0:
-    SETTINGS_LOC = 'special://profile/addon_data/' + ADDON_ID
-
 CHANNELS_LOC = xbmc.translatePath(os.path.join(SETTINGS_LOC, 'cache')) + '/'
 GEN_CHAN_LOC = os.path.join(CHANNELS_LOC, 'generated') + '/'
 MADE_CHAN_LOC = os.path.join(CHANNELS_LOC, 'stored') + '/'
@@ -78,6 +88,7 @@ GlobalFileLock = FileLock()
 ADDON_SETTINGS = Settings.Settings()
 
 USING_EDEN = True
+USING_FRODO = False
 
 try:
     import xbmcvfs
@@ -85,6 +96,16 @@ try:
 except:
     USING_EDEN = False
     log("Globals - Dharma")
+
+if USING_EDEN:
+    try:
+        log("Trying Frodo")
+        xbmcgui.Window(10000).addControls(0)
+    except TypeError:
+        USING_FRODO = True
+        log("Globals - Frodo")
+    except:
+        pass
 
 TIME_BAR = 'pstvTimeBar.png'
 BUTTON_FOCUS = 'pstvButtonFocus.png'

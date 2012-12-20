@@ -33,10 +33,6 @@ class Settings:
 
     def loadSettings(self):
         self.log("Loading settings from " + self.logfile);
-
-        if Globals.GlobalFileLock.lockFile(self.logfile) == False:
-            self.log("Unable to lock the settings file before loading it")
-
         del self.currentSettings[:]
 
         if FileAccess.exists(self.logfile):
@@ -55,8 +51,6 @@ class Settings:
 
                     if val:
                         self.currentSettings.append([name.group(1), val.group(1)])
-
-        Globals.GlobalFileLock.unlockFile(self.logfile)
 
 
     def log(self, msg, level = xbmc.LOGDEBUG):
@@ -107,16 +101,13 @@ class Settings:
 
 
     def writeSettings(self):
-        if Globals.GlobalFileLock.lockFile(self.logfile) == False:
-            self.log("Unable to lock the settings file before writing it")
-
         try:
             fle = FileAccess.open(self.logfile, "w")
         except:
             self.log("Unable to open the file for writing")
             return
 
-        flewrite = "<settings>\n"
+        flewrite = Globals.uni("<settings>\n")
 
         for i in range(len(self.currentSettings)):
             flewrite += '    <setting id="' + self.currentSettings[i][0] + '" value="' + self.currentSettings[i][1] + '" />\n'
@@ -124,4 +115,3 @@ class Settings:
         flewrite += '</settings>\n'
         fle.write(flewrite)
         fle.close()
-        Globals.GlobalFileLock.unlockFile(self.logfile)

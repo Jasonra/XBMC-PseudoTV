@@ -21,6 +21,8 @@ import subprocess, os, shutil
 import time, threading
 import random, os
 import Globals
+import codecs
+from SMBFile import SMBManager
 
 VFS_AVAILABLE = False
 
@@ -31,8 +33,10 @@ except:
     pass
 
 
+
 FILE_LOCK_MAX_FILE_TIMEOUT = 13
 FILE_LOCK_NAME = "FileLock.dat"
+Manager = SMBManager()
 
 
 
@@ -43,22 +47,22 @@ class FileAccess:
 
 
     @staticmethod
-    def open(filename, mode):
+    def open(filename, mode, encoding = "utf-8"):
         fle = 0
-        filename = xbmc.makeLegalFilename(filename)
+#        filename = xbmc.makeLegalFilename(filename)
+        FileAccess.log("trying to open " + filename)
 
-        if os.path.exists(filename) == False:
-            if filename[0:6].lower() == 'smb://':
-                fle = FileAccess.openSMB(filename, mode)
+        if filename[0:6].lower() == 'smb://':
+            fle = FileAccess.openSMB(filename, mode, encoding)
 
-                if fle != 0:
-                    return fle
+            if fle:
+                return fle
 
         # Even if we can't find the file, try to open it anyway
         try:
-            fle = open(filename, mode)
+            fle = codecs.open(filename, mode, encoding)
         except:
-            fle = 0
+            raise IOError()
 
         if fle == 0:
             raise IOError()
@@ -68,8 +72,8 @@ class FileAccess:
 
     @staticmethod
     def copy(orgfilename, newfilename):
-        orgfilename = xbmc.makeLegalFilename(orgfilename)
-        newfilename = xbmc.makeLegalFilename(newfilename)
+#        orgfilename = xbmc.makeLegalFilename(orgfilename)
+#        newfilename = xbmc.makeLegalFilename(newfilename)
 
         if VFS_AVAILABLE == True:
             xbmcvfs.copy(orgfilename, newfilename)
@@ -87,23 +91,29 @@ class FileAccess:
         if os.path.exists(filename):
             return True
 
-        if filename[0:6].lower() == 'smb://':
-            return FileAccess.existsSMB(filename)
+        if VFS_AVAILABLE == True:
+            return xbmcvfs.exists(filename)
+        else:
+            if filename[0:6].lower() == 'smb://':
+                return FileAccess.existsSMB(filename)
 
         return False
 
 
     @staticmethod
-    def openSMB(filename, mode):
+    def openSMB(filename, mode, encoding = "utf-8"):
         fle = 0
 
         if os.name.lower() == 'nt':
-            filename = '\\\\' + filename[6:]
+            newname = '\\\\' + filename[6:]
 
             try:
-                fle = open(filename, mode)
+                fle = codecs.open(newname, mode, encoding)
             except:
                 fle = 0
+
+        if fle == 0:
+            fle = Manager.openFile(filename, mode)
 
         return fle
 
@@ -192,7 +202,7 @@ class FileAccess:
 class FileLock:
     def __init__(self):
         random.seed()
-        self.lockFileName = Globals.CHANNELS_LOC + FILE_LOCK_NAME
+        self.lockFileName = Globals.LOCK_LOC + FILE_LOCK_NAME
         self.lockedList = []
         self.refreshLocksTimer = threading.Timer(4.0, self.refreshLocks)
         self.refreshLocksTimer.name = "RefreshLocks"
@@ -244,12 +254,9 @@ class FileLock:
         curval = -1
         attempts = 0
         fle = 0
-
-        if Globals.CHANNEL_SHARING == False:
-            return True
-
         filename = filename.lower()
         locked = True
+        lines = []
 
         while(locked == True and attempts < FILE_LOCK_MAX_FILE_TIMEOUT):
             locked = False
@@ -327,7 +334,7 @@ class FileLock:
         # timeout should help prevent issues with an old cache.
         for i in range(40):
             # Cycle file names in case one of them is sitting around in the directory
-            self.lockName = Globals.CHANNELS_LOC + str(random.randint(1, 60000)) + ".lock"
+            self.lockName = Globals.LOCK_LOC + str(random.randint(1, 60000)) + ".lock"
 
             try:
                 FileAccess.rename(self.lockFileName, self.lockName)
@@ -370,7 +377,10 @@ class FileLock:
         self.removeLockEntry(lines, filename)
 
         if addentry:
-            lines.append(str(random.randint(1, 60000)) + "," + filename + "\n")
+            try:
+                lines.append(str(random.randint(1, 60000)) + "," + filename + "\n")
+            except:
+                return False
 
         try:
             fle = FileAccess.open(self.lockName, 'w')
@@ -383,7 +393,11 @@ class FileLock:
         for line in lines:
             flewrite += line
 
-        fle.write(flewrite)
+        try:
+            fle.write(flewrite)
+        except:
+            self.log("Exception writing to the log file")
+
         fle.close()
 
 
@@ -433,10 +447,6 @@ class FileLock:
         filename = filename.lower()
         found = False
         realindex = 0
-
-        if Globals.CHANNEL_SHARING == False:
-            return True
-
         # First make sure we actually own the lock
         # Remove it from the list if we do
         self.listSemaphore.acquire()
@@ -480,10 +490,6 @@ class FileLock:
     def isFileLocked(self, filename, block = False):
         self.log("isFileLocked " + filename)
         filename = filename.lower()
-
-        if Globals.CHANNEL_SHARING == False:
-            return False
-
         self.grabSemaphore.acquire()
 
         if self.grabLockFile() == False:

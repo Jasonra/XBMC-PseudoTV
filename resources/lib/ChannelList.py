@@ -247,7 +247,7 @@ class ChannelList:
                 response = conn.getresponse()
 
                 if response.status == 200:
-                    data = response.read()
+                    data = uni(response.read())
                     usedhttp = True
 
                 conn.close()
@@ -258,7 +258,7 @@ class ChannelList:
             self.httpJSON = False
             data = xbmc.executeJSONRPC(command)
 
-        return data
+        return uni(data)
 
 
     def setupChannel(self, channel, background = False, makenewlist = False, append = False):
@@ -289,10 +289,12 @@ class ChannelList:
         self.channels[channel - 1].isSetup = True
         self.channels[channel - 1].loadRules(channel)
         self.runActions(RULES_ACTION_START, channel, self.channels[channel - 1])
-        GlobalFileLock.lockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u', True)
 
         try:
             needsreset = ADDON_SETTINGS.getSetting('Channel_' + str(channel) + '_changed') == 'True'
+
+            if needsreset:
+                self.channels[channel - 1].isSetup = False
         except:
             pass
 
@@ -381,6 +383,7 @@ class ChannelList:
 
                         if needsreset:
                             ADDON_SETTINGS.setSetting('Channel_' + str(channel) + '_changed', 'False')
+                            self.channels[channel - 1].isSetup = True
 
         self.runActions(RULES_ACTION_BEFORE_CLEAR, channel, self.channels[channel - 1])
 
@@ -389,8 +392,6 @@ class ChannelList:
             self.updateDialogProgress = (channel - 1) * 100 // self.enteredChannelCount
             self.updateDialog.update(self.updateDialogProgress, "Loading channel " + str(channel), "clearing history", '')
             self.clearPlaylistHistory(channel)
-
-        GlobalFileLock.unlockFile(CHANNELS_LOC + 'channel_' + str(channel) + '.m3u')
 
         if append == False:
             self.runActions(RULES_ACTION_BEFORE_TIME, channel, self.channels[channel - 1])
@@ -438,7 +439,7 @@ class ChannelList:
                 self.log("clearPlaylistHistory Unable to open the smart playlist", xbmc.LOGERROR)
                 return
 
-            flewrite = "#EXTM3U\n"
+            flewrite = uni("#EXTM3U\n")
             tottime = 0
             timeremoved = 0
 
@@ -448,10 +449,10 @@ class ChannelList:
                 if tottime > (self.channels[channel - 1].totalTimePlayed - (60 * 60 * 12)):
                     tmpstr = str(self.channels[channel - 1].getItemDuration(i)) + ','
                     tmpstr += self.channels[channel - 1].getItemTitle(i) + "//" + self.channels[channel - 1].getItemEpisodeTitle(i) + "//" + self.channels[channel - 1].getItemDescription(i)
-                    tmpstr = tmpstr[:600]
+                    tmpstr = uni(tmpstr[:600])
                     tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
-                    tmpstr = tmpstr + '\n' + self.channels[channel - 1].getItemFilename(i)
-                    flewrite += "#EXTINF:" + tmpstr + "\n"
+                    tmpstr = uni(tmpstr) + uni('\n') + uni(self.channels[channel - 1].getItemFilename(i))
+                    flewrite += uni("#EXTINF:") + uni(tmpstr) + uni("\n")
                 else:
                     timeremoved = tottime
 
@@ -584,7 +585,7 @@ class ChannelList:
             return False
 
         if append == False:
-            channelplaylist.write("#EXTM3U\n")
+            channelplaylist.write(uni("#EXTM3U\n"))
 
         if len(fileList) == 0:
             self.log("Unable to get information about channel " + str(channel), xbmc.LOGERROR)
@@ -609,7 +610,7 @@ class ChannelList:
 
         # Write each entry into the new playlist
         for string in fileList:
-            channelplaylist.write("#EXTINF:" + string + "\n")
+            channelplaylist.write(uni("#EXTINF:") + uni(string) + uni("\n"))
 
         channelplaylist.close()
         self.log('makeChannelList return')
@@ -812,13 +813,13 @@ class ChannelList:
                             else:
                                 self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "added " + str(filecount) + " entries")
 
-                        afile = os.path.split(match.group(1).replace("\\\\", "\\"))[1]
+                        afile = uni(os.path.split(match.group(1).replace("\\\\", "\\"))[1])
                         afile, ext = os.path.splitext(afile)
-                        tmpstr = str(duration) + ','
-                        tmpstr += afile + "//" + thedir + "//"
-                        tmpstr = tmpstr[:600]
-                        tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
-                        tmpstr += "\n" + match.group(1).replace("\\\\", "\\")
+                        tmpstr = uni(str(duration) + ',')
+                        tmpstr += uni(afile) + uni("//") + uni(thedir) + uni("//")
+                        tmpstr = uni(tmpstr[:600])
+                        tmpstr = uni(tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\""))
+                        tmpstr += uni("\n") + uni(match.group(1).replace("\\\\", "\\"))
                         fileList.append(tmpstr)
 
         if filecount == 0:
@@ -844,11 +845,11 @@ class ChannelList:
 
 
     def cleanString(self, string):
-        newstr = string
+        newstr = uni(string)
         newstr = newstr.replace('&', '&amp;')
         newstr = newstr.replace('>', '&gt;')
         newstr = newstr.replace('<', '&lt;')
-        return newstr
+        return uni(newstr)
 
 
     def fillTVInfo(self, sortbycount = False):
@@ -1103,6 +1104,7 @@ class ChannelList:
                 del fileList[:]
                 break
 
+            f = uni(f)
             match = re.search('"file" *: *"(.*?)",', f)
             istvshow = False
 
@@ -1120,7 +1122,7 @@ class ChannelList:
 
                     # If duration doesn't exist, try to figure it out
                     if dur == 0:
-                        dur = self.videoParser.getVideoLength(match.group(1).replace("\\\\", "\\"))
+                        dur = self.videoParser.getVideoLength(uni(match.group(1)).replace("\\\\", "\\"))
 
                     # As a last resort (since it's not as accurate), use runtime
                     if dur == 0:
@@ -1168,7 +1170,7 @@ class ChannelList:
                                 try:
                                     seasonval = int(season.group(1))
                                     epval = int(episode.group(1))
-                                    
+
                                     if self.showSeasonEpisode:
                                         swtitle = swtitle + '(S' + ('0' if seasonval < 10 else '') + str(seasonval) + ' E' + ('0' if epval < 10 else '') + str(epval) + ')'
                                 except:

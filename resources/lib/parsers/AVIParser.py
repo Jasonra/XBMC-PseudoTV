@@ -19,6 +19,7 @@
 import xbmc
 import os, struct
 
+from resources.lib.Globals import ascii
 from resources.lib.FileAccess import FileAccess
 
 
@@ -124,14 +125,14 @@ class AVIParser:
 
 
     def log(self, msg, level = xbmc.LOGDEBUG):
-        xbmc.log('AVIParser: ' + msg, level)
+        xbmc.log('AVIParser: ' + ascii(msg), level)
 
 
     def determineLength(self, filename):
         self.log("determineLength " + filename)
 
         try:
-            self.File = FileAccess.open(filename, "rb")
+            self.File = FileAccess.open(filename, "rb", None)
         except:
             self.log("Unable to open the file")
             return 0
@@ -151,21 +152,21 @@ class AVIParser:
             return 0
 
         if data.fourcc[0:4] != "AVI ":
-            self.log("Not a basic AVI: " + data.fourcc[:2])
+            self.log("Wrong FourCC")
             return 0
 
         # Header List
         data = self.getChunkOrList()
 
         if data.fourcc != "hdrl":
-            self.log("Header not found: " + data.fourcc)
+            self.log("Header not found")
             return 0
 
         # Header chunk
         data = self.getChunkOrList()
 
         if data.fourcc != 'avih':
-            self.log('Header chunk not found: ' + data.fourcc)
+            self.log('Header chunk not found')
             return 0
 
         self.parseHeader(data)

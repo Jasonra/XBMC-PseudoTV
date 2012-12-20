@@ -19,6 +19,7 @@
 import xbmc
 import os, struct
 
+from resources.lib.Globals import ascii
 from resources.lib.FileAccess import FileAccess
 
 
@@ -52,14 +53,14 @@ class FLVTagHeader:
 
 class FLVParser:
     def log(self, msg, level = xbmc.LOGDEBUG):
-        xbmc.log('FLVParser: ' + msg, level)
+        xbmc.log('FLVParser: ' + ascii(msg), level)
 
 
     def determineLength(self, filename):
         self.log("determineLength " + filename)
 
         try:
-            self.File = FileAccess.open(filename, "rb")
+            self.File = FileAccess.open(filename, "rb", None)
         except:
             self.log("Unable to open the file")
             return

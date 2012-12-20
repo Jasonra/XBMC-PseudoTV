@@ -1,0 +1,24 @@
+Metadata-Version: 1.0
+Name: pysmb
+Version: 1.0.1
+Summary: pysmb is an experimental SMB/CIFS library written in Python to support file sharing between Windows and Linux machines
+Home-page: http://miketeo.net/projects/pysmb
+Author: Michael Teo
+Author-email: miketeo@miketeo.net
+License: zlib/libpng
+Description: pysmb is an experimental SMB/CIFS library written in Python. It implements the client-side SMB/CIFS protocol which allows your Python application to access and transfer files to/from SMB/CIFS shared folders like your Windows file sharing and Samba folders.
+Keywords: windows samba cifs sharing ftp smb linux
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Win32 (MS Windows)
+Classifier: Environment :: Console
+Classifier: License :: OSI Approved :: zlib/libpng License
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX
+Classifier: Programming Language :: Python :: 2.4
+Classifier: Programming Language :: Python :: 2.5
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Topic :: Communications :: File Sharing
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: System :: Networking

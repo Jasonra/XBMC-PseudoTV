@@ -1104,6 +1104,7 @@ class ChannelList:
                 del fileList[:]
                 break
 
+            f = uni(f)
             match = re.search('"file" *: *"(.*?)",', f)
             istvshow = False
 
@@ -1121,7 +1122,7 @@ class ChannelList:
 
                     # If duration doesn't exist, try to figure it out
                     if dur == 0:
-                        dur = self.videoParser.getVideoLength(match.group(1).replace("\\\\", "\\"))
+                        dur = self.videoParser.getVideoLength(uni(match.group(1)).replace("\\\\", "\\"))
 
                     # As a last resort (since it's not as accurate), use runtime
                     if dur == 0:

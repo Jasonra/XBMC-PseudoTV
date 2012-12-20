@@ -79,7 +79,10 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.actionSemaphore = threading.BoundedSemaphore()
         self.channelThread = ChannelListThread()
         self.channelThread.myOverlay = self
-        self.setCoordinateResolution(1)
+
+        if not USING_FRODO:
+            self.setCoordinateResolution(1)
+
         self.timeStarted = 0
         self.infoOnChange = True
         self.infoOffset = 0
@@ -242,9 +245,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.channelLogos = IMAGES_LOC
 
         self.log('Channel logo folder - ' + self.channelLogos)
-        chn = ChannelList()
-        chn.myOverlay = self
-        self.channels = chn.setupList()
+        self.channelList = ChannelList()
+        self.channelList.myOverlay = self
+        self.channels = self.channelList.setupList()
 
         if self.channels is None:
             self.log('readConfig No channel list returned')
@@ -575,8 +578,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         ##
 
         if xbmc.getCondVisibility('Player.ShowInfo'):
-            xbmc.executehttpapi("SendKey(0xF049)")
-            self.ignoreInfoAction = True
+            if USING_FRODO:
+                json_query = '{"jsonrpc": "2.0", "method": "Input.Info", "id": 1}'
+                self.ignoreInfoAction = True
+                self.channelList.sendJSON(json_query);
+            else:
+                xbmc.executehttpapi("SendKey(0xF049)")
+                self.ignoreInfoAction = True
 
         self.channelLabelTimer.name = "ChannelLabel"
         self.channelLabelTimer.start()
@@ -625,8 +633,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         self.infoTimer.name = "InfoTimer"
 
         if xbmc.getCondVisibility('Player.ShowInfo'):
-            xbmc.executehttpapi("SendKey(0xF049)")
-            self.ignoreInfoAction = True
+            if USING_FRODO:
+                json_query = '{"jsonrpc": "2.0", "method": "Input.Info", "id": 1}'
+                self.ignoreInfoAction = True
+                self.channelList.sendJSON(json_query);
+            else:
+                xbmc.executehttpapi("SendKey(0xF049)")
+                self.ignoreInfoAction = True
 
         self.infoTimer.start()
 
@@ -747,8 +760,13 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                     self.hideInfo()
 
                     if xbmc.getCondVisibility('Player.ShowInfo'):
-                        xbmc.executehttpapi("SendKey(0xF049)")
-                        self.ignoreInfoAction = True
+                        if USING_FRODO:
+                            json_query = '{"jsonrpc": "2.0", "method": "Input.Info", "id": 1}'
+                            self.ignoreInfoAction = True
+                            self.channelList.sendJSON(json_query);
+                        else:
+                            xbmc.executehttpapi("SendKey(0xF049)")
+                            self.ignoreInfoAction = True
                 else:
                     self.showInfo(10.0)
         elif action >= ACTION_NUMBER_0 and action <= ACTION_NUMBER_9:

@@ -33,7 +33,10 @@ class AdvancedConfig(xbmcgui.WindowXMLDialog):
     def __init__(self, *args, **kwargs):
         self.log("__init__")
         xbmcgui.WindowXMLDialog.__init__(self, *args, **kwargs)
-        self.setCoordinateResolution(1)
+
+        if not USING_FRODO:
+            self.setCoordinateResolution(1)
+
         self.ruleList = []
         self.allRules = RulesList()
 

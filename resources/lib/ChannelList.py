@@ -256,7 +256,7 @@ class ChannelList:
 
         if usedhttp == False:
             self.httpJSON = False
-            data = xbmc.executeJSONRPC(command)
+            data = xbmc.executeJSONRPC(uni(command))
 
         return uni(data)
 

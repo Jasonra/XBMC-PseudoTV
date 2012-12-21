@@ -228,6 +228,8 @@ class ChannelList:
         if USING_EDEN:
             command = command.replace('fields', 'properties')
 
+        self.log('sendJSON command: ' + command)
+
         # If there have been problems using the server, just skip the attempt and use executejsonrpc
         if self.httpJSON == True:
             try:
@@ -256,7 +258,11 @@ class ChannelList:
 
         if usedhttp == False:
             self.httpJSON = False
-            data = xbmc.executeJSONRPC(uni(command))
+            
+            try:
+                data = xbmc.executeJSONRPC(uni(command))
+            except UnicodeEncodeError:
+                data = xbmc.executeJSONRPC(ascii(command))
 
         return uni(data)
 

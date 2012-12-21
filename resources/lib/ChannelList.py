@@ -870,13 +870,21 @@ class ChannelList:
                 del self.showGenreList[:]
                 return
 
-            match = re.search('"studio" *: *\[(.*?)\]', f)
+            if USING_FRODO:
+                match = re.search('"studio" *: *\[(.*?)\]', f)
+            else:
+                match = re.search('"studio" *: *"(.*?)",', f)
+
             network = ''
 
             if match:
-                network = (match.group(1).split(','))[0]
+                if USING_FRODO:
+                    network = (match.group(1).split(','))[0]
+                else:
+                    network = match.group(1)
+
+                network = network.strip('"').strip()
                 found = False
-                network = match.group(1).strip('"')
 
                 for item in range(len(self.networkList)):
                     if self.threadPause() == False:
@@ -910,14 +918,20 @@ class ChannelList:
                 show = match.group(1).strip()
                 self.showList.append([show, network])
 
-            match = re.search('"genre" *: *\[(.*?)\]', f)
+            if USING_FRODO:
+                match = re.search('"genre" *: *\[(.*?)\]', f)
+            else:
+                match = re.search('"genre" *: *"(.*?)",', f)
 
             if match:
-                genres = match.group(1).split(',')
+                if USING_FRODO:
+                    genres = match.group(1).split(',')
+                else:
+                    genres = match.group(1).split('/')
 
                 for genre in genres:
                     found = False
-                    curgenre = genre.lower().strip('"')
+                    curgenre = genre.lower().strip('"').strip()
 
                     for g in range(len(self.showGenreList)):
                         if self.threadPause() == False:
@@ -941,9 +955,9 @@ class ChannelList:
 
                     if found == False:
                         if sortbycount:
-                            self.showGenreList.append([genre.strip('"'), 1])
+                            self.showGenreList.append([genre.strip('"').strip(), 1])
                         else:
-                            self.showGenreList.append(genre.strip('"'))
+                            self.showGenreList.append(genre.strip('"').strip())
 
         if sortbycount:
             self.networkList.sort(key=lambda x: x[1], reverse = True)
@@ -979,14 +993,20 @@ class ChannelList:
                 del studioList[:]
                 break
 
-            match = re.search('"genre" *: *\[(.*?)\]', f)
+            if USING_FRODO:
+                match = re.search('"genre" *: *\[(.*?)\]', f)
+            else:
+                match = re.search('"genre" *: *"(.*?)",', f)
 
             if match:
-                genres = match.group(1).split(',')
+                if USING_FRODO:
+                    genres = match.group(1).split(',')
+                else:
+                    genres = match.group(1).split('/')
 
                 for genre in genres:
                     found = False
-                    curgenre = genre.lower().strip('"')
+                    curgenre = genre.lower().strip('"').strip()
 
                     for g in range(len(self.movieGenreList)):
                         itm = self.movieGenreList[g]
@@ -1004,17 +1024,23 @@ class ChannelList:
 
                     if found == False:
                         if sortbycount:
-                            self.movieGenreList.append([genre.strip('"'), 1])
+                            self.movieGenreList.append([genre.strip('"').strip(), 1])
                         else:
-                            self.movieGenreList.append(genre.strip('"'))
+                            self.movieGenreList.append(genre.strip('"').strip())
 
-            match = re.search('"studio" *: *\[(.*?)\]', f)
+            if USING_FRODO:
+                match = re.search('"studio" *: *\[(.*?)\]', f)
+            else:
+                match = re.search('"studio" *: *"(.*?)"', f)
 
             if match:
-                studios = match.group(1).split(',')
+                if USING_FRODO:
+                    studios = match.group(1).split(',')
+                else:
+                    studios = match.group(1).split('/')
 
                 for studio in studios:
-                    curstudio = studio.strip('"')
+                    curstudio = studio.strip('"').strip()
                     found = False
 
                     for i in range(len(studioList)):

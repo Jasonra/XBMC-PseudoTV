@@ -870,12 +870,13 @@ class ChannelList:
                 del self.showGenreList[:]
                 return
 
-            match = re.search('"studio" *: *"(.*?)",', f)
+            match = re.search('"studio" *: *\[(.*?)\]', f)
             network = ''
 
             if match:
+                network = (match.group(1).split(','))[0]
                 found = False
-                network = match.group(1).strip()
+                network = match.group(1).strip('"')
 
                 for item in range(len(self.networkList)):
                     if self.threadPause() == False:
@@ -909,14 +910,14 @@ class ChannelList:
                 show = match.group(1).strip()
                 self.showList.append([show, network])
 
-            match = re.search('"genre" *: *"(.*?)",', f)
+            match = re.search('"genre" *: *\[(.*?)\]', f)
 
             if match:
-                genres = match.group(1).split('/')
+                genres = match.group(1).split(',')
 
                 for genre in genres:
                     found = False
-                    curgenre = genre.lower().strip()
+                    curgenre = genre.lower().strip('"')
 
                     for g in range(len(self.showGenreList)):
                         if self.threadPause() == False:
@@ -940,9 +941,9 @@ class ChannelList:
 
                     if found == False:
                         if sortbycount:
-                            self.showGenreList.append([genre.strip(), 1])
+                            self.showGenreList.append([genre.strip('"'), 1])
                         else:
-                            self.showGenreList.append(genre.strip())
+                            self.showGenreList.append(genre.strip('"'))
 
         if sortbycount:
             self.networkList.sort(key=lambda x: x[1], reverse = True)
@@ -978,14 +979,14 @@ class ChannelList:
                 del studioList[:]
                 break
 
-            match = re.search('"genre" *: *"(.*?)",', f)
+            match = re.search('"genre" *: *\[(.*?)\]', f)
 
             if match:
-                genres = match.group(1).split('/')
+                genres = match.group(1).split(',')
 
                 for genre in genres:
                     found = False
-                    curgenre = genre.lower().strip()
+                    curgenre = genre.lower().strip('"')
 
                     for g in range(len(self.movieGenreList)):
                         itm = self.movieGenreList[g]
@@ -1003,17 +1004,17 @@ class ChannelList:
 
                     if found == False:
                         if sortbycount:
-                            self.movieGenreList.append([genre.strip(), 1])
+                            self.movieGenreList.append([genre.strip('"'), 1])
                         else:
-                            self.movieGenreList.append(genre.strip())
+                            self.movieGenreList.append(genre.strip('"'))
 
-            match = re.search('"studio" *: *"(.*?)",', f)
+            match = re.search('"studio" *: *\[(.*?)\]', f)
 
             if match:
-                studios = match.group(1).split('/')
+                studios = match.group(1).split(',')
 
                 for studio in studios:
-                    curstudio = studio.strip()
+                    curstudio = studio.strip('"')
                     found = False
 
                     for i in range(len(studioList)):

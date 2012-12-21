@@ -1117,7 +1117,7 @@ class ChannelList:
         fileList = []
         seasoneplist = []
         filecount = 0
-        json_query = '{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "video", "fields":["season","episode","playcount","streamdetails","duration","runtime","tagline","showtitle","album","artist","plot"]}, "id": 1}' % (self.escapeDirJSON(dir_name))
+        json_query = uni('{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "%s", "media": "video", "fields":["season","episode","playcount","streamdetails","duration","runtime","tagline","showtitle","album","artist","plot"]}, "id": 1}' % (self.escapeDirJSON(dir_name)))
 
         if self.background == False:
             self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "querying database")
@@ -1316,10 +1316,12 @@ class ChannelList:
 
 
     def escapeDirJSON(self, dir_name):
-        if (dir_name.find(":")):
-            dir_name = dir_name.replace("\\", "\\\\")
+        mydir = uni(dir_name)
 
-        return dir_name
+        if (mydir.find(":")):
+            mydir = mydir.replace("\\", "\\\\")
+
+        return mydir
 
 
     def getSmartPlaylistType(self, dom):

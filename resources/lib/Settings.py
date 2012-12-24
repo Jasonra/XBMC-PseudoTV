@@ -18,7 +18,7 @@
 
 import xbmc, xbmcaddon
 import sys, re, os
-import time
+import time, traceback
 import Globals
 
 from FileAccess import FileLock, FileAccess
@@ -41,7 +41,8 @@ class Settings:
                 curset = fle.readlines()
                 fle.close()
             except:
-                pass
+                self.log("Exception when reading settings: ")
+                self.log(traceback.format_exc(), xbmc.LOGERROR)
 
             for line in curset:
                 name = re.search('setting id="(.*?)"', line)

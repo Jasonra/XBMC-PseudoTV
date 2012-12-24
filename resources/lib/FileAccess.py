@@ -51,21 +51,29 @@ class FileAccess:
         fle = 0
 #        filename = xbmc.makeLegalFilename(filename)
         FileAccess.log("trying to open " + filename)
-
-        if filename[0:6].lower() == 'smb://':
-            fle = FileAccess.openSMB(filename, mode, encoding)
-
-            if fle:
-                return fle
-
-        # Even if we can't find the file, try to open it anyway
+        
         try:
-            fle = codecs.open(filename, mode, encoding)
-        except:
-            raise IOError()
+            if Globals.USING_FRODO:
+                if mode == "r":
+                    FileAccess.log("Opening for reading")
+                    return VFSFile(xbmcvfs.File(filename))
 
-        if fle == 0:
-            raise IOError()
+            if filename[0:6].lower() == 'smb://':
+                fle = FileAccess.openSMB(filename, mode, encoding)
+
+                if fle:
+                    return fle
+
+            # Even if we can't find the file, try to open it anyway
+            try:
+                fle = codecs.open(filename, mode, encoding)
+            except:
+                raise IOError()
+
+            if fle == 0:
+                raise IOError()
+        except UnicodeDecodeError:
+            return FileAccess.open(ascii(filename), mode, encoding)
 
         return fle
 
@@ -88,14 +96,17 @@ class FileAccess:
 
     @staticmethod
     def exists(filename):
-        if os.path.exists(filename):
-            return True
+        try:
+            if VFS_AVAILABLE == True:
+                return xbmcvfs.exists(filename)
+            else:
+                if os.path.exists(filename):
+                    return True
 
-        if VFS_AVAILABLE == True:
-            return xbmcvfs.exists(filename)
-        else:
-            if filename[0:6].lower() == 'smb://':
-                return FileAccess.existsSMB(filename)
+                if filename[0:6].lower() == 'smb://':
+                    return FileAccess.existsSMB(filename)
+        except UnicodeDecodeError:
+            return FileAccess.exists(ascii(filename))
 
         return False
 
@@ -196,6 +207,36 @@ class FileAccess:
             return xbmcvfs.exists(path)
 
         return False
+
+
+
+class VFSFile:
+    def __init__(self, fle):
+        self.currentFile = fle
+        
+        
+    def read(self, bytes):
+        return self.currentFile.read(bytes)
+        
+        
+    def write(self, bytes):
+        return self.currentFile.write(bytes)
+        
+        
+    def close(self):
+        return self.currentFile.close()
+        
+        
+    def seek(self, bytes, offset):
+        return self.currentFile(bytes, offset)
+        
+        
+    def size(self):
+        return self.currentFile.size()
+        
+        
+    def readlines(self):
+        return self.currentFile.read().split('\n')
 
 
 

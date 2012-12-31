@@ -23,14 +23,8 @@ import random, os
 import Globals
 import codecs
 from SMBFile import SMBManager
-
-VFS_AVAILABLE = False
-
-try:
-    import xbmcvfs
-    VFS_AVAILABLE = True
-except:
-    pass
+import xbmcvfs
+VFS_AVAILABLE = True
 
 
 
@@ -49,14 +43,12 @@ class FileAccess:
     @staticmethod
     def open(filename, mode, encoding = "utf-8"):
         fle = 0
-#        filename = xbmc.makeLegalFilename(filename)
         FileAccess.log("trying to open " + filename)
         
         try:
-            if Globals.USING_FRODO:
-                if mode == "r":
-                    FileAccess.log("Opening for reading")
-                    return VFSFile(xbmcvfs.File(filename))
+            if mode == "r":
+                FileAccess.log("Opening for reading")
+                return VFSFile(xbmcvfs.File(filename))
 
             if filename[0:6].lower() == 'smb://':
                 fle = FileAccess.openSMB(filename, mode, encoding)
@@ -80,31 +72,14 @@ class FileAccess:
 
     @staticmethod
     def copy(orgfilename, newfilename):
-#        orgfilename = xbmc.makeLegalFilename(orgfilename)
-#        newfilename = xbmc.makeLegalFilename(newfilename)
-
-        if VFS_AVAILABLE == True:
-            xbmcvfs.copy(orgfilename, newfilename)
-        else:
-            try:
-                shutil.copy(orgfilename, newfilename)
-            except:
-                return False
-
+        xbmcvfs.copy(orgfilename, newfilename)
         return True
 
 
     @staticmethod
     def exists(filename):
         try:
-            if VFS_AVAILABLE == True:
-                return xbmcvfs.exists(filename)
-            else:
-                if os.path.exists(filename):
-                    return True
-
-                if filename[0:6].lower() == 'smb://':
-                    return FileAccess.existsSMB(filename)
+            return xbmcvfs.exists(filename)
         except UnicodeDecodeError:
             return FileAccess.exists(ascii(filename))
 
@@ -142,14 +117,11 @@ class FileAccess:
     def rename(path, newpath):
         FileAccess.log("rename " + path + " to " + newpath)
 
-        if VFS_AVAILABLE == True:
-            FileAccess.log("Using VFS")
-
-            try:
-                xbmcvfs.rename(path, newpath)
-                return True
-            except:
-                pass
+        try:
+            xbmcvfs.rename(path, newpath)
+            return True
+        except:
+            pass
 
         if path[0:6].lower() == 'smb://' or newpath[0:6].lower() == 'smb://':
             if os.name.lower() == 'nt':
@@ -188,25 +160,22 @@ class FileAccess:
 
     @staticmethod
     def _makedirs(path):
-        if VFS_AVAILABLE == True:
-            if len(path) == 0:
+        if len(path) == 0:
+            return False
+
+        if(xbmcvfs.exists(path)):
+            return True
+
+        success = xbmcvfs.mkdir(path)
+
+        if success == False:
+            if path == os.path.dirname(path):
                 return False
 
-            if(xbmcvfs.exists(path)):
-                return True
+            if FileAccess._makedirs(os.path.dirname(path)):
+                return xbmcvfs.mkdir(path)
 
-            success = xbmcvfs.mkdir(path)
-
-            if success == False:
-                if path == os.path.dirname(path):
-                    return False
-
-                if FileAccess._makedirs(os.path.dirname(path)):
-                    return xbmcvfs.mkdir(path)
-
-            return xbmcvfs.exists(path)
-
-        return False
+        return xbmcvfs.exists(path)
 
 
 

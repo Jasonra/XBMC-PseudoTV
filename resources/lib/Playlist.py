@@ -160,7 +160,7 @@ class Playlist:
             if len(self.itemlist) > 4096:
                 break
 
-            line = uni(lines[realindex])
+            line = uni(lines[realindex].rstrip())
 
             if line[:8] == '#EXTINF:':
                 tmpitem = PlaylistItem()
@@ -181,7 +181,7 @@ class Playlist:
                             tmpitem.episodetitle = tmpitem.episodetitle[:index]
 
                 realindex += 1
-                tmpitem.filename = uni(lines[realindex][:-1])
+                tmpitem.filename = uni(lines[realindex].rstrip())
                 self.itemlist.append(tmpitem)
                 self.totalDuration += tmpitem.duration
 

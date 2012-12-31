@@ -259,8 +259,11 @@ class FileLock:
         self.isExiting = True
 
         if self.refreshLocksTimer.isAlive():
-            self.refreshLocksTimer.cancel()
-            self.refreshLocksTimer.join()
+            try:
+                self.refreshLocksTimer.cancel()
+                self.refreshLocksTimer.join()
+            except:
+                pass
 
         for item in self.lockedList:
             self.unlockFile(item)

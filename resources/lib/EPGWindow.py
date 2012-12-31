@@ -82,6 +82,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             self.channelButtons[i] = []
 
         self.clockMode = ADDON_SETTINGS.getSetting("ClockMode")
+        self.toRemove = []
 
 
     def onFocus(self, controlid):
@@ -189,7 +190,6 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
     # setup all channel buttons for a given time
     def setChannelButtons(self, starttime, curchannel, singlerow = -1):
         self.log('setChannelButtons ' + str(starttime) + ', ' + str(curchannel))
-        self.removeControl(self.currentTimeBar)
         self.centerChannel = self.MyOverlayWindow.fixChannel(curchannel)
         # This is done twice to guarantee we go back 2 channels.  If the previous 2 channels
         # aren't valid, then doing a fix on curchannel - 2 may result in going back only
@@ -206,6 +206,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         timew = self.getControl(120).getWidth()
         timeh = self.getControl(120).getHeight()
         basecur = curchannel
+        self.toRemove.append(self.currentTimeBar)
 
         for i in range(self.rowCount):
             if singlerow == -1 or singlerow == i:
@@ -241,26 +242,21 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
             else:
                  self.currentTimeBar.setPosition(basex + basew - 2 - timew, timey)
 
-        if USING_FRODO:
-            myadds = []
-
-            for i in range(self.rowCount):
-                if singlerow == -1 or singlerow == i:
-                    for cntrl in self.channelButtons[i]:
-                        if not cntrl.isAdded():
-                            cntrl.activateChanges()
-                            myadds.append(cntrl.getControl())
-                            cntrl.wasAdded()
-
-            if len(myadds):
-                self.addControls(myadds)  
+        myadds = []
 
         for i in range(self.rowCount):
             if singlerow == -1 or singlerow == i:
                 for cntrl in self.channelButtons[i]:
                     cntrl.activateChanges()
 
-        self.addControl(self.currentTimeBar)
+                    if not cntrl.isAdded():
+                        myadds.append(cntrl.getControl())
+                        cntrl.wasAdded()
+
+        myadds.append(self.currentTimeBar)
+        self.removeControls(self.toRemove)
+        self.addControls(myadds)
+        self.toRemove = []
         self.log('setChannelButtons return')
 
 
@@ -403,9 +399,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                     self.log("Broken big loop, too many loops, reftime is " + str(reftime) + ", endtime is " + str(endtime))
 
             for button in rowbuttons:
-                button.setPosition(-4000, -4000, True)
-                
-            self.buttonCache.extend(rowbuttons)
+                self.toRemove.append(button.getControl())
         except:
             self.log("Exception in setButtons", xbmc.LOGERROR)
             self.log(traceback.format_exc(), xbmc.LOGERROR)
@@ -415,17 +409,8 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
 
     def getButton(self):
-        if len(self.buttonCache) > 0:
-            return self.buttonCache.pop()
-        else:
-            self.log("new button", xbmc.LOGERROR)
-            baseh = self.getControl(111).getHeight()
-            return EPGButton(self, -4000, -4000, 5, baseh, '')
-
-
-    def returnButton(self, button):
-        button.setPosition(-4000, -4000, True)
-        self.buttonCache.append(button)
+        baseh = self.getControl(111).getHeight()
+        return EPGButton(self, -4000, -4000, 5, baseh, '')
 
 
     def onAction(self, act):
@@ -626,11 +611,11 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
     def moveButtonsUp(self):
         self.log('moveButtonsUp')
+        self.toRemove = []
 
         for button in self.channelButtons[0]:
-            button.setPosition(-4000, -4000, True)
+            self.toRemove.append(button.getControl())
                 
-        self.buttonCache.extend(self.channelButtons[0])
         del self.channelButtons[0][:]
 
         for i in range(self.rowCount - 1):
@@ -646,11 +631,11 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
     def moveButtonsDown(self):
         self.log('moveButtonsDown')
+        self.toRemove = []
 
         for button in self.channelButtons[self.rowCount - 1]:
-            button.setPosition(-4000, -4000, True)
+            self.toRemove(button.getControl())
                 
-        self.buttonCache.extend(self.channelButtons[self.rowCount - 1])
         del self.channelButtons[self.rowCount - 1][:]
 
         for i in range(self.rowCount - 1):

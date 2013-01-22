@@ -245,7 +245,16 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                  self.currentTimeBar.setPosition(basex + basew - 2 - timew, timey)
 
         myadds.append(self.currentTimeBar)
-        self.removeControls(self.toRemove)
+
+        try:
+            self.removeControls(self.toRemove)
+        except:
+            for cntrl in self.toRemove:
+                try:
+                    self.removeControl(cntrl)
+                except:
+                    pass
+
         self.addControls(myadds)
         self.toRemove = []
         self.log('setChannelButtons return')

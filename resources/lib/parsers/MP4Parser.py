@@ -130,9 +130,9 @@ class MP4Parser:
 
     def readBlock(self):
         box = MP4DataBlock()
-        data = self.File.read(4)
         
         try:
+            data = self.File.read(4)
             box.size = struct.unpack('>I', data)[0]
             box.boxtype = self.File.read(4)
     

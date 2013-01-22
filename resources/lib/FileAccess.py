@@ -46,7 +46,7 @@ class FileAccess:
         FileAccess.log("trying to open " + filename)
         
         try:
-            if mode == "r":
+            if mode == "r" or mode == "rb":
                 FileAccess.log("Opening for reading")
                 return VFSFile(xbmcvfs.File(filename))
 

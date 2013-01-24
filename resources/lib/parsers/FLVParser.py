@@ -94,8 +94,12 @@ class FLVParser:
 
 
     def findLastVideoTag(self):
-        self.File.seek(0, 2)
-        curloc = self.File.tell()
+        try:
+            self.File.seek(0, 2)
+            curloc = self.File.tell()
+        except:
+            self.log("Exception seeking in findLastVideoTag")
+            return None
 
         while curloc > 0:
             try:

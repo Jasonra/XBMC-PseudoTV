@@ -48,7 +48,7 @@ class FileAccess:
         try:
             if mode == "r" or mode == "rb":
                 FileAccess.log("Opening for reading")
-                return VFSFile(xbmcvfs.File(filename))
+                return VFSFile(filename)
 
             if filename[0:6].lower() == 'smb://':
                 fle = FileAccess.openSMB(filename, mode, encoding)
@@ -180,8 +180,8 @@ class FileAccess:
 
 
 class VFSFile:
-    def __init__(self, fle):
-        self.currentFile = fle
+    def __init__(self, filename):
+        self.currentFile = xbmcvfs.File(filename)
         
         
     def read(self, bytes):
@@ -197,7 +197,7 @@ class VFSFile:
         
         
     def seek(self, bytes, offset):
-        return self.currentFile(bytes, offset)
+        return self.currentFile.seek(bytes, offset)
         
         
     def size(self):

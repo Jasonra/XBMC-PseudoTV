@@ -1129,7 +1129,7 @@ class ChannelList:
             self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "querying database")
 
         json_folder_detail = self.sendJSON(json_query)
-#        self.log(json_folder_detail)
+        self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in file_detail:
@@ -1154,8 +1154,8 @@ class ChannelList:
                         dur = 0
 
                     # If duration doesn't exist, try to figure it out
-#                    if dur == 0:
-#                        dur = self.videoParser.getVideoLength(uni(match.group(1)).replace("\\\\", "\\"))
+                    if dur == 0:
+                        dur = self.videoParser.getVideoLength(uni(match.group(1)).replace("\\\\", "\\"))
 
                     # As a last resort (since it's not as accurate), use runtime
                     if dur == 0:

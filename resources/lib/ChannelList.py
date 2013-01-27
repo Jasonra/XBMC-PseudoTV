@@ -1154,16 +1154,15 @@ class ChannelList:
                         dur = 0
 
                     # If duration doesn't exist, try to figure it out
-                    if dur == 0:
-                        dur = self.videoParser.getVideoLength(uni(match.group(1)).replace("\\\\", "\\"))
+#                    if dur == 0:
+#                        dur = self.videoParser.getVideoLength(uni(match.group(1)).replace("\\\\", "\\"))
 
                     # As a last resort (since it's not as accurate), use runtime
                     if dur == 0:
-                        duration = re.search('"runtime" *: *"([0-9]*?)",', f)
+                        duration = re.search('"runtime" *: *([0-9]*?),', f)
 
                         try:
-                            # Runtime is reported in minutes
-                            dur = int(duration.group(1)) * 60
+                            dur = int(duration.group(1))
                         except:
                             dur = 0
 

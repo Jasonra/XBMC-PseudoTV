@@ -182,8 +182,12 @@ class FileAccess:
 class VFSFile:
     def __init__(self, filename):
         self.currentFile = xbmcvfs.File(filename)
+        Globals.log("VFSFile: Opening " + str(filename), xbmc.LOGDEBUG)
         
-        
+        if self.currentFile == None:
+            Globals.log("VFSFile: Couldnt open " + str(filename), xbmc.LOGERROR)
+
+
     def read(self, bytes):
         return self.currentFile.read(bytes)
         
@@ -201,11 +205,18 @@ class VFSFile:
         
         
     def size(self):
-        return self.currentFile.size()
+        loc = self.currentFile.size()
+        return loc
         
         
     def readlines(self):
         return self.currentFile.read().split('\n')
+        
+        
+    def tell(self):
+        loc = self.currentFile.seek(0, 1)
+        return loc
+        
 
 
 

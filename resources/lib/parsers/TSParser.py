@@ -121,12 +121,14 @@ class TSParser:
             maxpackets -= 1
         
             if packet == None:
+                self.log('getEndTime got a null packet')
                 return 0
 
             if packet.errorbit == 0 and packet.pesstartbit == 1 and packet.pid == self.pid:
                 ret = self.getPTS(packet)
 
                 if ret > 0:
+                    self.log('getEndTime returning time')
                     return ret
             else:
                 try:
@@ -134,12 +136,14 @@ class TSParser:
                 except:
                     self.log('exception')
                     return 0
-            
+        
+        self.log('getEndTime no found end time')
         return 0
         
     
     def getPTS(self, packet):
         timestamp = 0
+        self.log('getPTS')
         
         try:
             data = struct.unpack('19B', packet.pesdata[:19])
@@ -159,10 +163,13 @@ class TSParser:
                     timestamp = timestamp | ((data[11 + offset] >> 1) << 15)
                     timestamp = timestamp | (data[12 + offset] << 7)
                     timestamp = timestamp | (data[13 + offset] >> 1)
+                    self.log('getPTS returning timestamp')
                     return timestamp                        
         except:
+            self.log('exception in getPTS')
             pass
 
+        self.log('getPTS returning 0')
         return 0
         
     
@@ -197,6 +204,7 @@ class TSParser:
                         # read the PES data
                         packet.pesdata = self.File.read(188 - pos)
         except:
+            self.log('readTSPacket exception')
             return None
             
         return packet

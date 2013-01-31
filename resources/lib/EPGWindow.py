@@ -45,6 +45,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         self.textcolor = "FFFFFFFF"
         self.focusedcolor = "FF7d7d7d"
         self.clockMode = 0
+        self.textfont  = "font14"
 
         # Decide whether to use the current skin or the default skin.  If the current skin has the proper
         # image, then it should work.
@@ -122,6 +123,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         try:
             textcolor = int(self.getControl(100).getLabel(), 16)
             focusedcolor = int(self.getControl(100).getLabel2(), 16)
+            self.textfont =  self.getControl(105).getLabel()
 
             if textcolor > 0:
                 self.textcolor = hex(textcolor)[2:]
@@ -371,7 +373,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
                     if shouldskip == False and width >= 30:
                         mylabel = self.MyOverlayWindow.channels[curchannel - 1].getItemTitle(playlistpos)
-                        self.channelButtons[row].append(xbmcgui.ControlButton(xpos, basey, width, baseh, mylabel, focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor=self.textcolor, focusedColor=self.focusedcolor))
+                        self.channelButtons[row].append(xbmcgui.ControlButton(xpos, basey, width, baseh, mylabel, focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, font=self.textfont, textColor=self.textcolor, focusedColor=self.focusedcolor))
 
                     totaltime += tmpdur
                     reftime += tmpdur

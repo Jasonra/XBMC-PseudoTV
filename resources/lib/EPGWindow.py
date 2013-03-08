@@ -376,6 +376,10 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
 
                 if totalloops >= 1000:
                     self.log("Broken big loop, too many loops, reftime is " + str(reftime) + ", endtime is " + str(endtime))
+
+                # If there were no buttons added, show some default button
+                if len(self.channelButtons[row]) == 0:
+                    self.channelButtons[row].append(xbmcgui.ControlButton(basex, basey, basew, baseh, self.MyOverlayWindow.channels[curchannel - 1].name, focusTexture=self.textureButtonFocus, noFocusTexture=self.textureButtonNoFocus, alignment=4, textColor=self.textcolor, focusedColor=self.focusedcolor))
         except:
             self.log("Exception in setButtons", xbmc.LOGERROR)
             self.log(traceback.format_exc(), xbmc.LOGERROR)

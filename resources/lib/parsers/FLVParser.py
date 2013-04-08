@@ -101,7 +101,13 @@ class FLVParser:
             self.log("Exception seeking in findLastVideoTag")
             return None
 
-        while curloc > 0:
+        # Go through a limited amount of the file before quiting
+        maximum = curloc - (2 * 1024 * 1024)
+
+        if maximum < 0:
+            maximum = 0
+
+        while curloc > maximum:
             try:
                 self.File.seek(-4, 1)
                 data = int(struct.unpack('>I', self.File.read(4))[0])
@@ -110,12 +116,21 @@ class FLVParser:
                     self.log('Invalid packet data')
                     return None
 
+                if curloc - data <= 0:
+                    self.log('No video packet found')
+                    return None
+
                 self.File.seek(-4 - data, 1)
+                curloc = curloc - data
                 tag = FLVTagHeader()
                 tag.readHeader(self.File)
 
                 if tag.datasize <= 0:
                     self.log('Invalid packet header')
+                    return None
+
+                if curloc - 8 <= 0:
+                    self.log('No video packet found')
                     return None
 
                 self.File.seek(-8, 1)

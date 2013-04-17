@@ -105,7 +105,7 @@ class FLVParser:
         maximum = curloc - (2 * 1024 * 1024)
 
         if maximum < 0:
-            maximum = 0
+            maximum = 8
 
         while curloc > maximum:
             try:

@@ -135,7 +135,8 @@ class Playlist:
         try:
             lines = fle.readlines()
         except:
-            self.log(traceback.format_exc())
+            self.log("ERROR loading playlist: " + filename)
+            self.log(traceback.format_exc(), xbmc.LOGERROR)
 
         fle.close()
         realindex = -1
@@ -160,7 +161,11 @@ class Playlist:
             if len(self.itemlist) > 4096:
                 break
 
-            line = uni(lines[realindex].rstrip())
+            try:
+                line = uni(lines[realindex].rstrip())
+            except:
+                self.log("ERROR: Invalid line in playlist - " + filename)
+                self.log(traceback.format_exc(), xbmc.LOGERROR)
 
             if line[:8] == '#EXTINF:':
                 tmpitem = PlaylistItem()

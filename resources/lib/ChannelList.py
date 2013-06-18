@@ -455,7 +455,7 @@ class ChannelList:
                 if tottime > (self.channels[channel - 1].totalTimePlayed - (60 * 60 * 12)):
                     tmpstr = str(self.channels[channel - 1].getItemDuration(i)) + ','
                     tmpstr += self.channels[channel - 1].getItemTitle(i) + "//" + self.channels[channel - 1].getItemEpisodeTitle(i) + "//" + self.channels[channel - 1].getItemDescription(i)
-                    tmpstr = uni(tmpstr[:600])
+                    tmpstr = uni(tmpstr[:500])
                     tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
                     tmpstr = uni(tmpstr) + uni('\n') + uni(self.channels[channel - 1].getItemFilename(i))
                     flewrite += uni("#EXTINF:") + uni(tmpstr) + uni("\n")
@@ -788,7 +788,6 @@ class ChannelList:
             self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "getting file list")
 
         json_folder_detail = self.sendJSON(json_query)
-#        self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
         thedir = ''
 
@@ -823,7 +822,7 @@ class ChannelList:
                         afile, ext = os.path.splitext(afile)
                         tmpstr = uni(str(duration) + ',')
                         tmpstr += uni(afile) + uni("//") + uni(thedir) + uni("//")
-                        tmpstr = uni(tmpstr[:600])
+                        tmpstr = uni(tmpstr[:500])
                         tmpstr = uni(tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\""))
                         tmpstr += uni("\n") + uni(match.group(1).replace("\\\\", "\\"))
                         fileList.append(tmpstr)
@@ -1129,7 +1128,7 @@ class ChannelList:
             self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "adding videos", "querying database")
 
         json_folder_detail = self.sendJSON(json_query)
-        self.log(json_folder_detail)
+#        self.log(json_folder_detail)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in file_detail:
@@ -1227,7 +1226,7 @@ class ChannelList:
                                     artist = re.search('"artist" *: *"(.*?)"', f)
                                     tmpstr += album.group(1) + "//" + artist.group(1)
 
-                            tmpstr = tmpstr[:600]
+                            tmpstr = tmpstr[:500]
                             tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
                             tmpstr = tmpstr + '\n' + match.group(1).replace("\\\\", "\\")
 

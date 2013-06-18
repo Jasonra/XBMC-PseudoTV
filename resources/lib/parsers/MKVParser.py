@@ -18,6 +18,7 @@
 
 import xbmc
 import os, struct
+import traceback
 
 from resources.lib.Globals import ascii
 from resources.lib.FileAccess import FileAccess
@@ -36,6 +37,7 @@ class MKVParser:
             self.File = FileAccess.open(filename, "rb", None)
         except:
             self.log("Unable to open the file")
+            self.log(traceback.format_exc(), xbmc.LOGERROR)
             return
 
         size = self.findHeader()

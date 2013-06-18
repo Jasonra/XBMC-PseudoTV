@@ -29,6 +29,7 @@ class Settings:
     def __init__(self):
         self.logfile = xbmc.translatePath(os.path.join(Globals.SETTINGS_LOC, 'settings2.xml'))
         self.currentSettings = []
+        self.alwaysWrite = 1
 
 
     def loadSettings(self):
@@ -52,6 +53,10 @@ class Settings:
 
                     if val:
                         self.currentSettings.append([name.group(1), val.group(1)])
+
+
+    def disableWriteOnSave(self):
+        self.alwaysWrite = 0
 
 
     def log(self, msg, level = xbmc.LOGDEBUG):
@@ -98,7 +103,8 @@ class Settings:
         if found == False:
             self.currentSettings.append([name, value])
 
-        self.writeSettings()
+        if self.alwaysWrite == 1:
+            self.writeSettings()
 
 
     def writeSettings(self):

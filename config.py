@@ -39,10 +39,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
     def __init__(self, *args, **kwargs):
         self.log("__init__")
         xbmcgui.WindowXMLDialog.__init__(self, *args, **kwargs)
-
-        if not USING_FRODO:
-            self.setCoordinateResolution(1)
-
+        self.madeChanges = 0
         self.showingList = True
         self.channel = 0
         self.channel_type = 9999
@@ -55,6 +52,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             FileAccess.copy(realloc + '/settings2.xml', SETTINGS_LOC + '/settings2.xml')
 
         ADDON_SETTINGS.loadSettings()
+        ADDON_SETTINGS.disableWriteOnSave()
         self.doModal()
         self.log("__init__ return")
 
@@ -91,11 +89,27 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
                 self.cancelChan()
                 self.hideChanDetails()
             else:
-                if CHANNEL_SHARING:
-                    realloc = REAL_SETTINGS.getSetting('SettingsFolder')
-                    FileAccess.copy(SETTINGS_LOC + '/settings2.xml', realloc + '/settings2.xml')
+                if self.madeChanges == 1:
+                    dlg = xbmcgui.Dialog()
+
+                    if dlg.yesno("Save", "Do you want to save all changes?"):
+                        ADDON_SETTINGS.writeSettings()
+            
+                        if CHANNEL_SHARING:
+                            realloc = REAL_SETTINGS.getSetting('SettingsFolder')
+                            FileAccess.copy(SETTINGS_LOC + '/settings2.xml', realloc + '/settings2.xml')
 
                 self.close()
+        elif act.getButtonCode() == 61575:      # Delete button
+            curchan = self.listcontrol.getSelectedPosition() + 1
+
+            if( (self.showingList == True) and (ADDON_SETTINGS.getSetting("Channel_" + str(curchan) + "_type") != "9999") ):
+                dlg = xbmcgui.Dialog()
+
+                if dlg.yesno("Save", "Are you sure you want to clear this channel?"):
+                    ADDON_SETTINGS.setSetting("Channel_" + str(curchan) + "_type", "9999")
+                    self.updateListing(curchan)
+                    self.madeChanges = 1
 
 
     def saveSettings(self):
@@ -152,6 +166,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             pass
 
         if chantype != self.channel_type or set1 != self.setting1 or set2 != self.setting2 or self.savedRules:
+            self.madeChanges = 1
             ADDON_SETTINGS.setSetting('Channel_' + chan + '_changed', 'True')
 
         self.log("saveSettings return")

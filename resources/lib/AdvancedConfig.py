@@ -172,6 +172,8 @@ class AdvancedConfig(xbmcgui.WindowXMLDialog):
 
 
     def setupOptions(self):
+        self.getControl(102).setVisible(False)
+
         for i in range(4):
             if i < (self.ruleList[self.selectedRuleIndex].getOptionCount() - (self.optionRowOffset * 2)):
                 self.getControl(i + 150).setVisible(True)
@@ -183,6 +185,7 @@ class AdvancedConfig(xbmcgui.WindowXMLDialog):
                 self.getControl(i + 150).setVisible(False)
                 self.getControl(i + 160).setVisible(False)
 
+        self.getControl(102).setVisible(True)
 
     def scrollRulesLeft(self):
         self.log("scrollRulesLeft")

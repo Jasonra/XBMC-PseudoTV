@@ -128,7 +128,7 @@ class AdvancedConfig(xbmcgui.WindowXMLDialog):
                 if focusid < 162:
                     if self.optionRowSelected == 0:
                         self.scrollOptionsUp()
-    
+
                         # If we're not offset, make sure that the top options have a
                         # control-up value
                         if self.optionRowOffset == 0:
@@ -173,9 +173,26 @@ class AdvancedConfig(xbmcgui.WindowXMLDialog):
 
     def setupOptions(self):
         self.getControl(102).setVisible(False)
+        optcount = self.ruleList[self.selectedRuleIndex].getOptionCount()
+
+        try:
+            arrowup = self.getControl(170)
+            arrowdown = self.getControl(171)
+
+            if (optcount > 4) and (optcount > (4 + (self.optionRowOffset * 2))):
+                arrowup.setVisible(True)
+            else:
+                arrowup.setVisible(False)
+
+            if self.optionRowOffset > 0:
+                arrowdown.setVisible(True)
+            else:
+                arrowdown.setVisible(False)
+        except:
+            pass
 
         for i in range(4):
-            if i < (self.ruleList[self.selectedRuleIndex].getOptionCount() - (self.optionRowOffset * 2)):
+            if i < (optcount - (self.optionRowOffset * 2)):
                 self.getControl(i + 150).setVisible(True)
                 self.getControl(i + 150).setLabel(self.ruleList[self.selectedRuleIndex].getOptionLabel(i + (self.optionRowOffset * 2)))
                 self.getControl(i + 160).setVisible(True)

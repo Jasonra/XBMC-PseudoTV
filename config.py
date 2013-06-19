@@ -411,6 +411,14 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             self.getControl(192).setLabel(self.findItemInList(self.showList, chansetting1))
             self.getControl(194).setSelected(chansetting2 == str(MODE_ORDERAIRDATE))
         elif chantype == 7:
+            if (chansetting1.find('/') > -1) or (chansetting1.find('\\') > -1):
+                plname = self.getSmartPlaylistName(chansetting1)
+
+                if len(plname) != 0:
+                    chansetting1 = ''
+            else:
+                chansetting1 = ''
+
             self.getControl(200).setLabel(chansetting1)
 
         self.loadRules(channel)

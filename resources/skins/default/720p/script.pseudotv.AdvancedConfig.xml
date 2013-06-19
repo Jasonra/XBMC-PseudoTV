@@ -341,6 +341,26 @@
                         <onleft>162</onleft>
                         <textcolor>FF000000</textcolor>
                     </control>
+                    
+                    <control type="image" id="170">
+                        <description>Down arrow when there are more controls for a rule</description>
+                        <posx>260</posx>
+                        <posy>175</posy>
+                        <width>20</width>
+                        <height>20</height>
+                        <texture border="0,0,0,0">pstvDownNoFocus.png</texture>
+                        <colordiffuse>FFFFFFFF</colordiffuse>
+                    </control>
+                    
+                    <control type="image" id="171">
+                        <description>Up arrow when there are more controls for a rule</description>
+                        <posx>260</posx>
+                        <posy>55</posy>
+                        <width>20</width>
+                        <height>20</height>
+                        <texture border="0,0,0,0">pstvUpNoFocus.png</texture>
+                        <colordiffuse>FFFFFFFF</colordiffuse>
+                    </control>
                 </control>
             </control>
         </control>

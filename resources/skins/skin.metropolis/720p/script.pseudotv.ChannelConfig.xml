@@ -1,27 +1,22 @@
-<window>
+﻿<window>
     <coordinates>        
         <posx>0</posx>
         <posy>0</posy>
     </coordinates>
-	<animation effect="fade" time="200" start="0" end="100">WindowOpen</animation>
-    <animation effect="fade" time="200" start="100" end="0">WindowClose</animation>
+	<include>Animation_OpenCloseFade</include>
 	<zorder>1</zorder>
     <controls>
-		<control type="image">
-			<include>Dimensions_Fullscreen</include>
-			<texture>background.png</texture>
-		</control>
 		<include>Global_Background</include>
         <control type="label">
             <posx>460</posx>
-				<posy>70</posy>
-				<width>810</width>
-				<height>38</height>
-				<font>METF_TitleTextLarge</font>
-				<textcolor>SettingsTitle</textcolor>
-				<align>left</align>
-				<aligny>center</aligny>
-            <label>Channel Configuration</label>
+			<posy>70</posy>
+			<width>810</width>
+			<height>38</height>
+			<font>METF_TitleTextLarge</font>
+			<textcolor>SettingsTitle</textcolor>
+			<align>left</align>
+			<aligny>center</aligny>
+            <label>$LOCALIZE[19029] $LOCALIZE[10507]</label>
         </control>
         <control type="group" id="105">
             <posx>440</posx>
@@ -37,18 +32,18 @@
 				<aligny>center</aligny>
 				<font>METF_TitleText</font>
 				<textcolor>GlobalHeading</textcolor>
-                <label>Channel</label>
+                <label>$LOCALIZE[19029]</label>
             </control>
             <control type="label">
                 <posx>790</posx>
                 <posy>2</posy>
-                <width>100</width>
+                <width>200</width>
                 <height>40</height>
                 <align>right</align>
 				<aligny>center</aligny>
 				<font>METF_TitleText</font>
 				<textcolor>GlobalHeading</textcolor>
-                <label>Content</label>
+                <label>$LOCALIZE[33029]</label>
             </control>
 			<control type="button" id="999">
 				<description>Ok Button</description>
@@ -69,7 +64,7 @@
                 <posy>40</posy>
 				<onup>102</onup>
 				<ondown>102</ondown>
-                <onright>999</onright>
+                <onright>103</onright>
                 <onleft>999</onleft>
                 <width>840</width>
                 <height>370</height>
@@ -147,7 +142,6 @@
 				<aligny>center</aligny>
 				<font>METF_TitleText</font>
 				<textcolor>GlobalHeading</textcolor>
-                <label></label>
             </control>
             <control type="label">
                 <posx>15</posx>
@@ -158,7 +152,7 @@
                 <aligny>center</aligny>
                 <align>left</align>
 				<font>METF_ContextValue</font>
-                <label>Channel Type:</label>
+                <label>$LOCALIZE[19029] $LOCALIZE[35501]:</label>
             </control>
             <control type="label" id="109">
                 <posx>720</posx>
@@ -169,7 +163,6 @@
                 <aligny>center</aligny>
                 <align>right</align>
 				<font>METF_ContextValue</font>
-                <label></label>
             </control>
             <control type="button" id="110">
                 <posx>750</posx>
@@ -199,7 +192,7 @@
                 <posx>-440</posx>
                 <posy>5</posy>
                 <include>SettingsLabelLeft</include>
-                <label>Channel Rules</label>
+                <label>$LOCALIZE[19029] $LOCALIZE[5]</label>
                 <onup>112</onup>
                 <ondown>113</ondown>
 				<onleft>110</onleft>
@@ -240,7 +233,7 @@
                 <width>200</width>
                 <height>35</height>
                 <textcolor>white</textcolor>
-                <label>Playlist:</label>
+                <label>$LOCALIZE[559]:</label>
 				<font>METF_ContextValue</font>
                 <aligny>center</aligny>
                 <align>left</align>
@@ -255,7 +248,7 @@
 				<aligny>center</aligny>
 				<align>left</align>
 				<texturefocus border="3">ButtonFo.png</texturefocus>
-				<texturenofocus border="3">list/listfocus.png</texturenofocus>
+				<texturenofocus border="3">listfocus.png</texturenofocus>
                 <onup>110</onup>
 				<ondown>112</ondown>				
             </control>
@@ -273,7 +266,7 @@
                 <width>300</width>
                 <height>35</height>
                 <textcolor>white</textcolor>
-                <label>Network:</label>
+                <label>$LOCALIZE[705]:</label>
 				<font>METF_ContextValue</font>
                 <aligny>center</aligny>
                 <align>left</align>
@@ -287,7 +280,6 @@
                 <aligny>center</aligny>
                 <align>right</align>
 				<font>METF_ContextValue</font>
-                <label></label>
             </control>
             <control type="button" id="140">
                 <posx>750</posx>
@@ -327,7 +319,7 @@
                 <width>300</width>
                 <height>35</height>
                 <textcolor>white</textcolor>
-                <label>Studio:</label>
+                <label>$LOCALIZE[572]:</label>
 				<font>METF_ContextValue</font>
                 <aligny>center</aligny>
                 <align>left</align>
@@ -341,7 +333,6 @@
                 <aligny>center</aligny>
                 <align>right</align>
 				<font>METF_ContextValue</font>
-                <label></label>
             </control>
             <control type="button" id="150">
                 <posx>750</posx>
@@ -381,7 +372,7 @@
                 <width>300</width>
                 <height>35</height>
                 <textcolor>white</textcolor>
-                <label>Genre:</label>
+                <label>$LOCALIZE[515]:</label>
 				<font>METF_ContextValue</font>
                 <aligny>center</aligny>
                 <align>left</align>
@@ -395,7 +386,6 @@
                 <aligny>center</aligny>
                 <align>right</align>
 				<font>METF_ContextValue</font>
-                <label></label>
             </control>
             <control type="button" id="160">
                 <posx>750</posx>
@@ -435,7 +425,7 @@
                 <width>300</width>
                 <height>35</height>
                 <textcolor>white</textcolor>
-                <label>Genre:</label>
+                <label>$LOCALIZE[515]:</label>
 				<font>METF_ContextValue</font>
                 <aligny>center</aligny>
                 <align>left</align>
@@ -449,7 +439,6 @@
                 <aligny>center</aligny>
                 <align>right</align>
 				<font>METF_ContextValue</font>
-                <label></label>
             </control>		
             <control type="button" id="170">
                 <posx>750</posx>
@@ -489,7 +478,7 @@
                 <width>300</width>
                 <height>35</height>
                 <textcolor>white</textcolor>
-                <label>Genre:</label>
+                <label>$LOCALIZE[515]:</label>
 				<font>METF_ContextValue</font>
                 <aligny>center</aligny>
                 <align>left</align>
@@ -503,7 +492,6 @@
                 <aligny>center</aligny>
                 <align>right</align>
 				<font>METF_ContextValue</font>
-                <label></label>
             </control>
             <control type="button" id="180">
                 <posx>750</posx>
@@ -543,7 +531,7 @@
                 <width>300</width>
                 <height>35</height>
                 <textcolor>white</textcolor>
-                <label>Show:</label>
+                <label>$LOCALIZE[20364]:</label>
 				<font>METF_ContextValue</font>
                 <aligny>center</aligny>
                 <align>left</align>
@@ -557,7 +545,6 @@
                 <aligny>center</aligny>
                 <align>right</align>
 				<font>METF_ContextValue</font>
-                <label></label>
             </control>
             <control type="button" id="190">
                 <posx>750</posx>
@@ -592,11 +579,11 @@
 				<height>35</height>
 				<font>METF_ContextValue</font>
 				<texturefocus border="3">ButtonFo.png</texturefocus>
-				<texturenofocus border="3">list/listfocus.png</texturenofocus>
+				<texturenofocus border="3">listfocus.png</texturenofocus>
 				<align>left</align>
 				<onup>190</onup>
 				<ondown>112</ondown>
-				<label>Show in Order:</label>
+				<label>$LOCALIZE[581] ($LOCALIZE[20359])</label>
 				<textoffsetx>5</textoffsetx>
 			</control>          
         </control>
@@ -613,25 +600,41 @@
                 <width>300</width>
                 <height>35</height>
 				<font>METF_ContextValue</font>
-                <label>Directory:</label>
+                <label>$LOCALIZE[16015]:</label>
                 <aligny>center</aligny>
                 <align>left</align>
             </control>
             <control type="button" id="200">
-                <posx>150</posx>
+                <posx>170</posx>
                 <posy>82</posy>
-                <width>670</width>
+                <width>650</width>
                 <height>35</height>
 				<font>METF_ContextValue</font>
 				<textoffsetx>20</textoffsetx>
 				<texturefocus border="3">ButtonFo.png</texturefocus>
-				<texturenofocus border="3">list/listfocus.png</texturenofocus>
+				<texturenofocus border="3">listfocus.png</texturenofocus>
 				<aligny>center</aligny>
 				<align>right</align>
                 <onup>110</onup>
                 <ondown>112</ondown>
             </control>
 		</control>
+		<control type="scrollbar" id="103">
+			<posx>1265</posx>
+			<posy>110</posy>
+			<width>30</width>
+			<height>468</height>
+			<visible allowhiddenfocus="true">Control.IsVisible(102) + Control.HasFocus(103)</visible>
+			<texturesliderbackground>-</texturesliderbackground>
+			<textureslidernib>ScrollBarV_Nib_Focus.png</textureslidernib>
+			<textureslidernibfocus>ScrollBarV_Nib_Focus.png</textureslidernibfocus>
+			<onleft>102</onleft>
+			<onright>103</onright>
+			<showonepage>true</showonepage>
+			<orientation>vertical</orientation>
+			<animation effect="fade" start="0" end="100" time="400" condition="Control.IsVisible(102) + Control.HasFocus(103)">Conditional</animation>
+		</control>
+		<include>Global_Weather</include>
 		<include>Global_Time</include>
     </controls>
 </window>

@@ -145,6 +145,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         ADDON_SETTINGS.loadSettings()
         
         if CHANNEL_SHARING:
+            FileAccess.makedirs(LOCK_LOC)
             updateDialog.update(70, "Initializing", "Checking Other Instances")
             self.isMaster = GlobalFileLock.lockFile("MasterLock", False)
         else:

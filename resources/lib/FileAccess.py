@@ -22,7 +22,6 @@ import time, threading
 import random, os
 import Globals
 import codecs
-from SMBFile import SMBManager
 import xbmcvfs
 VFS_AVAILABLE = True
 
@@ -30,7 +29,6 @@ VFS_AVAILABLE = True
 
 FILE_LOCK_MAX_FILE_TIMEOUT = 13
 FILE_LOCK_NAME = "FileLock.dat"
-Manager = SMBManager()
 
 
 
@@ -46,24 +44,7 @@ class FileAccess:
         FileAccess.log("trying to open " + filename)
         
         try:
-            if mode == "r" or mode == "rb":
-                FileAccess.log("Opening for reading")
-                return VFSFile(filename)
-
-            if filename[0:6].lower() == 'smb://':
-                fle = FileAccess.openSMB(filename, mode, encoding)
-
-                if fle:
-                    return fle
-
-            # Even if we can't find the file, try to open it anyway
-            try:
-                fle = codecs.open(filename, mode, encoding)
-            except:
-                raise IOError()
-
-            if fle == 0:
-                raise IOError()
+            return VFSFile(filename, mode)
         except UnicodeDecodeError:
             return FileAccess.open(ascii(filename), mode, encoding)
 
@@ -72,6 +53,7 @@ class FileAccess:
 
     @staticmethod
     def copy(orgfilename, newfilename):
+        FileAccess.log('copying ' + orgfilename + ' to ' + newfilename)
         xbmcvfs.copy(orgfilename, newfilename)
         return True
 
@@ -98,9 +80,6 @@ class FileAccess:
             except:
                 fle = 0
 
-        if fle == 0:
-            fle = Manager.openFile(filename, mode)
-
         return fle
 
 
@@ -118,8 +97,8 @@ class FileAccess:
         FileAccess.log("rename " + path + " to " + newpath)
 
         try:
-            xbmcvfs.rename(path, newpath)
-            return True
+            if xbmcvfs.rename(path, newpath):
+                return True
         except:
             pass
 
@@ -180,8 +159,14 @@ class FileAccess:
 
 
 class VFSFile:
-    def __init__(self, filename):
-        self.currentFile = xbmcvfs.File(filename)
+    def __init__(self, filename, mode):
+        Globals.log("VFSFile: trying to open " + filename)
+
+        if mode == 'w':
+            self.currentFile = xbmcvfs.File(filename, 'w')
+        else:        
+            self.currentFile = xbmcvfs.File(filename)
+
         Globals.log("VFSFile: Opening " + filename, xbmc.LOGDEBUG)
         
         if self.currentFile == None:
@@ -223,6 +208,7 @@ class VFSFile:
 class FileLock:
     def __init__(self):
         random.seed()
+        FileAccess.makedirs(Globals.LOCK_LOC)
         self.lockFileName = Globals.LOCK_LOC + FILE_LOCK_NAME
         self.lockedList = []
         self.refreshLocksTimer = threading.Timer(4.0, self.refreshLocks)
@@ -369,13 +355,12 @@ class FileLock:
                 time.sleep(0.5)
 
         self.log("Creating lock file")
-
-        # If we couldn't grab it, it is gone.  Create it.
+        
         try:
-            fle = FileAccess.open(self.lockName, "w")
+            fle = FileAccess.open(self.lockName, 'w')
             fle.close()
         except:
-            self.log("Unable to create the lock file")
+            self.log("Unable to create a lock file")
             return False
 
         return True

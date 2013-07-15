@@ -397,7 +397,11 @@
 			<visible>false</visible>			
 			<label>0x88FFFFFF</label><!--un-focused text color-->			
 			<label2>0xFF000000</label2><!--focused text color-->
-		</control>			
+		</control>
+		<control type="button" id="105">
+			<visible>false</visible>			
+			<label>font13</label><!--text font-->	
+		</control>
 		<control type="group" id="111">
 			<posx>391</posx>
 			<posy>171</posy>

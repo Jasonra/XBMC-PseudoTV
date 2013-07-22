@@ -268,107 +268,128 @@
                         <onup>130</onup>
                         <ondown>160</ondown>
                     </control>
+					
+					<control type="group">
+						<posy>50</posy>
+						<control type="label" id="150">
+							<posx>10</posx>
+							<posy>65</posy>
+							<width>320</width>
+							<height>30</height>
+							<align>left</align>
+							<font>font13</font>
+							<textcolor>green</textcolor>
+						</control>
 
-                    <control type="label" id="150">
-                        <posx>10</posx>
-                        <posy>65</posy>
-                        <width>320</width>
-                        <height>30</height>
-                        <align>left</align>
-						<font>font13</font>
-                        <textcolor>green</textcolor>
-                    </control>
-
-                    <control type="label" id="151">
-                        <posx>340</posx>
-                        <posy>65</posy>
-                        <width>310</width>
-                        <height>30</height>
-                        <align>left</align>
-						<font>font13</font>
-                        <textcolor>green</textcolor>
-                    </control>
+						<control type="label" id="151">
+							<posx>340</posx>
+							<posy>65</posy>
+							<width>310</width>
+							<height>30</height>
+							<align>left</align>
+							<font>font13</font>
+							<textcolor>green</textcolor>
+						</control>
 
 
-                    <control type="label" id="152">
-                        <posx>10</posx>
-                        <posy>145</posy>
-                        <width>320</width>
-                        <height>30</height>
-                        <align>left</align>
-						<font>font13</font>
-                        <textcolor>green</textcolor>
-                    </control>
+						<control type="label" id="152">
+							<posx>10</posx>
+							<posy>145</posy>
+							<width>320</width>
+							<height>30</height>
+							<align>left</align>
+							<font>font13</font>
+							<textcolor>green</textcolor>
+						</control>
 
-                    <control type="label" id="153">
-                        <posx>340</posx>
-                        <posy>145</posy>
-                        <width>320</width>
-                        <height>30</height>
-                        <align>left</align>
-						<font>font13</font>
-                        <textcolor>green</textcolor>
-                    </control>
+						<control type="label" id="153">
+							<posx>340</posx>
+							<posy>145</posy>
+							<width>320</width>
+							<height>30</height>
+							<align>left</align>
+							<font>font13</font>
+							<textcolor>green</textcolor>
+						</control>
 
-                    <control type="button" id="160">
-                        <posx>0</posx>
-                        <posy>100</posy>
-                        <width>310</width>
-                        <height>44</height>
-						<texturefocus>views/line_frame_device_white.png</texturefocus>
-						<texturenofocus>views/list_frame_device.png</texturenofocus>
-                        <align>center</align>
-                        <onup>131</onup>
-                        <ondown>162</ondown>
-                        <onright>161</onright>
-                        <textcolor>white</textcolor>
-						<focusedcolor>black</focusedcolor>
-                    </control>
+						<control type="button" id="160">
+							<posx>0</posx>
+							<posy>100</posy>
+							<width>310</width>
+							<height>44</height>
+							<texturefocus>views/line_frame_device_white.png</texturefocus>
+							<texturenofocus>views/list_frame_device.png</texturenofocus>
+							<align>center</align>
+							<onup>131</onup>
+							<ondown>162</ondown>
+							<onright>161</onright>
+							<textcolor>white</textcolor>
+							<focusedcolor>black</focusedcolor>
+						</control>
 
-                    <control type="button" id="161">
-                        <posx>330</posx>
-                        <posy>100</posy>
-                        <width>310</width>
-                        <height>44</height>
-						<texturefocus>views/line_frame_device_white.png</texturefocus>
-						<texturenofocus>views/list_frame_device.png</texturenofocus>
-                        <align>center</align>
-                        <onup>131</onup>
-                        <ondown>163</ondown>
-                        <onleft>160</onleft>
-                        <onright>162</onright>
-                        <textcolor>white</textcolor>
-						<focusedcolor>black</focusedcolor>
-                    </control>
+						<control type="button" id="161">
+							<posx>330</posx>
+							<posy>100</posy>
+							<width>310</width>
+							<height>44</height>
+							<texturefocus>views/line_frame_device_white.png</texturefocus>
+							<texturenofocus>views/list_frame_device.png</texturenofocus>
+							<align>center</align>
+							<onup>131</onup>
+							<ondown>163</ondown>
+							<onleft>160</onleft>
+							<onright>162</onright>
+							<textcolor>white</textcolor>
+							<focusedcolor>black</focusedcolor>
+						</control>
 
-                    <control type="button" id="162">
-                        <posx>0</posx>
-                        <posy>180</posy>
-                        <width>310</width>
-                        <height>44</height>
-						<texturefocus>views/line_frame_device_white.png</texturefocus>
-						<texturenofocus>views/list_frame_device.png</texturenofocus>
-                        <align>center</align>
-                        <onup>160</onup>
-                        <onright>163</onright>
-                        <onleft>161</onleft>
-                        <textcolor>white</textcolor>
-						<focusedcolor>black</focusedcolor>
-                    </control>
+						<control type="button" id="162">
+							<posx>0</posx>
+							<posy>180</posy>
+							<width>310</width>
+							<height>44</height>
+							<texturefocus>views/line_frame_device_white.png</texturefocus>
+							<texturenofocus>views/list_frame_device.png</texturenofocus>
+							<align>center</align>
+							<onup>160</onup>
+							<onright>163</onright>
+							<onleft>161</onleft>
+							<textcolor>white</textcolor>
+							<focusedcolor>black</focusedcolor>
+						</control>
 
-                    <control type="button" id="163">
-                        <posx>330</posx>
-                        <posy>180</posy>
-                        <width>310</width>
-                        <height>44</height>
-						<texturefocus>views/line_frame_device_white.png</texturefocus>
-						<texturenofocus>views/list_frame_device.png</texturenofocus>
-                        <align>center</align>
-                        <onup>161</onup>
-                        <onleft>162</onleft>
-                        <textcolor>white</textcolor>
-						<focusedcolor>black</focusedcolor>
-                    </control>
+						<control type="button" id="163">
+							<posx>330</posx>
+							<posy>180</posy>
+							<width>310</width>
+							<height>44</height>
+							<texturefocus>views/line_frame_device_white.png</texturefocus>
+							<texturenofocus>views/list_frame_device.png</texturenofocus>
+							<align>center</align>
+							<onup>161</onup>
+							<onleft>162</onleft>
+							<textcolor>white</textcolor>
+							<focusedcolor>black</focusedcolor>
+						</control>
+						
+						<control type="image" id="170">
+							<description>Down arrow when there are more controls for a rule</description>
+							<posx>309</posx>
+							<posy>235</posy>
+							<width>20</width>
+							<height>20</height>
+							<texture>icons/settings_arrow_button_down.png</texture>
+						</control>
+                    
+						<control type="image" id="171">
+							<description>Up arrow when there are more controls for a rule</description>
+							<posx>309</posx>
+							<posy>35</posy>
+							<width>20</width>
+							<height>20</height>
+							<texture>icons/settings_arrow_button_up.png</texture>
+						</control>
+					</control>
                 </control>
             </control>
         </control>

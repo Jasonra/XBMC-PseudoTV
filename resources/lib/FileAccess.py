@@ -163,7 +163,7 @@ class VFSFile:
         Globals.log("VFSFile: trying to open " + filename)
 
         if mode == 'w':
-            self.currentFile = xbmcvfs.File(filename, 'w')
+            self.currentFile = xbmcvfs.File(filename, 'wb')
         else:        
             self.currentFile = xbmcvfs.File(filename)
 
@@ -177,8 +177,12 @@ class VFSFile:
         return self.currentFile.read(bytes)
         
         
-    def write(self, bytes):
-        return self.currentFile.write(bytes)
+    def write(self, data):
+        if isinstance(data, unicode):
+            data = bytearray(data, "utf-8")
+            data = bytes(data)
+    
+        return self.currentFile.write(data)
         
         
     def close(self):
